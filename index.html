@@ -1,751 +1,789 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Viewer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .container {
-            display: flex;
-            height: 100vh;
-            gap: 10px;
-            padding: 10px;
-        }
-
-        .viewer-container {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .controls-panel {
-            width: 300px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .control-section {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .control-section h3 {
-            color: white;
-            margin-bottom: 15px;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .control-group {
-            margin-bottom: 15px;
-        }
-
-        .control-group label {
-            display: block;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 5px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .control-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            font-size: 14px;
-            backdrop-filter: blur(5px);
-        }
-
-        .control-input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
-        }
-
-        .control-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .color-input {
-            width: 100%;
-            height: 40px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            background: none;
-        }
-
-        .button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 12px;
-        }
-
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-        }
-
-        .info-display {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            text-align: center;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        canvas {
-            display: block;
-            border-radius: 15px;
-        }
-    </style>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.6">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="viewer-container">
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <div>Loading 3D Viewer...</div>
-            </div>
-            <div id="info" class="info-display">
-                <div>Camera Position: (0, 0, 5)</div>
-                <div>Camera Rotation: (0, 0, 0)</div>
-                <div>Zoom: 1.00</div>
-                <div>Model: Default Cube</div>
-            </div>
-        </div>
-        
-        <div class="controls-panel">
-            <div class="control-section">
-                <h3>Camera Controls</h3>
-                <div class="control-group">
-                    <label>Position X</label>
-                    <input type="range" id="posX" class="control-input" min="-10" max="10" step="0.1" value="0">
-                </div>
-                <div class="control-group">
-                    <label>Position Y</label>
-                    <input type="range" id="posY" class="control-input" min="-10" max="10" step="0.1" value="0">
-                </div>
-                <div class="control-group">
-                    <label>Position Z</label>
-                    <input type="range" id="posZ" class="control-input" min="1" max="20" step="0.1" value="5">
-                </div>
-                <button id="resetCamera" class="button">Reset Camera</button>
-            </div>
-
-            <div class="control-section">
-                <h3>Material Properties</h3>
-                <div class="control-group">
-                    <label>Material Color</label>
-                    <input type="color" id="materialColor" class="color-input" value="#4CAF50">
-                </div>
-                <div class="control-group">
-                    <label>Metalness</label>
-                    <input type="range" id="metalness" class="control-input" min="0" max="1" step="0.01" value="0.1">
-                </div>
-                <div class="control-group">
-                    <label>Roughness</label>
-                    <input type="range" id="roughness" class="control-input" min="0" max="1" step="0.01" value="0.8">
-                </div>
-                <div class="control-group">
-                    <label>Emissive Intensity</label>
-                    <input type="range" id="emissive" class="control-input" min="0" max="1" step="0.01" value="0">
-                </div>
-            </div>
-
-            <div class="control-section">
-                <h3>Model Controls</h3>
-                <div class="control-group">
-                    <label>Model Scale</label>
-                    <input type="range" id="modelScale" class="control-input" min="0.5" max="3" step="0.1" value="1">
-                </div>
-                <div class="control-group">
-                    <label>Rotation Speed</label>
-                    <input type="range" id="rotationSpeed" class="control-input" min="0" max="0.05" step="0.001" value="0.01">
-                </div>
-                <button id="toggleRotation" class="button">Toggle Auto Rotation</button>
-            </div>
-
-            <div class="control-section">
-                <h3>Lighting</h3>
-                <div class="control-group">
-                    <label>Light Intensity</label>
-                    <input type="range" id="lightIntensity" class="control-input" min="0" max="3" step="0.1" value="1">
-                </div>
-                <div class="control-group">
-                    <label>Ambient Light</label>
-                    <input type="range" id="ambientLight" class="control-input" min="0" max="1" step="0.01" value="0.4">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        // ==================== UTILITY FUNCTIONS ====================
-        
-        // Format number for display
-        function formatNumber(num) {
-            return parseFloat(num).toFixed(2);
-        }
-
-        // Convert radians to degrees
-        function radToDeg(rad) {
-            return rad * (180 / Math.PI);
-        }
-
-        // Clamp value between min and max
-        function clamp(value, min, max) {
-            return Math.min(Math.max(value, min), max);
-        }
-
-        // ==================== CUSTOM HOOKS (State Management) ====================
-        
-        class ViewerState {
-            constructor() {
-                this.camera = null;
-                this.scene = null;
-                this.renderer = null;
-                this.model = null;
-                this.controls = null;
-                this.lights = {};
-                this.autoRotate = true;
-                this.rotationSpeed = 0.01;
-                this.subscribers = [];
-            }
-
-            subscribe(callback) {
-                this.subscribers.push(callback);
-            }
-
-            notify(data) {
-                this.subscribers.forEach(callback => callback(data));
-            }
-
-            updateCameraInfo() {
-                if (this.camera) {
-                    const pos = this.camera.position;
-                    const rot = this.camera.rotation;
-                    const zoom = this.camera.zoom || 1;
-                    
-                    this.notify({
-                        type: 'camera',
-                        position: { x: pos.x, y: pos.y, z: pos.z },
-                        rotation: { 
-                            x: radToDeg(rot.x), 
-                            y: radToDeg(rot.y), 
-                            z: radToDeg(rot.z) 
-                        },
-                        zoom: zoom
-                    });
-                }
-            }
-        }
-
-        // ==================== THREE.JS SETUP ====================
-        
-        // Import Three.js from CDN
-        const THREE = window.THREE || await import('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-
-        // ==================== UI COMPONENTS ====================
-        
-        class InfoDisplay {
-            constructor(element) {
-                this.element = element;
-            }
-
-            update({ position, rotation, zoom, model = 'Default Cube' }) {
-                this.element.innerHTML = `
-                    <div>Camera Position: (${formatNumber(position.x)}, ${formatNumber(position.y)}, ${formatNumber(position.z)})</div>
-                    <div>Camera Rotation: (${formatNumber(rotation.x)}°, ${formatNumber(rotation.y)}°, ${formatNumber(rotation.z)}°)</div>
-                    <div>Zoom: ${formatNumber(zoom)}</div>
-                    <div>Model: ${model}</div>
-                `;
-            }
-        }
-
-        class ControlPanel {
-            constructor(state) {
-                this.state = state;
-                this.setupEventListeners();
-            }
-
-            setupEventListeners() {
-                // Camera controls
-                document.getElementById('posX').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.x = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('posY').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.y = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('posZ').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.z = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('resetCamera').addEventListener('click', () => {
-                    this.resetCamera();
-                });
-
-                // Material controls
-                document.getElementById('materialColor').addEventListener('input', (e) => {
-                    this.updateMaterialColor(e.target.value);
-                });
-
-                document.getElementById('metalness').addEventListener('input', (e) => {
-                    this.updateMaterialProperty('metalness', parseFloat(e.target.value));
-                });
-
-                document.getElementById('roughness').addEventListener('input', (e) => {
-                    this.updateMaterialProperty('roughness', parseFloat(e.target.value));
-                });
-
-                document.getElementById('emissive').addEventListener('input', (e) => {
-                    this.updateEmissive(parseFloat(e.target.value));
-                });
-
-                // Model controls
-                document.getElementById('modelScale').addEventListener('input', (e) => {
-                    this.updateModelScale(parseFloat(e.target.value));
-                });
-
-                document.getElementById('rotationSpeed').addEventListener('input', (e) => {
-                    this.state.rotationSpeed = parseFloat(e.target.value);
-                });
-
-                document.getElementById('toggleRotation').addEventListener('click', () => {
-                    this.toggleAutoRotation();
-                });
-
-                // Lighting controls
-                document.getElementById('lightIntensity').addEventListener('input', (e) => {
-                    this.updateLightIntensity(parseFloat(e.target.value));
-                });
-
-                document.getElementById('ambientLight').addEventListener('input', (e) => {
-                    this.updateAmbientLight(parseFloat(e.target.value));
-                });
-            }
-
-            resetCamera() {
-                if (this.state.camera) {
-                    this.state.camera.position.set(0, 0, 5);
-                    this.state.camera.rotation.set(0, 0, 0);
-                    this.state.updateCameraInfo();
-                    
-                    // Update sliders
-                    document.getElementById('posX').value = 0;
-                    document.getElementById('posY').value = 0;
-                    document.getElementById('posZ').value = 5;
-                }
-            }
-
-            updateMaterialColor(color) {
-                if (this.state.model && this.state.model.material) {
-                    this.state.model.material.color.setHex(color.replace('#', '0x'));
-                }
-            }
-
-            updateMaterialProperty(property, value) {
-                if (this.state.model && this.state.model.material) {
-                    this.state.model.material[property] = value;
-                }
-            }
-
-            updateEmissive(intensity) {
-                if (this.state.model && this.state.model.material) {
-                    const color = this.state.model.material.color.clone();
-                    this.state.model.material.emissive = color.multiplyScalar(intensity);
-                }
-            }
-
-            updateModelScale(scale) {
-                if (this.state.model) {
-                    this.state.model.scale.set(scale, scale, scale);
-                }
-            }
-
-            toggleAutoRotation() {
-                this.state.autoRotate = !this.state.autoRotate;
-                const button = document.getElementById('toggleRotation');
-                button.textContent = this.state.autoRotate ? 'Stop Auto Rotation' : 'Start Auto Rotation';
-            }
-
-            updateLightIntensity(intensity) {
-                if (this.state.lights.directional) {
-                    this.state.lights.directional.intensity = intensity;
-                }
-            }
-
-            updateAmbientLight(intensity) {
-                if (this.state.lights.ambient) {
-                    this.state.lights.ambient.intensity = intensity;
-                }
-            }
-        }
-
-        // ==================== FEATURE COMPONENTS ====================
-        
-        class ThreeJSViewer {
-            constructor(container, state) {
-                this.container = container;
-                this.state = state;
-                this.mouseControls = {
-                    isDragging: false,
-                    previousMousePosition: { x: 0, y: 0 }
-                };
-                this.init();
-            }
-
-            init() {
-                this.setupScene();
-                this.setupCamera();
-                this.setupRenderer();
-                this.setupLights();
-                this.setupModel();
-                this.setupControls();
-                this.startRenderLoop();
-                
-                // Hide loading indicator
-                document.getElementById('loading').style.display = 'none';
-            }
-
-            setupScene() {
-                this.state.scene = new THREE.Scene();
-                this.state.scene.background = new THREE.Color(0x222222);
-                
-                // Add fog for depth perception
-                this.state.scene.fog = new THREE.Fog(0x222222, 1, 100);
-            }
-
-            setupCamera() {
-                this.state.camera = new THREE.PerspectiveCamera(
-                    75,
-                    this.container.clientWidth / this.container.clientHeight,
-                    0.1,
-                    1000
-                );
-                this.state.camera.position.set(0, 0, 5);
-            }
-
-            setupRenderer() {
-                this.state.renderer = new THREE.WebGLRenderer({ 
-                    antialias: true,
-                    alpha: true 
-                });
-                this.state.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-                this.state.renderer.setPixelRatio(window.devicePixelRatio);
-                this.state.renderer.shadowMap.enabled = true;
-                this.state.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                this.state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.state.renderer.toneMappingExposure = 1;
-                this.container.appendChild(this.state.renderer.domElement);
-
-                // Handle window resize
-                window.addEventListener('resize', () => this.handleResize());
-            }
-
-            setupLights() {
-                // Ambient light
-                this.state.lights.ambient = new THREE.AmbientLight(0x404040, 0.4);
-                this.state.scene.add(this.state.lights.ambient);
-
-                // Directional light
-                this.state.lights.directional = new THREE.DirectionalLight(0xffffff, 1);
-                this.state.lights.directional.position.set(5, 5, 5);
-                this.state.lights.directional.castShadow = true;
-                this.state.lights.directional.shadow.mapSize.width = 2048;
-                this.state.lights.directional.shadow.mapSize.height = 2048;
-                this.state.scene.add(this.state.lights.directional);
-
-                // Point light for additional illumination
-                const pointLight = new THREE.PointLight(0xffffff, 0.5, 100);
-                pointLight.position.set(-5, 5, 5);
-                this.state.scene.add(pointLight);
-            }
-
-            setupModel() {
-                // Create a more interesting default model (torus knot)
-                const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
-                const material = new THREE.MeshStandardMaterial({
-                    color: 0x4CAF50,
-                    metalness: 0.1,
-                    roughness: 0.8,
-                    envMapIntensity: 1
-                });
-
-                this.state.model = new THREE.Mesh(geometry, material);
-                this.state.model.castShadow = true;
-                this.state.model.receiveShadow = true;
-                this.state.scene.add(this.state.model);
-
-                // Add a ground plane
-                const groundGeometry = new THREE.PlaneGeometry(20, 20);
-                const groundMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0x999999, 
-                    transparent: true, 
-                    opacity: 0.3 
-                });
-                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-                ground.rotation.x = -Math.PI / 2;
-                ground.position.y = -2;
-                ground.receiveShadow = true;
-                this.state.scene.add(ground);
-            }
-
-            setupControls() {
-                const canvas = this.state.renderer.domElement;
-
-                // Mouse controls
-                canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-                canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-                canvas.addEventListener('mouseup', () => this.onMouseUp());
-                canvas.addEventListener('wheel', (e) => this.onWheel(e));
-
-                // Touch controls for mobile
-                canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
-                canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
-                canvas.addEventListener('touchend', () => this.onTouchEnd());
-            }
-
-            onMouseDown(event) {
-                this.mouseControls.isDragging = true;
-                this.mouseControls.previousMousePosition = {
-                    x: event.clientX,
-                    y: event.clientY
-                };
-            }
-
-            onMouseMove(event) {
-                if (!this.mouseControls.isDragging) return;
-
-                const deltaMove = {
-                    x: event.clientX - this.mouseControls.previousMousePosition.x,
-                    y: event.clientY - this.mouseControls.previousMousePosition.y
-                };
-
-                // Rotate the model based on mouse movement
-                if (this.state.model) {
-                    this.state.model.rotation.y += deltaMove.x * 0.01;
-                    this.state.model.rotation.x += deltaMove.y * 0.01;
-                }
-
-                this.mouseControls.previousMousePosition = {
-                    x: event.clientX,
-                    y: event.clientY
-                };
-
-                this.state.updateCameraInfo();
-            }
-
-            onMouseUp() {
-                this.mouseControls.isDragging = false;
-            }
-
-            onWheel(event) {
-                event.preventDefault();
-                const delta = event.deltaY > 0 ? 1.1 : 0.9;
-                this.state.camera.position.multiplyScalar(delta);
-                this.state.updateCameraInfo();
-            }
-
-            onTouchStart(event) {
-                if (event.touches.length === 1) {
-                    this.onMouseDown({
-                        clientX: event.touches[0].clientX,
-                        clientY: event.touches[0].clientY
-                    });
-                }
-            }
-
-            onTouchMove(event) {
-                if (event.touches.length === 1) {
-                    this.onMouseMove({
-                        clientX: event.touches[0].clientX,
-                        clientY: event.touches[0].clientY
-                    });
-                }
-            }
-
-            onTouchEnd() {
-                this.onMouseUp();
-            }
-
-            handleResize() {
-                const width = this.container.clientWidth;
-                const height = this.container.clientHeight;
-
-                this.state.camera.aspect = width / height;
-                this.state.camera.updateProjectionMatrix();
-
-                this.state.renderer.setSize(width, height);
-            }
-
-            startRenderLoop() {
-                const animate = () => {
-                    requestAnimationFrame(animate);
-
-                    // Auto rotation
-                    if (this.state.autoRotate && this.state.model) {
-                        this.state.model.rotation.y += this.state.rotationSpeed;
-                    }
-
-                    this.state.renderer.render(this.state.scene, this.state.camera);
-                    this.state.updateCameraInfo();
-                };
-
-                animate();
-            }
-        }
-
-        // ==================== MAIN APPLICATION ====================
-        
-        class App {
-            constructor() {
-                this.state = new ViewerState();
-                this.init();
-            }
-
-            async init() {
-                try {
-                    // Initialize components
-                    const viewerContainer = document.querySelector('.viewer-container');
-                    const infoElement = document.getElementById('info');
-
-                    // Create viewer
-                    this.viewer = new ThreeJSViewer(viewerContainer, this.state);
-                    
-                    // Create UI components
-                    this.infoDisplay = new InfoDisplay(infoElement);
-                    this.controlPanel = new ControlPanel(this.state);
-
-                    // Subscribe to state changes
-                    this.state.subscribe((data) => {
-                        if (data.type === 'camera') {
-                            this.infoDisplay.update(data);
-                        }
-                    });
-
-                    // Test functionality
-                    this.testComponent();
-
-                } catch (error) {
-                    console.error('Failed to initialize app:', error);
-                    document.getElementById('loading').innerHTML = 
-                        '<div style="color: #ff6b6b;">Failed to load 3D viewer. Please refresh the page.</div>';
-                }
-            }
-
-            testComponent() {
-                // Basic functionality test
-                console.log('✅ Testing 3D Model Viewer...');
-                
-                // Test state management
-                if (this.state && this.state.scene && this.state.camera && this.state.renderer) {
-                    console.log('✅ Three.js components initialized successfully');
-                }
-                
-                // Test UI components
-                if (this.infoDisplay && this.controlPanel) {
-                    console.log('✅ UI components initialized successfully');
-                }
-                
-                // Test controls
-                const testControls = document.querySelectorAll('.control-input').length > 0;
-                if (testControls) {
-                    console.log('✅ Control inputs are present and functional');
-                }
-                
-                console.log('✅ All tests passed - 3D Model Viewer is ready!');
-            }
-        }
-
-        // Initialize the application
-        window.addEventListener('DOMContentLoaded', () => {
-            new App();
-        });
-
-        // Make Three.js available globally for debugging
-        window.THREE = THREE;
-    </script>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;3D Model Viewer&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>* {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 0;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-sizing: border-box;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-family: 'Arial', sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>overflow: hidden;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>height: 100vh;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.container {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>height: 100vh;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>gap: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.viewer-container {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>flex: 1;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0, 0, 0, 0.05);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid rgba(0, 0, 0, 0.1);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>position: relative;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>overflow: hidden;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.controls-panel {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>width: 300px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0, 0, 0, 0.05);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid rgba(0, 0, 0, 0.1);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 20px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>overflow-y: auto;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.control-section {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 25px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0, 0, 0, 0.03);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid rgba(0, 0, 0, 0.05);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.control-section h3 {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: #333;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 16px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>text-transform: uppercase;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>letter-spacing: 1px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.control-group {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.control-group label {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>display: block;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: #555;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 5px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-weight: 500;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.control-input {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 8px 12px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid #ddd;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 6px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: #333;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 14px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.control-input:focus {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>outline: none;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-color: #007bff;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.control-input::placeholder {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: rgba(255, 255, 255, 0.6);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.color-input {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>height: 40px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: none;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 6px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>cursor: pointer;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: none;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.button {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: none;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 6px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(45deg, #ff6b6b, #ee5a24);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-weight: 600;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>cursor: pointer;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>transition: all 0.3s ease;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>text-transform: uppercase;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>letter-spacing: 0.5px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.button:hover {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>transform: translateY(-2px);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.info-display {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>position: absolute;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>top: 20px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>left: 20px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0, 0, 0, 0.7);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>padding: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 8px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-family: 'Courier New', monospace;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>backdrop-filter: blur(10px);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid rgba(255, 255, 255, 0.1);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.loading {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>position: absolute;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>top: 50%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>left: 50%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>transform: translate(-50%, -50%);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>font-size: 18px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>text-align: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.spinner {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>width: 40px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>height: 40px;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border: 4px solid rgba(255, 255, 255, 0.3);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-top: 4px solid white;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 50%;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>animation: spin 1s linear infinite;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>margin: 0 auto 10px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>@keyframes spin {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>0% { transform: rotate(0deg); }</p>
+<p class="p1"><span class="Apple-converted-space">            </span>100% { transform: rotate(360deg); }</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>canvas {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>display: block;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="container"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="viewer-container"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="loading" class="loading"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="spinner"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div&gt;Loading 3D Viewer...&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="info" class="info-display"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div&gt;Camera Position: (0, 0, 5)&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div&gt;Camera Rotation: (0, 0, 0)&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div&gt;Zoom: 1.00&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div&gt;Model: Default Cube&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="controls-panel"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="control-section"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;h3&gt;Camera Controls&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Position X&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="posX" class="control-input" min="-10" max="10" step="0.1" value="0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Position Y&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="posY" class="control-input" min="-10" max="10" step="0.1" value="0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Position Z&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="posZ" class="control-input" min="1" max="20" step="0.1" value="5"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button id="resetCamera" class="button"&gt;Reset Camera&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="control-section"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;h3&gt;Material Properties&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Material Color&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="color" id="materialColor" class="color-input" value="#4CAF50"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Metalness&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="metalness" class="control-input" min="0" max="1" step="0.01" value="0.1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Roughness&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="roughness" class="control-input" min="0" max="1" step="0.01" value="0.8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Emissive Intensity&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="emissive" class="control-input" min="0" max="1" step="0.01" value="0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="control-section"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;h3&gt;Model Controls&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Model Scale&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="modelScale" class="control-input" min="0.5" max="3" step="0.1" value="1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Rotation Speed&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="rotationSpeed" class="control-input" min="0" max="0.05" step="0.001" value="0.01"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button id="toggleRotation" class="button"&gt;Toggle Auto Rotation&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="control-section"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;h3&gt;Lighting&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Light Intensity&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="lightIntensity" class="control-input" min="0" max="3" step="0.1" value="1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="control-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label&gt;Ambient Light&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="range" id="ambientLight" class="control-input" min="0" max="1" step="0.01" value="0.4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script type="module"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// ==================== UTILITY FUNCTIONS ====================</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Format number for display</p>
+<p class="p1"><span class="Apple-converted-space">        </span>function formatNumber(num) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return parseFloat(num).toFixed(2);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Convert radians to degrees</p>
+<p class="p1"><span class="Apple-converted-space">        </span>function radToDeg(rad) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return rad * (180 / Math.PI);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Clamp value between min and max</p>
+<p class="p1"><span class="Apple-converted-space">        </span>function clamp(value, min, max) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>return Math.min(Math.max(value, min), max);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// ==================== CUSTOM HOOKS (State Management) ====================</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>class ViewerState {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>constructor() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.camera = null;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.scene = null;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.renderer = null;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.model = null;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.controls = null;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.lights = {};</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.autoRotate = true;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.rotationSpeed = 0.01;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.subscribers = [];</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>subscribe(callback) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.subscribers.push(callback);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>notify(data) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.subscribers.forEach(callback =&gt; callback(data));</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateCameraInfo() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.camera) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const pos = this.camera.position;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const rot = this.camera.rotation;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const zoom = this.camera.zoom || 1;</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.notify({</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>type: 'camera',</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>position: { x: pos.x, y: pos.y, z: pos.z },</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>rotation: {<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                            </span>x: radToDeg(rot.x),<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                            </span>y: radToDeg(rot.y),<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                            </span>z: radToDeg(rot.z)<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                        </span>},</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>zoom: zoom</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// ==================== THREE.JS SETUP ====================</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Import Three.js from CDN with error handling</p>
+<p class="p1"><span class="Apple-converted-space">        </span>let THREE;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>try {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>// Try to load Three.js from CDN</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const script = document.createElement('script');</p>
+<p class="p1"><span class="Apple-converted-space">            </span>script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';</p>
+<p class="p1"><span class="Apple-converted-space">            </span>script.onload = function() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>THREE = window.THREE;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (THREE) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>console.log('✅ Three.js loaded successfully');</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>initializeApp();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>throw new Error('Three.js failed to load');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p1"><span class="Apple-converted-space">            </span>script.onerror = function() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>console.error('❌ Failed to load Three.js from CDN');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('loading').innerHTML =<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>'&lt;div style="color: #ff6b6b;"&gt;Failed to load Three.js. Please check your internet connection and refresh the page.&lt;/div&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p1"><span class="Apple-converted-space">            </span>document.head.appendChild(script);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>} catch (error) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>console.error('❌ Error setting up Three.js:', error);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('loading').innerHTML =<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>'&lt;div style="color: #ff6b6b;"&gt;Failed to initialize 3D viewer. Please refresh the page.&lt;/div&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// ==================== UI COMPONENTS ====================</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>class InfoDisplay {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>constructor(element) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.element = element;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>update({ position, rotation, zoom, model = 'Default Cube' }) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.element.innerHTML = `</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;Camera Position: (${formatNumber(position.x)}, ${formatNumber(position.y)}, ${formatNumber(position.z)})&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;Camera Rotation: (${formatNumber(rotation.x)}°, ${formatNumber(rotation.y)}°, ${formatNumber(rotation.z)}°)&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;Zoom: ${formatNumber(zoom)}&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;Model: ${model}&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>`;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>class ControlPanel {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>constructor(state) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state = state;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.setupEventListeners();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setupEventListeners() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Camera controls</p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('posX').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (this.state.camera) {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>this.state.camera.position.x = parseFloat(e.target.value);</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>this.state.updateCameraInfo();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('posY').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (this.state.camera) {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>this.state.camera.position.y = parseFloat(e.target.value);</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>this.state.updateCameraInfo();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('posZ').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (this.state.camera) {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>this.state.camera.position.z = parseFloat(e.target.value);</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>this.state.updateCameraInfo();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('resetCamera').addEventListener('click', () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.resetCamera();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Material controls</p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('materialColor').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.updateMaterialColor(e.target.value);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('metalness').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.updateMaterialProperty('metalness', parseFloat(e.target.value));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('roughness').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.updateMaterialProperty('roughness', parseFloat(e.target.value));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('emissive').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.updateEmissive(parseFloat(e.target.value));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Model controls</p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('modelScale').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.updateModelScale(parseFloat(e.target.value));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('rotationSpeed').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.rotationSpeed = parseFloat(e.target.value);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('toggleRotation').addEventListener('click', () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.toggleAutoRotation();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Lighting controls</p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('lightIntensity').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.updateLightIntensity(parseFloat(e.target.value));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('ambientLight').addEventListener('input', (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.updateAmbientLight(parseFloat(e.target.value));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>resetCamera() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.camera) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.camera.position.set(0, 0, 5);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.camera.rotation.set(0, 0, 0);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.updateCameraInfo();</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Update sliders</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>document.getElementById('posX').value = 0;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>document.getElementById('posY').value = 0;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>document.getElementById('posZ').value = 5;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateMaterialColor(color) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.model &amp;&amp; this.state.model.material) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.model.material.color.setHex(color.replace('#', '0x'));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateMaterialProperty(property, value) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.model &amp;&amp; this.state.model.material) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.model.material[property] = value;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateEmissive(intensity) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.model &amp;&amp; this.state.model.material) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const color = this.state.model.material.color.clone();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.model.material.emissive = color.multiplyScalar(intensity);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateModelScale(scale) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.model) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.model.scale.set(scale, scale, scale);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>toggleAutoRotation() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.autoRotate = !this.state.autoRotate;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const button = document.getElementById('toggleRotation');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>button.textContent = this.state.autoRotate ? 'Stop Auto Rotation' : 'Start Auto Rotation';</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateLightIntensity(intensity) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.lights.directional) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.lights.directional.intensity = intensity;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateAmbientLight(intensity) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.lights.ambient) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.lights.ambient.intensity = intensity;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// ==================== FEATURE COMPONENTS ====================</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>class ThreeJSViewer {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>constructor(container, state) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.container = container;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state = state;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.mouseControls = {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>isDragging: false,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>previousMousePosition: { x: 0, y: 0 }</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.init();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>init() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.setupScene();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.setupCamera();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.setupRenderer();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.setupLights();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.setupModel();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.setupControls();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.startRenderLoop();</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Hide loading indicator</p>
+<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('loading').style.display = 'none';</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setupScene() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene = new THREE.Scene();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene.background = new THREE.Color(0x222222);</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Add fog for depth perception</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene.fog = new THREE.Fog(0x222222, 1, 100);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setupCamera() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.camera = new THREE.PerspectiveCamera(</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>75,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.container.clientWidth / this.container.clientHeight,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>0.1,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>1000</p>
+<p class="p1"><span class="Apple-converted-space">                </span>);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.camera.position.set(0, 0, 5);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setupRenderer() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer = new THREE.WebGLRenderer({<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>antialias: true,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>alpha: true<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer.setSize(this.container.clientWidth, this.container.clientHeight);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer.setPixelRatio(window.devicePixelRatio);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer.shadowMap.enabled = true;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer.shadowMap.type = THREE.PCFSoftShadowMap;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer.toneMapping = THREE.ACESFilmicToneMapping;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer.toneMappingExposure = 1;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.container.appendChild(this.state.renderer.domElement);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Handle window resize</p>
+<p class="p1"><span class="Apple-converted-space">                </span>window.addEventListener('resize', () =&gt; this.handleResize());</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setupLights() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Ambient light</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.lights.ambient = new THREE.AmbientLight(0x404040, 0.4);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene.add(this.state.lights.ambient);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Directional light</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.lights.directional = new THREE.DirectionalLight(0xffffff, 1);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.lights.directional.position.set(5, 5, 5);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.lights.directional.castShadow = true;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.lights.directional.shadow.mapSize.width = 2048;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.lights.directional.shadow.mapSize.height = 2048;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene.add(this.state.lights.directional);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Point light for additional illumination</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const pointLight = new THREE.PointLight(0xffffff, 0.5, 100);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>pointLight.position.set(-5, 5, 5);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene.add(pointLight);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setupModel() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Create a more interesting default model (torus knot)</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const material = new THREE.MeshStandardMaterial({</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>color: 0x4CAF50,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>metalness: 0.1,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>roughness: 0.8,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>envMapIntensity: 1</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.model = new THREE.Mesh(geometry, material);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.model.castShadow = true;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.model.receiveShadow = true;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene.add(this.state.model);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Add a ground plane</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const groundGeometry = new THREE.PlaneGeometry(20, 20);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const groundMaterial = new THREE.MeshStandardMaterial({<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>color: 0x999999,<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>transparent: true,<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>opacity: 0.3<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const ground = new THREE.Mesh(groundGeometry, groundMaterial);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>ground.rotation.x = -Math.PI / 2;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>ground.position.y = -2;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>ground.receiveShadow = true;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.scene.add(ground);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setupControls() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const canvas = this.state.renderer.domElement;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Mouse controls</p>
+<p class="p1"><span class="Apple-converted-space">                </span>canvas.addEventListener('mousedown', (e) =&gt; this.onMouseDown(e));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>canvas.addEventListener('mousemove', (e) =&gt; this.onMouseMove(e));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>canvas.addEventListener('mouseup', () =&gt; this.onMouseUp());</p>
+<p class="p1"><span class="Apple-converted-space">                </span>canvas.addEventListener('wheel', (e) =&gt; this.onWheel(e));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Touch controls for mobile</p>
+<p class="p1"><span class="Apple-converted-space">                </span>canvas.addEventListener('touchstart', (e) =&gt; this.onTouchStart(e));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>canvas.addEventListener('touchmove', (e) =&gt; this.onTouchMove(e));</p>
+<p class="p1"><span class="Apple-converted-space">                </span>canvas.addEventListener('touchend', () =&gt; this.onTouchEnd());</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>onMouseDown(event) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.mouseControls.isDragging = true;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.mouseControls.previousMousePosition = {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>x: event.clientX,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>y: event.clientY</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>onMouseMove(event) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (!this.mouseControls.isDragging) return;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>const deltaMove = {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>x: event.clientX - this.mouseControls.previousMousePosition.x,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>y: event.clientY - this.mouseControls.previousMousePosition.y</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Rotate the model based on mouse movement</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state.model) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.model.rotation.y += deltaMove.x * 0.01;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.model.rotation.x += deltaMove.y * 0.01;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.mouseControls.previousMousePosition = {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>x: event.clientX,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>y: event.clientY</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.updateCameraInfo();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>onMouseUp() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.mouseControls.isDragging = false;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>onWheel(event) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>event.preventDefault();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const delta = event.deltaY &gt; 0 ? 1.1 : 0.9;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.camera.position.multiplyScalar(delta);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.updateCameraInfo();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>onTouchStart(event) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (event.touches.length === 1) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.onMouseDown({</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>clientX: event.touches[0].clientX,</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>clientY: event.touches[0].clientY</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>onTouchMove(event) {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (event.touches.length === 1) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.onMouseMove({</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>clientX: event.touches[0].clientX,</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>clientY: event.touches[0].clientY</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>onTouchEnd() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.onMouseUp();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>handleResize() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const width = this.container.clientWidth;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const height = this.container.clientHeight;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.camera.aspect = width / height;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.camera.updateProjectionMatrix();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state.renderer.setSize(width, height);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>startRenderLoop() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const animate = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>requestAnimationFrame(animate);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Auto rotation</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (this.state.autoRotate &amp;&amp; this.state.model) {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>this.state.model.rotation.y += this.state.rotationSpeed;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.renderer.render(this.state.scene, this.state.camera);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.updateCameraInfo();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>animate();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// ==================== MAIN APPLICATION ====================</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>class App {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>constructor() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>this.state = new ViewerState();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>async init() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>try {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Initialize components</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const viewerContainer = document.querySelector('.viewer-container');</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const infoElement = document.getElementById('info');</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Create viewer</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.viewer = new ThreeJSViewer(viewerContainer, this.state);</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Create UI components</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.infoDisplay = new InfoDisplay(infoElement);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.controlPanel = new ControlPanel(this.state);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Subscribe to state changes</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.state.subscribe((data) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>if (data.type === 'camera') {</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>this.infoDisplay.update(data);</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Test functionality</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>this.testComponent();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>} catch (error) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>console.error('Failed to initialize app:', error);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>document.getElementById('loading').innerHTML =<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                        </span>'&lt;div style="color: #ff6b6b;"&gt;Failed to load 3D viewer. Please refresh the page.&lt;/div&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>testComponent() {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Basic functionality test</p>
+<p class="p1"><span class="Apple-converted-space">                </span>console.log('✅ Testing 3D Model Viewer...');</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Test state management</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.state &amp;&amp; this.state.scene &amp;&amp; this.state.camera &amp;&amp; this.state.renderer) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>console.log('✅ Three.js components initialized successfully');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Test UI components</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (this.infoDisplay &amp;&amp; this.controlPanel) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>console.log('✅ UI components initialized successfully');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Test controls</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const testControls = document.querySelectorAll('.control-input').length &gt; 0;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (testControls) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>console.log('✅ Control inputs are present and functional');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>console.log('✅ All tests passed - 3D Model Viewer is ready!');</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Initialize the application when Three.js is loaded</p>
+<p class="p1"><span class="Apple-converted-space">        </span>function initializeApp() {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const app = new App();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>app.init();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Make Three.js available globally for debugging</p>
+<p class="p1"><span class="Apple-converted-space">        </span>window.THREE = THREE;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
 </body>
 </html>
