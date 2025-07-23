@@ -313,30 +313,29 @@
         
         // Import Three.js from CDN with error handling
         let THREE;
-        try {
-            // Try to load Three.js from CDN
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-            script.onload = function() {
+        async function loadThreeJS() {
+            try {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+                document.head.appendChild(script);
+
+                await new Promise((resolve, reject) => {
+                    script.onload = resolve;
+                    script.onerror = reject;
+                });
+
                 THREE = window.THREE;
-                if (THREE) {
-                    console.log('✅ Three.js loaded successfully');
-                    initializeApp();
-                } else {
-                    throw new Error('Three.js failed to load');
-                }
-            };
-            script.onerror = function() {
-                console.error('❌ Failed to load Three.js from CDN');
+                if (!THREE) throw new Error('Three.js failed to load');
+                console.log('✅ Three.js loaded successfully');
+                initializeApp();
+            } catch (error) {
+                console.error('❌ Error loading Three.js:', error);
                 document.getElementById('loading').innerHTML = 
                     '<div style="color: #ff6b6b;">Failed to load Three.js. Please check your internet connection and refresh the page.</div>';
-            };
-            document.head.appendChild(script);
-        } catch (error) {
-            console.error('❌ Error setting up Three.js:', error);
-            document.getElementById('loading').innerHTML = 
-                '<div style="color: #ff6b6b;">Failed to initialize 3D viewer. Please refresh the page.</div>';
+            }
         }
+
+        loadThreeJS();
 
         // ==================== UI COMPONENTS ====================
         
@@ -362,6 +361,9 @@
             }
 
             setupEventListeners() {
+                const resetCameraButton = document.getElementById('resetCamera');
+                resetCameraButton.addEventListener('click', () => this.resetCamera());
+
                 // Camera controls
                 document.getElementById('posX').addEventListener('input', (e) => {
                     if (this.state.camera) {
@@ -382,10 +384,6 @@
                         this.state.camera.position.z = parseFloat(e.target.value);
                         this.state.updateCameraInfo();
                     }
-                });
-
-                document.getElementById('resetCamera').addEventListener('click', () => {
-                    this.resetCamera();
                 });
 
                 // Material controls
@@ -412,10 +410,6 @@
                 // Model controls
                 document.getElementById('modelScale').addEventListener('input', (e) => {
                     this.updateModelScale(parseFloat(e.target.value));
-                });
-
-                document.getElementById('resetCamera').addEventListener('click', () => {
-                    this.resetCamera();
                 });
 
                 // Lighting controls
@@ -705,14 +699,36 @@
                 const animate = () => {
                     requestAnimationFrame(animate);
 
-                    // No auto rotation - model stays stationary
-                    // Camera controls handle all movement
-
+                    // Render the scene
                     this.state.renderer.render(this.state.scene, this.state.camera);
-                    this.state.updateCameraInfo();
+
+                    // Update camera info only if necessary
+                    if (this.state.camera && this.cameraHasChanged()) {
+                        this.state.updateCameraInfo();
+                    }
                 };
 
                 animate();
+            }
+
+            cameraHasChanged() {
+                const pos = this.state.camera.position;
+                const rot = this.state.camera.rotation;
+
+                // Compare current position/rotation with previous values
+                if (
+                    pos.x !== this.previousCameraPosition.x ||
+                    pos.y !== this.previousCameraPosition.y ||
+                    pos.z !== this.previousCameraPosition.z ||
+                    rot.x !== this.previousCameraRotation.x ||
+                    rot.y !== this.previousCameraRotation.y ||
+                    rot.z !== this.previousCameraRotation.z
+                ) {
+                    this.previousCameraPosition = { ...pos };
+                    this.previousCameraRotation = { ...rot };
+                    return true;
+                }
+                return false;
             }
         }
 
