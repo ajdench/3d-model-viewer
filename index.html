@@ -65,6 +65,12 @@
             margin-bottom: 15px;
         }
 
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .control-group label {
             display: block;
             color: #555;
@@ -73,7 +79,7 @@
             font-weight: 500;
         }
 
-        .control-input {
+        .control-input, .slider-input {
             width: 100%;
             padding: 8px 12px;
             border: 1px solid #ddd;
@@ -83,15 +89,25 @@
             font-size: 14px;
         }
 
-        .control-input:focus {
-            outline: none;
-            background: white;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-            border-color: #007bff;
+        .slider-input {
+            flex: 1;
         }
 
-        .control-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
+        .number-input {
+            width: 80px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .control-input:focus, .slider-input:focus, .number-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+            border-color: #007bff;
         }
 
         .color-input {
@@ -100,7 +116,6 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            background: none;
         }
 
         .button {
@@ -116,6 +131,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-size: 12px;
+            margin-bottom: 5px;
         }
 
         .button:hover {
@@ -123,18 +139,54 @@
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
         }
 
+        .button.secondary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .button.secondary:hover {
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .preset-controls {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .preset-name {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-size: 12px;
+        }
+
+        .file-input {
+            margin: 10px 0;
+        }
+
+        .file-input input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+        }
+
         .info-display {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
+            background: rgba(0, 0, 0, 0.05);
+            color: #333;
             padding: 15px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
+            border-radius: 10px;
+            font-family: 'Arial', sans-serif;
             font-size: 12px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
         .loading {
@@ -142,7 +194,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
+            color: #333;
             font-size: 18px;
             text-align: center;
         }
@@ -150,8 +202,8 @@
         .spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #333;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 10px;
@@ -179,7 +231,7 @@
                 <div>Camera Position: (0, 0, 5)</div>
                 <div>Camera Rotation: (0, 0, 0)</div>
                 <div>Zoom: 1.00</div>
-                <div>Model: Default Cube</div>
+                <div>Model: Default Torus Knot</div>
             </div>
         </div>
         
@@ -188,17 +240,26 @@
                 <h3>Camera Controls</h3>
                 <div class="control-group">
                     <label>Position X</label>
-                    <input type="range" id="posX" class="control-input" min="-10" max="10" step="0.1" value="0">
+                    <div class="slider-container">
+                        <input type="range" id="posX" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                        <input type="number" id="posXNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Position Y</label>
-                    <input type="range" id="posY" class="control-input" min="-10" max="10" step="0.1" value="0">
+                    <div class="slider-container">
+                        <input type="range" id="posY" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                        <input type="number" id="posYNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Position Z</label>
-                    <input type="range" id="posZ" class="control-input" min="1" max="20" step="0.1" value="5">
+                    <div class="slider-container">
+                        <input type="range" id="posZ" class="slider-input" min="1" max="20" step="0.1" value="5">
+                        <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
+                    </div>
                 </div>
-                <button id="resetCamera" class="button">Reset Camera</button>
+                <button id="resetCamera" class="button">Reset Camera View</button>
             </div>
 
             <div class="control-section">
@@ -209,19 +270,24 @@
                 </div>
                 <div class="control-group">
                     <label>Metalness</label>
-                    <input type="range" id="metalness" class="control-input" min="0" max="1" step="0.01" value="0.1">
+                    <div class="slider-container">
+                        <input type="range" id="metalness" class="slider-input" min="0" max="1" step="0.01" value="0.1">
+                        <input type="number" id="metalnessNum" class="number-input" min="0" max="1" step="0.01" value="0.1">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Roughness</label>
-                    <input type="range" id="roughness" class="control-input" min="0" max="1" step="0.01" value="0.8">
-                </div>
-                <div class="control-group">
-                    <label>Emissive Intensity</label>
-                    <input type="range" id="emissive" class="control-input" min="0" max="1" step="0.01" value="0">
+                    <div class="slider-container">
+                        <input type="range" id="roughness" class="slider-input" min="0" max="1" step="0.01" value="0.8">
+                        <input type="number" id="roughnessNum" class="number-input" min="0" max="1" step="0.01" value="0.8">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Transparency</label>
-                    <input type="range" id="transparency" class="control-input" min="0" max="1" step="0.01" value="1">
+                    <div class="slider-container">
+                        <input type="range" id="transparency" class="slider-input" min="0" max="1" step="0.01" value="1">
+                        <input type="number" id="transparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
+                    </div>
                 </div>
             </div>
 
@@ -229,578 +295,484 @@
                 <h3>Model Controls</h3>
                 <div class="control-group">
                     <label>Model Scale</label>
-                    <input type="range" id="modelScale" class="control-input" min="0.5" max="3" step="0.1" value="1">
+                    <div class="slider-container">
+                        <input type="range" id="modelScale" class="slider-input" min="0.5" max="3" step="0.1" value="1">
+                        <input type="number" id="modelScaleNum" class="number-input" min="0.5" max="3" step="0.1" value="1">
+                    </div>
                 </div>
-                <button id="resetCamera" class="button">Reset Camera View</button>
+            </div>
+
+            <div class="control-section">
+                <h3>Model Library</h3>
+                <div class="control-group">
+                    <label>Load Model</label>
+                    <select id="modelSelector" class="control-input">
+                        <option value="default">Default Torus Knot</option>
+                        <option value="cube">Cube</option>
+                        <option value="sphere">Sphere</option>
+                    </select>
+                </div>
+                <div class="file-input">
+                    <label>Upload Custom Model</label>
+                    <input type="file" id="fileUpload" accept=".gltf,.glb,.obj" />
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Save/Load Presets</h3>
+                <div class="control-group">
+                    <label>Preset Name</label>
+                    <input type="text" id="presetName" class="preset-name" placeholder="Enter preset name">
+                </div>
+                <div class="preset-controls">
+                    <button id="savePreset" class="button secondary">Save</button>
+                    <button id="loadPreset" class="button secondary">Load</button>
+                </div>
+                <div class="control-group">
+                    <label>Saved Presets</label>
+                    <select id="presetSelector" class="control-input">
+                        <option value="">Select a preset...</option>
+                    </select>
+                </div>
             </div>
 
             <div class="control-section">
                 <h3>Lighting</h3>
                 <div class="control-group">
                     <label>Light Intensity</label>
-                    <input type="range" id="lightIntensity" class="control-input" min="0" max="3" step="0.1" value="1">
+                    <div class="slider-container">
+                        <input type="range" id="lightIntensity" class="slider-input" min="0" max="3" step="0.1" value="0.8">
+                        <input type="number" id="lightIntensityNum" class="number-input" min="0" max="3" step="0.1" value="0.8">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Ambient Light</label>
-                    <input type="range" id="ambientLight" class="control-input" min="0" max="1" step="0.01" value="0.4">
+                    <div class="slider-container">
+                        <input type="range" id="ambientLight" class="slider-input" min="0" max="1" step="0.01" value="0.6">
+                        <input type="number" id="ambientLightNum" class="number-input" min="0" max="1" step="0.01" value="0.6">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        // ==================== UTILITY FUNCTIONS ====================
-        
-        // Format number for display
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Global state
+        let state = {
+            camera: null,
+            scene: null,
+            renderer: null,
+            model: null,
+            lights: {},
+            zoom: 1,
+            presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}')
+        };
+
+        let mouseControls = {
+            isDragging: false,
+            isLeftButton: false,
+            isRightButton: false,
+            previousMousePosition: { x: 0, y: 0 }
+        };
+
+        // Utility functions
         function formatNumber(num) {
             return parseFloat(num).toFixed(2);
         }
 
-        // Convert radians to degrees
         function radToDeg(rad) {
             return rad * (180 / Math.PI);
         }
 
-        // Clamp value between min and max
-        function clamp(value, min, max) {
-            return Math.min(Math.max(value, min), max);
-        }
-
-        // ==================== CUSTOM HOOKS (State Management) ====================
-        
-        class ViewerState {
-            constructor() {
-                this.camera = null;
-                this.scene = null;
-                this.renderer = null;
-                this.model = null;
-                this.controls = null;
-                this.lights = {};
-                this.autoRotate = false; // Disabled by default
-                this.rotationSpeed = 0;
-                this.subscribers = [];
-            }
-
-            subscribe(callback) {
-                this.subscribers.push(callback);
-            }
-
-            notify(data) {
-                this.subscribers.forEach(callback => callback(data));
-            }
-
-            updateCameraInfo() {
-                if (this.camera) {
-                    const pos = this.camera.position;
-                    const rot = this.camera.rotation;
-                    const zoom = this.camera.zoom || 1;
-                    
-                    this.notify({
-                        type: 'camera',
-                        position: { x: pos.x, y: pos.y, z: pos.z },
-                        rotation: { 
-                            x: radToDeg(rot.x), 
-                            y: radToDeg(rot.y), 
-                            z: radToDeg(rot.z) 
-                        },
-                        zoom: zoom
-                    });
-                }
-            }
-        }
-
-        // ==================== THREE.JS SETUP ====================
-        
-        // Import Three.js from CDN with error handling
-        let THREE;
-        async function loadThreeJS() {
-            try {
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-                document.head.appendChild(script);
-
-                await new Promise((resolve, reject) => {
-                    script.onload = resolve;
-                    script.onerror = reject;
-                });
-
-                THREE = window.THREE;
-                if (!THREE) throw new Error('Three.js failed to load');
-                console.log('✅ Three.js loaded successfully');
-                initializeApp();
-            } catch (error) {
-                console.error('❌ Error loading Three.js:', error);
-                document.getElementById('loading').innerHTML = 
-                    '<div style="color: #ff6b6b;">Failed to load Three.js. Please check your internet connection and refresh the page.</div>';
-            }
-        }
-
-        loadThreeJS();
-
-        // ==================== UI COMPONENTS ====================
-        
-        class InfoDisplay {
-            constructor(element) {
-                this.element = element;
-            }
-
-            update({ position, rotation, zoom, model = 'Default Cube' }) {
-                this.element.innerHTML = `
-                    <div>Camera Position: (${formatNumber(position.x)}, ${formatNumber(position.y)}, ${formatNumber(position.z)})</div>
-                    <div>Camera Rotation: (${formatNumber(rotation.x)}°, ${formatNumber(rotation.y)}°, ${formatNumber(rotation.z)}°)</div>
-                    <div>Zoom: ${formatNumber(zoom)}</div>
-                    <div>Model: ${model}</div>
+        function updateCameraInfo() {
+            if (state.camera) {
+                const pos = state.camera.position;
+                const rot = state.camera.rotation;
+                const distance = state.camera.position.length();
+                state.zoom = 5 / distance;
+                
+                document.getElementById('info').innerHTML = `
+                    <div>Camera Position: (${formatNumber(pos.x)}, ${formatNumber(pos.y)}, ${formatNumber(pos.z)})</div>
+                    <div>Camera Rotation: (${formatNumber(radToDeg(rot.x))}°, ${formatNumber(radToDeg(rot.y))}°, ${formatNumber(radToDeg(rot.z))}°)</div>
+                    <div>Zoom: ${formatNumber(state.zoom)}</div>
+                    <div>Model: Default Torus Knot</div>
                 `;
             }
         }
 
-        class ControlPanel {
-            constructor(state) {
-                this.state = state;
-                this.setupEventListeners();
-            }
-
-            setupEventListeners() {
-                const resetCameraButton = document.getElementById('resetCamera');
-                resetCameraButton.addEventListener('click', () => this.resetCamera());
-
-                // Camera controls
-                document.getElementById('posX').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.x = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('posY').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.y = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('posZ').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.z = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                // Material controls
-                document.getElementById('materialColor').addEventListener('input', (e) => {
-                    this.updateMaterialColor(e.target.value);
-                });
-
-                document.getElementById('metalness').addEventListener('input', (e) => {
-                    this.updateMaterialProperty('metalness', parseFloat(e.target.value));
-                });
-
-                document.getElementById('roughness').addEventListener('input', (e) => {
-                    this.updateMaterialProperty('roughness', parseFloat(e.target.value));
-                });
-
-                document.getElementById('emissive').addEventListener('input', (e) => {
-                    this.updateEmissive(parseFloat(e.target.value));
-                });
-
-                document.getElementById('transparency').addEventListener('input', (e) => {
-                    this.updateTransparency(parseFloat(e.target.value));
-                });
-
-                // Model controls
-                document.getElementById('modelScale').addEventListener('input', (e) => {
-                    this.updateModelScale(parseFloat(e.target.value));
-                });
-
-                // Lighting controls
-                document.getElementById('lightIntensity').addEventListener('input', (e) => {
-                    this.updateLightIntensity(parseFloat(e.target.value));
-                });
-
-                document.getElementById('ambientLight').addEventListener('input', (e) => {
-                    this.updateAmbientLight(parseFloat(e.target.value));
-                });
-            }
-
-            resetCamera() {
-                if (this.state.camera) {
-                    this.state.camera.position.set(0, 0, 5);
-                    this.state.camera.rotation.set(0, 0, 0);
-                    this.state.updateCameraInfo();
-                    
-                    // Update sliders
-                    document.getElementById('posX').value = 0;
-                    document.getElementById('posY').value = 0;
-                    document.getElementById('posZ').value = 5;
-                }
-            }
-
-            updateTransparency(opacity) {
-                if (this.state.model && this.state.model.material) {
-                    this.state.model.material.opacity = opacity;
-                    this.state.model.material.transparent = opacity < 1;
-                }
-            }
-
-            updateMaterialColor(color) {
-                if (this.state.model && this.state.model.material) {
-                    this.state.model.material.color.setHex(color.replace('#', '0x'));
-                }
-            }
-
-            updateMaterialProperty(property, value) {
-                if (this.state.model && this.state.model.material) {
-                    this.state.model.material[property] = value;
-                }
-            }
-
-            updateEmissive(intensity) {
-                if (this.state.model && this.state.model.material) {
-                    const color = this.state.model.material.color.clone();
-                    this.state.model.material.emissive = color.multiplyScalar(intensity);
-                }
-            }
-
-            updateModelScale(scale) {
-                if (this.state.model) {
-                    this.state.model.scale.set(scale, scale, scale);
-                }
-            }
-
-            updateLightIntensity(intensity) {
-                if (this.state.lights.directional) {
-                    this.state.lights.directional.intensity = intensity;
-                }
-            }
-
-            updateAmbientLight(intensity) {
-                if (this.state.lights.ambient) {
-                    this.state.lights.ambient.intensity = intensity;
-                }
-            }
+        // Initialize Three.js
+        function initThreeJS() {
+            const container = document.querySelector('.viewer-container');
+            
+            // Scene
+            state.scene = new THREE.Scene();
+            state.scene.background = new THREE.Color(0xffffff);
+            
+            // Camera
+            state.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            state.camera.position.set(0, 0, 5);
+            
+            // Renderer
+            state.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            state.renderer.setSize(container.clientWidth, container.clientHeight);
+            state.renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(state.renderer.domElement);
+            
+            // Lights
+            state.lights.ambient = new THREE.AmbientLight(0x404040, 0.6);
+            state.scene.add(state.lights.ambient);
+            
+            state.lights.directional = new THREE.DirectionalLight(0xffffff, 0.8);
+            state.lights.directional.position.set(5, 5, 5);
+            state.scene.add(state.lights.directional);
+            
+            // Model
+            const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x4CAF50,
+                metalness: 0.1,
+                roughness: 0.8,
+                transparent: false,
+                opacity: 1.0
+            });
+            
+            state.model = new THREE.Mesh(geometry, material);
+            state.scene.add(state.model);
+            
+            // Mouse controls
+            setupMouseControls();
+            
+            // Start render loop
+            animate();
+            
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
         }
 
-        // ==================== FEATURE COMPONENTS ====================
-        
-        class ThreeJSViewer {
-            constructor(container, state) {
-                this.container = container;
-                this.state = state;
-                this.mouseControls = {
-                    isDragging: false,
-                    previousMousePosition: { x: 0, y: 0 }
+        function setupMouseControls() {
+            const canvas = state.renderer.domElement;
+            
+            canvas.addEventListener('mousedown', (e) => {
+                mouseControls.isDragging = true;
+                mouseControls.isLeftButton = e.button === 0;
+                mouseControls.isRightButton = e.button === 2;
+                mouseControls.previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (!mouseControls.isDragging) return;
+                
+                const deltaMove = {
+                    x: e.clientX - mouseControls.previousMousePosition.x,
+                    y: e.clientY - mouseControls.previousMousePosition.y
                 };
-                this.init();
-            }
-
-            init() {
-                this.setupScene();
-                this.setupCamera();
-                this.setupRenderer();
-                this.setupLights();
-                this.setupModel();
-                this.setupControls();
-                this.startRenderLoop();
                 
-                // Hide loading indicator
-                document.getElementById('loading').style.display = 'none';
-            }
-
-            setupScene() {
-                this.state.scene = new THREE.Scene();
-                this.state.scene.background = new THREE.Color(0xffffff); // Pure white background
+                if (mouseControls.isLeftButton) {
+                    // Left click: Rotate model
+                    if (state.model) {
+                        state.model.rotation.y += deltaMove.x * 0.01;
+                        state.model.rotation.x += deltaMove.y * 0.01;
+                    }
+                } else if (mouseControls.isRightButton) {
+                    // Right click: Orbit camera
+                    const spherical = new THREE.Spherical();
+                    spherical.setFromVector3(state.camera.position);
+                    spherical.theta -= deltaMove.x * 0.01;
+                    spherical.phi += deltaMove.y * 0.01;
+                    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                    state.camera.position.setFromSpherical(spherical);
+                    state.camera.lookAt(0, 0, 0);
+                }
                 
-                // Remove fog for clean appearance
-                // this.state.scene.fog = new THREE.Fog(0x222222, 1, 100);
-            }
+                mouseControls.previousMousePosition = { x: e.clientX, y: e.clientY };
+                updateCameraInfo();
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                mouseControls.isDragging = false;
+            });
+            
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 1.1 : 0.9;
+                state.camera.position.multiplyScalar(delta);
+                
+                const distance = state.camera.position.length();
+                if (distance < 1) state.camera.position.normalize().multiplyScalar(1);
+                if (distance > 50) state.camera.position.normalize().multiplyScalar(50);
+                
+                updateCameraInfo();
+            });
+            
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
 
-            setupCamera() {
-                this.state.camera = new THREE.PerspectiveCamera(
-                    75,
-                    this.container.clientWidth / this.container.clientHeight,
-                    0.1,
-                    1000
-                );
-                this.state.camera.position.set(0, 0, 5);
-            }
+        function animate() {
+            requestAnimationFrame(animate);
+            state.renderer.render(state.scene, state.camera);
+            updateCameraInfo();
+        }
 
-            setupRenderer() {
-                this.state.renderer = new THREE.WebGLRenderer({ 
-                    antialias: true,
-                    alpha: true 
+        function setupControls() {
+            // Slider-number sync function
+            function syncSliderNumber(sliderId, numberId) {
+                const slider = document.getElementById(sliderId);
+                const number = document.getElementById(numberId);
+                if (!slider || !number) return;
+                
+                slider.addEventListener('input', () => {
+                    number.value = slider.value;
                 });
-                this.state.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-                this.state.renderer.setPixelRatio(window.devicePixelRatio);
-                this.state.renderer.shadowMap.enabled = false; // Disable shadows
-                this.state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.state.renderer.toneMappingExposure = 1;
-                this.container.appendChild(this.state.renderer.domElement);
-
-                // Handle window resize
-                window.addEventListener('resize', () => this.handleResize());
+                
+                number.addEventListener('input', () => {
+                    const value = parseFloat(number.value);
+                    if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
+                        slider.value = value;
+                        slider.dispatchEvent(new Event('input'));
+                    }
+                });
             }
 
-            setupLights() {
-                // Ambient light - increased for clean appearance
-                this.state.lights.ambient = new THREE.AmbientLight(0x404040, 0.6);
-                this.state.scene.add(this.state.lights.ambient);
+            // Setup all slider-number pairs
+            syncSliderNumber('posX', 'posXNum');
+            syncSliderNumber('posY', 'posYNum');
+            syncSliderNumber('posZ', 'posZNum');
+            syncSliderNumber('metalness', 'metalnessNum');
+            syncSliderNumber('roughness', 'roughnessNum');
+            syncSliderNumber('transparency', 'transparencyNum');
+            syncSliderNumber('modelScale', 'modelScaleNum');
+            syncSliderNumber('lightIntensity', 'lightIntensityNum');
+            syncSliderNumber('ambientLight', 'ambientLightNum');
 
-                // Directional light - no shadows
-                this.state.lights.directional = new THREE.DirectionalLight(0xffffff, 0.8);
-                this.state.lights.directional.position.set(5, 5, 5);
-                this.state.lights.directional.castShadow = false;
-                this.state.scene.add(this.state.lights.directional);
+            // Camera controls
+            document.getElementById('posX').addEventListener('input', (e) => {
+                state.camera.position.x = parseFloat(e.target.value);
+            });
+            
+            document.getElementById('posY').addEventListener('input', (e) => {
+                state.camera.position.y = parseFloat(e.target.value);
+            });
+            
+            document.getElementById('posZ').addEventListener('input', (e) => {
+                state.camera.position.z = parseFloat(e.target.value);
+            });
+            
+            document.getElementById('resetCamera').addEventListener('click', () => {
+                state.camera.position.set(0, 0, 5);
+                document.getElementById('posX').value = 0;
+                document.getElementById('posY').value = 0;
+                document.getElementById('posZ').value = 5;
+                document.getElementById('posXNum').value = 0;
+                document.getElementById('posYNum').value = 0;
+                document.getElementById('posZNum').value = 5;
+            });
 
-                // Point light for additional illumination
-                const pointLight = new THREE.PointLight(0xffffff, 0.3, 100);
-                pointLight.position.set(-5, 5, 5);
-                this.state.scene.add(pointLight);
-            }
+            // Material controls
+            document.getElementById('materialColor').addEventListener('input', (e) => {
+                if (state.model) {
+                    state.model.material.color.setHex(e.target.value.replace('#', '0x'));
+                }
+            });
+            
+            document.getElementById('metalness').addEventListener('input', (e) => {
+                if (state.model) {
+                    state.model.material.metalness = parseFloat(e.target.value);
+                }
+            });
+            
+            document.getElementById('roughness').addEventListener('input', (e) => {
+                if (state.model) {
+                    state.model.material.roughness = parseFloat(e.target.value);
+                }
+            });
+            
+            document.getElementById('transparency').addEventListener('input', (e) => {
+                if (state.model) {
+                    const opacity = parseFloat(e.target.value);
+                    state.model.material.opacity = opacity;
+                    state.model.material.transparent = opacity < 1;
+                }
+            });
 
-            setupModel() {
-                // Create a more interesting default model (torus knot)
-                const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+            // Model controls
+            document.getElementById('modelScale').addEventListener('input', (e) => {
+                if (state.model) {
+                    const scale = parseFloat(e.target.value);
+                    state.model.scale.set(scale, scale, scale);
+                }
+            });
+            
+            document.getElementById('modelSelector').addEventListener('change', (e) => {
+                if (state.model) {
+                    state.scene.remove(state.model);
+                }
+                
+                let geometry;
+                switch (e.target.value) {
+                    case 'cube':
+                        geometry = new THREE.BoxGeometry(2, 2, 2);
+                        break;
+                    case 'sphere':
+                        geometry = new THREE.SphereGeometry(1.5, 32, 32);
+                        break;
+                    default:
+                        geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+                }
+                
                 const material = new THREE.MeshStandardMaterial({
                     color: 0x4CAF50,
                     metalness: 0.1,
                     roughness: 0.8,
                     transparent: false,
-                    opacity: 1.0,
-                    envMapIntensity: 1
+                    opacity: 1.0
                 });
-
-                this.state.model = new THREE.Mesh(geometry, material);
-                this.state.model.castShadow = false;
-                this.state.model.receiveShadow = false;
-                this.state.scene.add(this.state.model);
-
-                // Remove ground plane for clean white background
-                // const groundGeometry = new THREE.PlaneGeometry(20, 20);
-                // const groundMaterial = new THREE.MeshStandardMaterial({ 
-                //     color: 0x999999, 
-                //     transparent: true, 
-                //     opacity: 0.3 
-                // });
-                // const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-                // ground.rotation.x = -Math.PI / 2;
-                // ground.position.y = -2;
-                // ground.receiveShadow = true;
-                // this.state.scene.add(ground);
-            }
-
-            setupControls() {
-                const canvas = this.state.renderer.domElement;
-
-                // Mouse controls
-                canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-                canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-                canvas.addEventListener('mouseup', () => this.onMouseUp());
-                canvas.addEventListener('wheel', (e) => this.onWheel(e));
-
-                // Touch controls for mobile
-                canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
-                canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
-                canvas.addEventListener('touchend', () => this.onTouchEnd());
-            }
-
-            onMouseDown(event) {
-                this.mouseControls.isDragging = true;
-                this.mouseControls.previousMousePosition = {
-                    x: event.clientX,
-                    y: event.clientY
-                };
-            }
-
-            onMouseMove(event) {
-                if (!this.mouseControls.isDragging) return;
-
-                const deltaMove = {
-                    x: event.clientX - this.mouseControls.previousMousePosition.x,
-                    y: event.clientY - this.mouseControls.previousMousePosition.y
-                };
-
-                // Rotate the camera around the model instead of rotating the model
-                const spherical = new THREE.Spherical();
-                spherical.setFromVector3(this.state.camera.position);
                 
-                spherical.theta -= deltaMove.x * 0.01;
-                spherical.phi += deltaMove.y * 0.01;
-                
-                // Clamp phi to prevent camera flipping
-                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-                
-                this.state.camera.position.setFromSpherical(spherical);
-                this.state.camera.lookAt(0, 0, 0);
+                state.model = new THREE.Mesh(geometry, material);
+                state.scene.add(state.model);
+            });
 
-                this.mouseControls.previousMousePosition = {
-                    x: event.clientX,
-                    y: event.clientY
-                };
+            // File upload
+            document.getElementById('fileUpload').addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    alert(`File "${e.target.files[0].name}" selected. Custom model loading will be implemented with GLTF/OBJ loaders.`);
+                }
+            });
 
-                this.state.updateCameraInfo();
-            }
-
-            onMouseUp() {
-                this.mouseControls.isDragging = false;
-            }
-
-            onWheel(event) {
-                event.preventDefault();
-                const delta = event.deltaY > 0 ? 1.1 : 0.9;
-                
-                // Move camera closer/further from origin
-                const direction = this.state.camera.position.clone().normalize();
-                this.state.camera.position.multiplyScalar(delta);
-                
-                // Prevent getting too close or too far
-                const distance = this.state.camera.position.length();
-                if (distance < 1) {
-                    this.state.camera.position.normalize().multiplyScalar(1);
-                } else if (distance > 50) {
-                    this.state.camera.position.normalize().multiplyScalar(50);
+            // Preset controls
+            document.getElementById('savePreset').addEventListener('click', () => {
+                const name = document.getElementById('presetName').value.trim();
+                if (!name) {
+                    alert('Please enter a preset name');
+                    return;
                 }
                 
-                this.state.updateCameraInfo();
-            }
-
-            onTouchStart(event) {
-                if (event.touches.length === 1) {
-                    this.onMouseDown({
-                        clientX: event.touches[0].clientX,
-                        clientY: event.touches[0].clientY
-                    });
-                }
-            }
-
-            onTouchMove(event) {
-                if (event.touches.length === 1) {
-                    this.onMouseMove({
-                        clientX: event.touches[0].clientX,
-                        clientY: event.touches[0].clientY
-                    });
-                }
-            }
-
-            onTouchEnd() {
-                this.onMouseUp();
-            }
-
-            handleResize() {
-                const width = this.container.clientWidth;
-                const height = this.container.clientHeight;
-
-                this.state.camera.aspect = width / height;
-                this.state.camera.updateProjectionMatrix();
-
-                this.state.renderer.setSize(width, height);
-            }
-
-            startRenderLoop() {
-                const animate = () => {
-                    requestAnimationFrame(animate);
-
-                    // Render the scene
-                    this.state.renderer.render(this.state.scene, this.state.camera);
-
-                    // Update camera info only if necessary
-                    if (this.state.camera && this.cameraHasChanged()) {
-                        this.state.updateCameraInfo();
+                const preset = {
+                    camera: {
+                        x: state.camera.position.x,
+                        y: state.camera.position.y,
+                        z: state.camera.position.z
+                    },
+                    material: {
+                        color: state.model?.material.color.getHex(),
+                        metalness: state.model?.material.metalness,
+                        roughness: state.model?.material.roughness,
+                        opacity: state.model?.material.opacity
                     }
                 };
-
-                animate();
-            }
-
-            cameraHasChanged() {
-                const pos = this.state.camera.position;
-                const rot = this.state.camera.rotation;
-
-                // Compare current position/rotation with previous values
-                if (
-                    pos.x !== this.previousCameraPosition.x ||
-                    pos.y !== this.previousCameraPosition.y ||
-                    pos.z !== this.previousCameraPosition.z ||
-                    rot.x !== this.previousCameraRotation.x ||
-                    rot.y !== this.previousCameraRotation.y ||
-                    rot.z !== this.previousCameraRotation.z
-                ) {
-                    this.previousCameraPosition = { ...pos };
-                    this.previousCameraRotation = { ...rot };
-                    return true;
+                
+                state.presets[name] = preset;
+                localStorage.setItem('viewerPresets', JSON.stringify(state.presets));
+                loadPresetsList();
+                alert(`Preset "${name}" saved!`);
+            });
+            
+            document.getElementById('loadPreset').addEventListener('click', () => {
+                const name = document.getElementById('presetName').value.trim();
+                if (!name || !state.presets[name]) {
+                    alert('Please enter a valid preset name');
+                    return;
                 }
-                return false;
-            }
-        }
-
-        // ==================== MAIN APPLICATION ====================
-        
-        class App {
-            constructor() {
-                this.state = new ViewerState();
-            }
-
-            async init() {
-                try {
-                    // Initialize components
-                    const viewerContainer = document.querySelector('.viewer-container');
-                    const infoElement = document.getElementById('info');
-
-                    // Create viewer
-                    this.viewer = new ThreeJSViewer(viewerContainer, this.state);
+                
+                const preset = state.presets[name];
+                
+                // Apply settings
+                if (preset.camera) {
+                    state.camera.position.set(preset.camera.x, preset.camera.y, preset.camera.z);
+                    document.getElementById('posX').value = preset.camera.x;
+                    document.getElementById('posY').value = preset.camera.y;
+                    document.getElementById('posZ').value = preset.camera.z;
+                    document.getElementById('posXNum').value = preset.camera.x;
+                    document.getElementById('posYNum').value = preset.camera.y;
+                    document.getElementById('posZNum').value = preset.camera.z;
+                }
+                
+                if (preset.material && state.model) {
+                    state.model.material.color.setHex(preset.material.color);
+                    state.model.material.metalness = preset.material.metalness;
+                    state.model.material.roughness = preset.material.roughness;
+                    state.model.material.opacity = preset.material.opacity;
+                    state.model.material.transparent = preset.material.opacity < 1;
                     
-                    // Create UI components
-                    this.infoDisplay = new InfoDisplay(infoElement);
-                    this.controlPanel = new ControlPanel(this.state);
-
-                    // Subscribe to state changes
-                    this.state.subscribe((data) => {
-                        if (data.type === 'camera') {
-                            this.infoDisplay.update(data);
-                        }
-                    });
-
-                    // Test functionality
-                    this.testComponent();
-
-                } catch (error) {
-                    console.error('Failed to initialize app:', error);
-                    document.getElementById('loading').innerHTML = 
-                        '<div style="color: #ff6b6b;">Failed to load 3D viewer. Please refresh the page.</div>';
-                }
-            }
-
-            testComponent() {
-                // Basic functionality test
-                console.log('✅ Testing 3D Model Viewer...');
-                
-                // Test state management
-                if (this.state && this.state.scene && this.state.camera && this.state.renderer) {
-                    console.log('✅ Three.js components initialized successfully');
+                    document.getElementById('metalness').value = preset.material.metalness;
+                    document.getElementById('roughness').value = preset.material.roughness;
+                    document.getElementById('transparency').value = preset.material.opacity;
+                    document.getElementById('metalnessNum').value = preset.material.metalness;
+                    document.getElementById('roughnessNum').value = preset.material.roughness;
+                    document.getElementById('transparencyNum').value = preset.material.opacity;
                 }
                 
-                // Test UI components
-                if (this.infoDisplay && this.controlPanel) {
-                    console.log('✅ UI components initialized successfully');
+                alert(`Preset "${name}" loaded!`);
+            });
+            
+            document.getElementById('presetSelector').addEventListener('change', (e) => {
+                if (e.target.value) {
+                    document.getElementById('presetName').value = e.target.value;
                 }
-                
-                // Test controls
-                const testControls = document.querySelectorAll('.control-input').length > 0;
-                if (testControls) {
-                    console.log('✅ Control inputs are present and functional');
+            });
+
+            // Lighting controls
+            document.getElementById('lightIntensity').addEventListener('input', (e) => {
+                if (state.lights.directional) {
+                    state.lights.directional.intensity = parseFloat(e.target.value);
                 }
-                
-                console.log('✅ All tests passed - 3D Model Viewer is ready!');
-            }
+            });
+            
+            document.getElementById('ambientLight').addEventListener('input', (e) => {
+                if (state.lights.ambient) {
+                    state.lights.ambient.intensity = parseFloat(e.target.value);
+                }
+            });
         }
 
-        // Initialize the application when Three.js is loaded
-        function initializeApp() {
-            const app = new App();
-            app.init();
+        function loadPresetsList() {
+            const selector = document.getElementById('presetSelector');
+            selector.innerHTML = '<option value="">Select a preset...</option>';
+            
+            Object.keys(state.presets).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                selector.appendChild(option);
+            });
         }
 
-        // Make Three.js available globally for debugging
-        window.THREE = THREE;
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            // Wait a bit for Three.js to fully load
+            setTimeout(() => {
+                if (window.THREE) {
+                    console.log('✅ Three.js loaded successfully');
+                    initThreeJS();
+                    setupControls();
+                    loadPresetsList();
+                    console.log('✅ 3D Model Viewer initialized successfully');
+                } else {
+                    console.error('❌ Three.js failed to load');
+                    // Try loading Three.js manually
+                    loadThreeJSManually();
+                }
+            }, 100);
+        });
+
+        // Backup function to load Three.js if it fails
+        function loadThreeJSManually() {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            script.onload = () => {
+                console.log('✅ Three.js loaded manually');
+                initThreeJS();
+                setupControls();
+                loadPresetsList();
+                console.log('✅ 3D Model Viewer initialized successfully');
+            };
+            script.onerror = () => {
+                console.error('❌ Failed to load Three.js manually');
+                document.getElementById('loading').innerHTML = 
+                    '<div style="color: #ff6b6b;">Failed to load Three.js. Please check your internet connection and refresh the page.</div>';
+            };
+            document.head.appendChild(script);
+        }
     </script>
 </body>
 </html>
