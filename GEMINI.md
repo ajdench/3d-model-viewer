@@ -46,3 +46,17 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Advanced Lighting Controls:**
   - **Option 1 (Simple):** Implement vertical sliders to control the Y-axis (height) of the directional lights.
   - **Option 3 (Complex):** Enhance the 2D control pad by adding separate Z-axis (depth) sliders for each light, providing full 3D positional control.
+
+- **Guide Line Overlay (2D):**
+  - **Option 1: Single HTML `div` with CSS Transforms (Recommended for simple lines)**
+    - **Concept:** Use a `div` element positioned absolutely over the viewer. The line itself is another `div` inside, styled and transformed using CSS (`rotate`, `scaleY` for thickness, `background-color`, `opacity`).
+    - **Pros:** Pure CSS/HTML, true overlay (fixed to screen), relatively simple, easy capture exclusion (toggle `display`).
+    - **Cons:** Limited to straight lines.
+  - **Option 2: HTML `canvas` Element with 2D Drawing**
+    - **Concept:** Create a separate `canvas` element overlaying the viewer. Use the 2D Canvas API (`getContext('2d')`) to draw the line.
+    - **Pros:** More flexible for complex drawing (dashed lines, arrows, text), clear separation of drawing logic.
+    - **Cons:** Higher complexity, more JavaScript code, capture exclusion requires clearing/redrawing.
+  - **Option 3: SVG Overlay**
+    - **Concept:** Create an SVG element overlaying the viewer. Use SVG elements (`<line>`, `<rect>`) and SVG transformations to render the line.
+    - **Pros:** Vector graphics (scalable), declarative, good for evolving to more complex 2D guides.
+    - **Cons:** Higher complexity, requires SVG DOM manipulation.

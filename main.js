@@ -13,7 +13,14 @@ let state = {
     zoom: 1,
     currentModelType: 'Default Torus Knot',
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
-    controlScheme: 'standard' // 'standard' or 'legacy'
+    controlScheme: 'standard', // 'standard' or 'legacy'
+    guideLine: {
+        thickness: 0.05,
+        color: '#FF0000',
+        transparency: 1.0,
+        angle: 0,
+        posY: 50 // New: Vertical position (0-100%)
+    }
 };
 
 let mouseControls = {
@@ -481,9 +488,17 @@ function focusModelOnScreen() {
 }
 
 function captureFrame(callback) {
+    const guideLineOverlay = document.getElementById('guideLineOverlay');
+    if (guideLineOverlay) {
+        guideLineOverlay.style.display = 'none';
+    }
+
     state.renderer.render(state.scene, state.camera);
     state.renderer.domElement.toBlob((blob) => {
         callback(blob);
+        if (guideLineOverlay) {
+            guideLineOverlay.style.display = 'block';
+        }
     }, 'image/png');
 }
 
@@ -491,6 +506,33 @@ function animate() {
     requestAnimationFrame(animate);
     state.renderer.render(state.scene, state.camera);
     updateCameraInfo();
+}
+
+function updateGuideLine() {
+    const guideLine = document.getElementById('guideLine');
+    if (!guideLine) return;
+
+    // Set static properties that define its full width and initial vertical centering
+    guideLine.style.width = '100%';
+    guideLine.style.left = '0';
+
+    // Apply thickness (convert percentage to viewport height)
+    guideLine.style.height = `${state.guideLine.thickness * 100}vh`;
+
+    // Apply color
+    guideLine.style.backgroundColor = state.guideLine.color;
+
+    // Apply transparency
+    guideLine.style.opacity = state.guideLine.transparency;
+
+    // Apply angle
+    let angle = state.guideLine.angle;
+
+    // Apply vertical position
+    guideLine.style.top = `${state.guideLine.posY}%`;
+
+    // Apply rotation
+    guideLine.style.transform = `rotate(${angle}deg)`;
 }
 
 // ----------------------------------------------------------------
@@ -1270,6 +1312,51 @@ function setupControls() {
             state.lights.directionalRight.intensity = parseFloat(e.target.value);
         }
     });
+
+    // Guide Line controls
+    syncSliderNumber('lineThickness', 'lineThicknessNum');
+    syncSliderNumber('lineTransparency', 'lineTransparencyNum');
+    syncSliderNumber('lineAngle', 'lineAngleNum');
+    syncSliderNumber('linePosY', 'linePosYNum');
+
+    safeAddEventListener('lineThickness', 'input', (e) => {
+        state.guideLine.thickness = parseFloat(e.target.value);
+        updateGuideLine();
+    });
+
+    safeAddEventListener('lineColor', 'input', (e) => {
+        state.guideLine.color = e.target.value;
+        updateGuideLine();
+    });
+
+    safeAddEventListener('lineTransparency', 'input', (e) => {
+        state.guideLine.transparency = parseFloat(e.target.value);
+        updateGuideLine();
+    });
+
+    safeAddEventListener('lineAngle', 'input', (e) => {
+        state.guideLine.angle = parseFloat(e.target.value);
+        updateGuideLine();
+    });
+
+    safeAddEventListener('linePosY', 'input', (e) => {
+        state.guideLine.posY = parseFloat(e.target.value);
+        updateGuideLine();
+    });
+
+    safeAddEventListener('angleFromLeft', 'click', () => {
+        state.guideLine.angleFrom = 'left';
+        updateGuideLine();
+        document.getElementById('angleFromLeft').classList.add('active');
+        document.getElementById('angleFromRight').classList.remove('active');
+    });
+
+    safeAddEventListener('angleFromRight', 'click', () => {
+        state.guideLine.angleFrom = 'right';
+        updateGuideLine();
+        document.getElementById('angleFromRight').classList.add('active');
+        document.getElementById('angleFromLeft').classList.remove('active');
+    });
 }
 
 function setupLightControls() {
@@ -1417,6 +1504,19 @@ async function initializeViewer() {
         loadPresetsList();
         updateControlInstructions(); // Call initially to set correct instructions
         setupMouseControls(); // Call here after DOM is ready
+        
+        // Initialize guide line controls to match state
+        safeSetValue('lineThickness', state.guideLine.thickness);
+        safeSetValue('lineThicknessNum', state.guideLine.thickness);
+        safeSetValue('lineColor', state.guideLine.color);
+        safeSetValue('lineTransparency', state.guideLine.transparency);
+        safeSetValue('lineTransparencyNum', state.guideLine.transparency);
+        safeSetValue('lineAngle', state.guideLine.angle);
+        safeSetValue('lineAngleNum', state.guideLine.angle);
+        safeSetValue('linePosY', state.guideLine.posY);
+        safeSetValue('linePosYNum', state.guideLine.posY);
+        
+        updateGuideLine(); // Initialize guide line
         console.log('✅ 3D Model Viewer initialized successfully');
     } catch (error) {
         console.error('❌ Error initializing viewer:', error);
