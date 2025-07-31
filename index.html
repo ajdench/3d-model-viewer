@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
-  <script type="module" crossorigin src="/3d-model-viewer/assets/index-B6W0uaBO.js"></script>
-  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-BquACX80.css">
+  <script type="module" crossorigin src="/3d-model-viewer/assets/index-EBh7zFHz.js"></script>
+  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-CjyiwjHm.css">
 </head>
 <body>
     <div class="container">
@@ -47,6 +47,9 @@
                 </div>
             </div>
         </div>
+        <div id="guideLineOverlay" class="guide-line-overlay">
+            <div id="guideLine" class="guide-line"></div>
+        </div>
         </div>
         
         <div class="controls-panel">
@@ -64,6 +67,41 @@
                 <div class="button-group">
                     <button id="saveToClipboard" class="button secondary" disabled>CLIPBOARD</button>
                     <button id="saveToFile" class="button secondary">FILE</button>
+                </div>
+            </div>
+            <div class="control-section">
+                <h3>Guide Line Controls</h3>
+                <div class="control-group">
+                    <label>Thickness</label>
+                    <div class="slider-container">
+                        <input type="range" id="lineThickness" class="slider-input" min="0.01" max="1" step="0.01" value="0.05">
+                        <input type="number" id="lineThicknessNum" class="number-input" min="0.01" max="1" step="0.01" value="0.05">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Color</label>
+                    <input type="color" id="lineColor" class="color-input" value="#FF0000">
+                </div>
+                <div class="control-group">
+                    <label>Transparency</label>
+                    <div class="slider-container">
+                        <input type="range" id="lineTransparency" class="slider-input" min="0" max="1" step="0.01" value="1">
+                        <input type="number" id="lineTransparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Angle</label>
+                    <div class="slider-container">
+                        <input type="range" id="lineAngle" class="slider-input" min="-90" max="90" step="1" value="0">
+                        <input type="number" id="lineAngleNum" class="number-input" min="-90" max="90" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Vertical Position</label>
+                    <div class="slider-container">
+                        <input type="range" id="linePosY" class="slider-input" min="0" max="100" step="1" value="50">
+                        <input type="number" id="linePosYNum" class="number-input" min="0" max="100" step="1" value="50">
+                    </div>
                 </div>
             </div>
             <div class="control-section">
