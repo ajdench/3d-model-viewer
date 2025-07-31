@@ -27,7 +27,9 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Camera Controls**: Sliders and number inputs for adjusting the camera's position (X, Y, Z) and rotation (X, Y, Z).
 - **Model Controls**: Sliders and number inputs for adjusting the model's rotation (X, Y, Z) and zoom.
 - **Material Properties**: Controls for adjusting the model's material, including color, metalness, roughness, and transparency.
-- **Lighting**: Sliders to control the intensity of ambient and directional lights.
+- **Lighting**: 
+  - Sliders to control the intensity of ambient and directional lights.
+  - An interactive 2D control pad to visually adjust the X/Y position of the directional lights.
 - **Presets**: Users can save and load their own presets for camera, model, material, and lighting settings.
 - **Reset Functionality**: Buttons to reset the camera and model to their default states.
 - **Responsive Viewer**: The 3D viewer resizes to fit its container.
@@ -38,3 +40,9 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - The "Viewer Stats" and "Interaction Controls" dialogs were restyled for consistency.
 - The mouse controls were updated to remove middle-click functionality and reassign right-click to panning.
 - A right directional light was added to provide more control over model lighting.
+
+### Future Development Ideas
+
+- **Advanced Lighting Controls:**
+  - **Option 1 (Simple):** Implement vertical sliders to control the Y-axis (height) of the directional lights.
+  - **Option 3 (Complex):** Enhance the 2D control pad by adding separate Z-axis (depth) sliders for each light, providing full 3D positional control.

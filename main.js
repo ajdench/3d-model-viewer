@@ -1272,6 +1272,77 @@ function setupControls() {
     });
 }
 
+function setupLightControls() {
+    const lightPad = document.querySelector('.light-pad');
+    const leftLightIcon = document.getElementById('left-light-icon');
+    const rightLightIcon = document.getElementById('right-light-icon');
+
+    if (!lightPad || !leftLightIcon || !rightLightIcon) return;
+
+    const lightPadRect = lightPad.getBoundingClientRect();
+
+    // Initial positions (set from default light positions)
+    // Map 3D world coordinates to 2D pad coordinates
+    const mapToPad = (lightPos) => {
+        // Normalize world coordinates (e.g., from -10 to 10) to a 0-1 range
+        const x = (lightPos.x + 10) / 20;
+        const y = (lightPos.y + 10) / 20;
+        // Convert to pad coordinates
+        return {
+            x: x * lightPadRect.width,
+            y: (1 - y) * lightPadRect.height // Invert Y-axis for screen coordinates
+        };
+    };
+
+    const setIconPosition = (icon, pos) => {
+        icon.style.left = `${pos.x}px`;
+        icon.style.top = `${pos.y}px`;
+    };
+
+    setIconPosition(leftLightIcon, mapToPad(state.lights.directional.position));
+    setIconPosition(rightLightIcon, mapToPad(state.lights.directionalRight.position));
+
+    function makeDraggable(icon, light) {
+        let isDragging = false;
+
+        icon.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            icon.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            // Get mouse position relative to the light pad
+            let x = e.clientX - lightPadRect.left;
+            let y = e.clientY - lightPadRect.top;
+
+            // Clamp position within the pad boundaries
+            x = Math.max(0, Math.min(lightPadRect.width, x));
+            y = Math.max(0, Math.min(lightPadRect.height, y));
+
+            // Update icon position
+            setIconPosition(icon, { x, y });
+
+            // Map 2D pad coordinates back to 3D world coordinates
+            const worldX = (x / lightPadRect.width) * 20 - 10;
+            const worldY = (1 - (y / lightPadRect.height)) * 20 - 10;
+
+            // Update the light's position
+            light.position.x = worldX;
+            light.position.y = worldY;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            icon.style.cursor = 'grab';
+        });
+    }
+
+    makeDraggable(leftLightIcon, state.lights.directional);
+    makeDraggable(rightLightIcon, state.lights.directionalRight);
+}
+
 // ----------------------------------------------------------------
 // 8. Main Initialization Functions
 // ----------------------------------------------------------------
@@ -1342,6 +1413,7 @@ async function initializeViewer() {
     try {
         initThreeJS();
         setupControls();
+        setupLightControls();
         loadPresetsList();
         updateControlInstructions(); // Call initially to set correct instructions
         setupMouseControls(); // Call here after DOM is ready
