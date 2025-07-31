@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Viewer</title>
+  <script type="module" crossorigin src="/assets/index-DwStQDTu.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-C6uPMUId.css">
+</head>
+<body>
+    <div class="container">
+        <div class="viewer-container">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div>Loading 3D Viewer...</div>
+            </div>
+            <div class="info-panel">
+            <div id="info" class="info-display">
+                <h4>VIEWER STATS</h4>
+                <p><b>Camera Position:</b> (0, 0, 5)</p>
+                <p><b>Camera Rotation:</b> (0, 0, 0)</p>
+                <p><b>Model Rotation:</b> (0, 0, 0)</p>
+                <p><b>Zoom:</b> 1.00</p>
+                <p><b>Model:</b> Default Torus Knot</p>
+            </div>
+            <div id="instructions" class="info-display instructions-display">
+                <h4>INTERACTION CONTROLS</h4>
+                <div id="standard-instructions">
+                    <p><b>Left-click + Drag:</b> Orbit Camera</p>
+                    <p><b>Ctrl + Left-click + Drag:</b> Rotate Model</p>
+                    <p><b>Right-click + Drag:</b> Pan Camera</p>
+                    <p><b>Scroll Wheel:</b> Zoom Camera</p>
+                    <p><b>F Key:</b> Focus Model on Screen</p>
+                </div>
+                <div id="legacy-instructions" style="display: none;">
+                    <p><b>Left-click + Drag:</b> Rotate Model</p>
+                    <p><b>Right-click + Drag:</b> Orbit Camera</p>
+                    <p><b>Scroll Wheel:</b> Zoom Camera</p>
+                    <p><b>F Key:</b> Focus Model on Screen</p>
+                </div>
+            </div>
+        </div>
+        </div>
+        
+        <div class="controls-panel">
+            <div class="control-section">
+                <h3>Control Scheme</h3>
+                <div class="control-group">
+                    <select id="controlSchemeSelector" class="control-input">
+                        <option value="standard">Standard (Camera-centric)</option>
+                        <option value="legacy">Legacy (Model-centric)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-section">
+                <h3>Capture</h3>
+                <div class="button-group">
+                    <button id="saveToClipboard" class="button secondary" disabled>CLIPBOARD</button>
+                    <button id="saveToFile" class="button secondary">FILE</button>
+                </div>
+            </div>
+            <div class="control-section">
+                <h3>Camera Controls</h3>
+                <div class="control-group">
+                    <label>Position X</label>
+                    <div class="slider-container">
+                        <input type="range" id="posX" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                        <input type="number" id="posXNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Position Y</label>
+                    <div class="slider-container">
+                        <input type="range" id="posY" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                        <input type="number" id="posYNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Position Z</label>
+                    <div class="slider-container">
+                        <input type="range" id="posZ" class="slider-input" min="1" max="20" step="0.1" value="5">
+                        <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation X</label>
+                    <div class="slider-container">
+                        <input type="range" id="rotX" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="rotXNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Y</label>
+                    <div class="slider-container">
+                        <input type="range" id="rotY" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="rotYNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Z</label>
+                    <div class="slider-container">
+                        <input type="range" id="rotZ" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="rotZNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <button id="resetCamera" class="button">Reset Camera View</button>
+            </div>
+
+            <div class="control-section">
+                <h3>Model Controls</h3>
+                <div class="control-group">
+                    <label>Rotation X</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelRotX" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="modelRotXNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Y</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelRotY" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="modelRotYNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Z</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelRotZ" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="modelRotZNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Zoom</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelZoom" class="slider-input" min="0.5" max="3" step="0.1" value="1">
+                        <input type="number" id="modelZoomNum" class="number-input" min="0.5" max="3" step="0.1" value="1">
+                    </div>
+                </div>
+                <button id="resetModel" class="button">Reset Model</button>
+            </div>
+
+            <div class="control-section">
+                <h3>Material Properties</h3>
+                <div class="control-group">
+                    <label>Material Color</label>
+                    <input type="color" id="materialColor" class="color-input" value="#4CAF50">
+                </div>
+                <div class="control-group">
+                    <label>Metalness</label>
+                    <div class="slider-container">
+                        <input type="range" id="metalness" class="slider-input" min="0" max="1" step="0.01" value="0.1">
+                        <input type="number" id="metalnessNum" class="number-input" min="0" max="1" step="0.01" value="0.1">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Roughness</label>
+                    <div class="slider-container">
+                        <input type="range" id="roughness" class="slider-input" min="0" max="1" step="0.01" value="0.8">
+                        <input type="number" id="roughnessNum" class="number-input" min="0" max="1" step="0.01" value="0.8">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Transparency</label>
+                    <div class="slider-container">
+                        <input type="range" id="transparency" class="slider-input" min="0" max="1" step="0.01" value="1">
+                        <input type="number" id="transparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Model Library</h3>
+                <div class="control-group">
+                    <label>Load Model</label>
+                    <select id="modelSelector" class="control-input">
+                        <option value="default">Default Torus Knot</option>
+                        <option value="cube">Cube</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="pyramid">Pyramid</option>
+                    </select>
+                </div>
+                <div class="file-input">
+                    <label>Upload Custom Model</label>
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="drop-icon">📁</div>
+                            <div class="drop-text">
+                                <div>Drag & drop your 3D model here</div>
+                                <div class="drop-subtext">or click to browse</div>
+                            </div>
+                            <div class="supported-formats">
+                                Supports: .obj, .stl, .gltf, .glb
+                            </div>
+                        </div>
+                        <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb" style="display: none;" />
+                    </div>
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+                <div class="example-models">
+                    <label>Example Models</label>
+                    <div class="example-buttons">
+                        <button id="loadTeapot" class="button secondary small">Utah Teapot</button>
+                        <button id="loadSuzanne" class="button secondary small">Suzanne Monkey</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Save/Load Presets</h3>
+                <div class="control-group">
+                    <label>Preset Name</label>
+                    <input type="text" id="presetName" class="preset-name" placeholder="Enter preset name">
+                </div>
+                <div class="button-group">
+                    <button id="savePreset" class="button secondary">Save</button>
+                    <button id="loadPreset" class="button secondary">Load</button>
+                </div>
+                <div class="control-group">
+                    <label>Saved Presets</label>
+                    <select id="presetSelector" class="control-input">
+                        <option value="">Select a preset...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Lighting</h3>
+                <div class="control-group">
+                    <label>Ambient Light</label>
+                    <div class="slider-container">
+                        <input type="range" id="ambientLight" class="slider-input" min="0" max="1" step="0.1" value="0.4">
+                        <input type="number" id="ambientLightNum" class="number-input" min="0" max="1" step="0.1" value="0.4">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Left Directional Light</label>
+                    <div class="slider-container">
+                        <input type="range" id="directionalLight" class="slider-input" min="0" max="2" step="0.1" value="0.6">
+                        <input type="number" id="directionalLightNum" class="number-input" min="0" max="2" step="0.1" value="0.6">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Right Directional Light</label>
+                    <div class="slider-container">
+                        <input type="range" id="directionalLightRight" class="slider-input" min="0" max="2" step="0.1" value="0.0">
+                        <input type="number" id="directionalLightRightNum" class="number-input" min="0" max="2" step="0.1" value="0.0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
