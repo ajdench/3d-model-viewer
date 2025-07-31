@@ -4,169 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: white;
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        .container {
-            display: flex;
-            height: 100vh;
-            gap: 10px;
-            padding: 10px;
-        }
-
-        .viewer-container {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 15px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        }
-
-        .controls-panel {
-            width: 300px;
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 15px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        }
-
-        .control-section {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.03);
-            border-radius: 10px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .control-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .control-group {
-            margin-bottom: 15px;
-        }
-
-        .control-group label {
-            display: block;
-            color: #555;
-            margin-bottom: 5px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .control-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .control-input:focus {
-            outline: none;
-            background: white;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-            border-color: #007bff;
-        }
-
-        .control-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .color-input {
-            width: 100%;
-            height: 40px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            background: none;
-        }
-
-        .button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 12px;
-        }
-
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-        }
-
-        .info-display {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            text-align: center;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        canvas {
-            display: block;
-            border-radius: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -175,30 +13,129 @@
                 <div class="spinner"></div>
                 <div>Loading 3D Viewer...</div>
             </div>
+            <div class="info-panel">
             <div id="info" class="info-display">
-                <div>Camera Position: (0, 0, 5)</div>
-                <div>Camera Rotation: (0, 0, 0)</div>
-                <div>Zoom: 1.00</div>
-                <div>Model: Default Cube</div>
+                <h4>VIEWER STATS</h4>
+                <p><b>Camera Position:</b> (0, 0, 5)</p>
+                <p><b>Camera Rotation:</b> (0, 0, 0)</p>
+                <p><b>Model Rotation:</b> (0, 0, 0)</p>
+                <p><b>Zoom:</b> 1.00</p>
+                <p><b>Model:</b> Default Torus Knot</p>
             </div>
+            <div id="instructions" class="info-display instructions-display">
+                <h4>INTERACTION CONTROLS</h4>
+                <div id="standard-instructions">
+                    <p><b>Left-click + Drag:</b> Orbit Camera</p>
+                    <p><b>Ctrl + Left-click + Drag:</b> Rotate Model</p>
+                    <p><b>Right-click + Drag:</b> Pan Camera</p>
+                    <p><b>Scroll Wheel:</b> Zoom Camera</p>
+                    <p><b>F Key:</b> Focus Model on Screen</p>
+                </div>
+                <div id="legacy-instructions" style="display: none;">
+                    <p><b>Left-click + Drag:</b> Rotate Model</p>
+                    <p><b>Right-click + Drag:</b> Orbit Camera</p>
+                    <p><b>Scroll Wheel:</b> Zoom Camera</p>
+                    <p><b>F Key:</b> Focus Model on Screen</p>
+                </div>
+            </div>
+        </div>
         </div>
         
         <div class="controls-panel">
             <div class="control-section">
+                <h3>Control Scheme</h3>
+                <div class="control-group">
+                    <select id="controlSchemeSelector" class="control-input">
+                        <option value="standard">Standard (Camera-centric)</option>
+                        <option value="legacy">Legacy (Model-centric)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-section">
+                <h3>Capture</h3>
+                <div class="button-group">
+                    <button id="saveToClipboard" class="button secondary" disabled>CLIPBOARD</button>
+                    <button id="saveToFile" class="button secondary">FILE</button>
+                </div>
+            </div>
+            <div class="control-section">
                 <h3>Camera Controls</h3>
                 <div class="control-group">
                     <label>Position X</label>
-                    <input type="range" id="posX" class="control-input" min="-10" max="10" step="0.1" value="0">
+                    <div class="slider-container">
+                        <input type="range" id="posX" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                        <input type="number" id="posXNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Position Y</label>
-                    <input type="range" id="posY" class="control-input" min="-10" max="10" step="0.1" value="0">
+                    <div class="slider-container">
+                        <input type="range" id="posY" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                        <input type="number" id="posYNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Position Z</label>
-                    <input type="range" id="posZ" class="control-input" min="1" max="20" step="0.1" value="5">
+                    <div class="slider-container">
+                        <input type="range" id="posZ" class="slider-input" min="1" max="20" step="0.1" value="5">
+                        <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
+                    </div>
                 </div>
-                <button id="resetCamera" class="button">Reset Camera</button>
+                <div class="control-group">
+                    <label>Rotation X</label>
+                    <div class="slider-container">
+                        <input type="range" id="rotX" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="rotXNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Y</label>
+                    <div class="slider-container">
+                        <input type="range" id="rotY" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="rotYNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Z</label>
+                    <div class="slider-container">
+                        <input type="range" id="rotZ" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="rotZNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <button id="resetCamera" class="button">Reset Camera View</button>
+            </div>
+
+            <div class="control-section">
+                <h3>Model Controls</h3>
+                <div class="control-group">
+                    <label>Rotation X</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelRotX" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="modelRotXNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Y</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelRotY" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="modelRotYNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Rotation Z</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelRotZ" class="slider-input" min="-180" max="180" step="1" value="0">
+                        <input type="number" id="modelRotZNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Zoom</label>
+                    <div class="slider-container">
+                        <input type="range" id="modelZoom" class="slider-input" min="0.5" max="3" step="0.1" value="1">
+                        <input type="number" id="modelZoomNum" class="number-input" min="0.5" max="3" step="0.1" value="1">
+                    </div>
+                </div>
+                <button id="resetModel" class="button">Reset Model</button>
             </div>
 
             <div class="control-section">
@@ -209,565 +146,108 @@
                 </div>
                 <div class="control-group">
                     <label>Metalness</label>
-                    <input type="range" id="metalness" class="control-input" min="0" max="1" step="0.01" value="0.1">
+                    <div class="slider-container">
+                        <input type="range" id="metalness" class="slider-input" min="0" max="1" step="0.01" value="0.1">
+                        <input type="number" id="metalnessNum" class="number-input" min="0" max="1" step="0.01" value="0.1">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Roughness</label>
-                    <input type="range" id="roughness" class="control-input" min="0" max="1" step="0.01" value="0.8">
+                    <div class="slider-container">
+                        <input type="range" id="roughness" class="slider-input" min="0" max="1" step="0.01" value="0.8">
+                        <input type="number" id="roughnessNum" class="number-input" min="0" max="1" step="0.01" value="0.8">
+                    </div>
                 </div>
                 <div class="control-group">
-                    <label>Emissive Intensity</label>
-                    <input type="range" id="emissive" class="control-input" min="0" max="1" step="0.01" value="0">
+                    <label>Transparency</label>
+                    <div class="slider-container">
+                        <input type="range" id="transparency" class="slider-input" min="0" max="1" step="0.01" value="1">
+                        <input type="number" id="transparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
+                    </div>
                 </div>
             </div>
 
             <div class="control-section">
-                <h3>Model Controls</h3>
+                <h3>Model Library</h3>
                 <div class="control-group">
-                    <label>Model Scale</label>
-                    <input type="range" id="modelScale" class="control-input" min="0.5" max="3" step="0.1" value="1">
+                    <label>Load Model</label>
+                    <select id="modelSelector" class="control-input">
+                        <option value="default">Default Torus Knot</option>
+                        <option value="cube">Cube</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="pyramid">Pyramid</option>
+                    </select>
+                </div>
+                <div class="file-input">
+                    <label>Upload Custom Model</label>
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="drop-icon">📁</div>
+                            <div class="drop-text">
+                                <div>Drag & drop your 3D model here</div>
+                                <div class="drop-subtext">or click to browse</div>
+                            </div>
+                            <div class="supported-formats">
+                                Supports: .obj, .stl, .gltf, .glb
+                            </div>
+                        </div>
+                        <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb" style="display: none;" />
+                    </div>
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+                <div class="example-models">
+                    <label>Example Models</label>
+                    <div class="example-buttons">
+                        <button id="loadTeapot" class="button secondary small">Utah Teapot</button>
+                        <button id="loadSuzanne" class="button secondary small">Suzanne Monkey</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Save/Load Presets</h3>
+                <div class="control-group">
+                    <label>Preset Name</label>
+                    <input type="text" id="presetName" class="preset-name" placeholder="Enter preset name">
+                </div>
+                <div class="button-group">
+                    <button id="savePreset" class="button secondary">Save</button>
+                    <button id="loadPreset" class="button secondary">Load</button>
                 </div>
                 <div class="control-group">
-                    <label>Rotation Speed</label>
-                    <input type="range" id="rotationSpeed" class="control-input" min="0" max="0.05" step="0.001" value="0.01">
+                    <label>Saved Presets</label>
+                    <select id="presetSelector" class="control-input">
+                        <option value="">Select a preset...</option>
+                    </select>
                 </div>
-                <button id="toggleRotation" class="button">Toggle Auto Rotation</button>
             </div>
 
             <div class="control-section">
                 <h3>Lighting</h3>
                 <div class="control-group">
-                    <label>Light Intensity</label>
-                    <input type="range" id="lightIntensity" class="control-input" min="0" max="3" step="0.1" value="1">
+                    <label>Ambient Light</label>
+                    <div class="slider-container">
+                        <input type="range" id="ambientLight" class="slider-input" min="0" max="1" step="0.1" value="0.4">
+                        <input type="number" id="ambientLightNum" class="number-input" min="0" max="1" step="0.1" value="0.4">
+                    </div>
                 </div>
                 <div class="control-group">
-                    <label>Ambient Light</label>
-                    <input type="range" id="ambientLight" class="control-input" min="0" max="1" step="0.01" value="0.4">
+                    <label>Left Directional Light</label>
+                    <div class="slider-container">
+                        <input type="range" id="directionalLight" class="slider-input" min="0" max="2" step="0.1" value="0.6">
+                        <input type="number" id="directionalLightNum" class="number-input" min="0" max="2" step="0.1" value="0.6">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Right Directional Light</label>
+                    <div class="slider-container">
+                        <input type="range" id="directionalLightRight" class="slider-input" min="0" max="2" step="0.1" value="0.0">
+                        <input type="number" id="directionalLightRightNum" class="number-input" min="0" max="2" step="0.1" value="0.0">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script type="module">
-        // ==================== UTILITY FUNCTIONS ====================
-        
-        // Format number for display
-        function formatNumber(num) {
-            return parseFloat(num).toFixed(2);
-        }
-
-        // Convert radians to degrees
-        function radToDeg(rad) {
-            return rad * (180 / Math.PI);
-        }
-
-        // Clamp value between min and max
-        function clamp(value, min, max) {
-            return Math.min(Math.max(value, min), max);
-        }
-
-        // ==================== CUSTOM HOOKS (State Management) ====================
-        
-        class ViewerState {
-            constructor() {
-                this.camera = null;
-                this.scene = null;
-                this.renderer = null;
-                this.model = null;
-                this.controls = null;
-                this.lights = {};
-                this.autoRotate = true;
-                this.rotationSpeed = 0.01;
-                this.subscribers = [];
-            }
-
-            subscribe(callback) {
-                this.subscribers.push(callback);
-            }
-
-            notify(data) {
-                this.subscribers.forEach(callback => callback(data));
-            }
-
-            updateCameraInfo() {
-                if (this.camera) {
-                    const pos = this.camera.position;
-                    const rot = this.camera.rotation;
-                    const zoom = this.camera.zoom || 1;
-                    
-                    this.notify({
-                        type: 'camera',
-                        position: { x: pos.x, y: pos.y, z: pos.z },
-                        rotation: { 
-                            x: radToDeg(rot.x), 
-                            y: radToDeg(rot.y), 
-                            z: radToDeg(rot.z) 
-                        },
-                        zoom: zoom
-                    });
-                }
-            }
-        }
-
-        // ==================== THREE.JS SETUP ====================
-        
-        // Import Three.js from CDN with error handling
-        let THREE;
-        try {
-            // Try to load Three.js from CDN
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-            script.onload = function() {
-                THREE = window.THREE;
-                if (THREE) {
-                    console.log('✅ Three.js loaded successfully');
-                    initializeApp();
-                } else {
-                    throw new Error('Three.js failed to load');
-                }
-            };
-            script.onerror = function() {
-                console.error('❌ Failed to load Three.js from CDN');
-                document.getElementById('loading').innerHTML = 
-                    '<div style="color: #ff6b6b;">Failed to load Three.js. Please check your internet connection and refresh the page.</div>';
-            };
-            document.head.appendChild(script);
-        } catch (error) {
-            console.error('❌ Error setting up Three.js:', error);
-            document.getElementById('loading').innerHTML = 
-                '<div style="color: #ff6b6b;">Failed to initialize 3D viewer. Please refresh the page.</div>';
-        }
-
-        // ==================== UI COMPONENTS ====================
-        
-        class InfoDisplay {
-            constructor(element) {
-                this.element = element;
-            }
-
-            update({ position, rotation, zoom, model = 'Default Cube' }) {
-                this.element.innerHTML = `
-                    <div>Camera Position: (${formatNumber(position.x)}, ${formatNumber(position.y)}, ${formatNumber(position.z)})</div>
-                    <div>Camera Rotation: (${formatNumber(rotation.x)}°, ${formatNumber(rotation.y)}°, ${formatNumber(rotation.z)}°)</div>
-                    <div>Zoom: ${formatNumber(zoom)}</div>
-                    <div>Model: ${model}</div>
-                `;
-            }
-        }
-
-        class ControlPanel {
-            constructor(state) {
-                this.state = state;
-                this.setupEventListeners();
-            }
-
-            setupEventListeners() {
-                // Camera controls
-                document.getElementById('posX').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.x = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('posY').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.y = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('posZ').addEventListener('input', (e) => {
-                    if (this.state.camera) {
-                        this.state.camera.position.z = parseFloat(e.target.value);
-                        this.state.updateCameraInfo();
-                    }
-                });
-
-                document.getElementById('resetCamera').addEventListener('click', () => {
-                    this.resetCamera();
-                });
-
-                // Material controls
-                document.getElementById('materialColor').addEventListener('input', (e) => {
-                    this.updateMaterialColor(e.target.value);
-                });
-
-                document.getElementById('metalness').addEventListener('input', (e) => {
-                    this.updateMaterialProperty('metalness', parseFloat(e.target.value));
-                });
-
-                document.getElementById('roughness').addEventListener('input', (e) => {
-                    this.updateMaterialProperty('roughness', parseFloat(e.target.value));
-                });
-
-                document.getElementById('emissive').addEventListener('input', (e) => {
-                    this.updateEmissive(parseFloat(e.target.value));
-                });
-
-                // Model controls
-                document.getElementById('modelScale').addEventListener('input', (e) => {
-                    this.updateModelScale(parseFloat(e.target.value));
-                });
-
-                document.getElementById('rotationSpeed').addEventListener('input', (e) => {
-                    this.state.rotationSpeed = parseFloat(e.target.value);
-                });
-
-                document.getElementById('toggleRotation').addEventListener('click', () => {
-                    this.toggleAutoRotation();
-                });
-
-                // Lighting controls
-                document.getElementById('lightIntensity').addEventListener('input', (e) => {
-                    this.updateLightIntensity(parseFloat(e.target.value));
-                });
-
-                document.getElementById('ambientLight').addEventListener('input', (e) => {
-                    this.updateAmbientLight(parseFloat(e.target.value));
-                });
-            }
-
-            resetCamera() {
-                if (this.state.camera) {
-                    this.state.camera.position.set(0, 0, 5);
-                    this.state.camera.rotation.set(0, 0, 0);
-                    this.state.updateCameraInfo();
-                    
-                    // Update sliders
-                    document.getElementById('posX').value = 0;
-                    document.getElementById('posY').value = 0;
-                    document.getElementById('posZ').value = 5;
-                }
-            }
-
-            updateMaterialColor(color) {
-                if (this.state.model && this.state.model.material) {
-                    this.state.model.material.color.setHex(color.replace('#', '0x'));
-                }
-            }
-
-            updateMaterialProperty(property, value) {
-                if (this.state.model && this.state.model.material) {
-                    this.state.model.material[property] = value;
-                }
-            }
-
-            updateEmissive(intensity) {
-                if (this.state.model && this.state.model.material) {
-                    const color = this.state.model.material.color.clone();
-                    this.state.model.material.emissive = color.multiplyScalar(intensity);
-                }
-            }
-
-            updateModelScale(scale) {
-                if (this.state.model) {
-                    this.state.model.scale.set(scale, scale, scale);
-                }
-            }
-
-            toggleAutoRotation() {
-                this.state.autoRotate = !this.state.autoRotate;
-                const button = document.getElementById('toggleRotation');
-                button.textContent = this.state.autoRotate ? 'Stop Auto Rotation' : 'Start Auto Rotation';
-            }
-
-            updateLightIntensity(intensity) {
-                if (this.state.lights.directional) {
-                    this.state.lights.directional.intensity = intensity;
-                }
-            }
-
-            updateAmbientLight(intensity) {
-                if (this.state.lights.ambient) {
-                    this.state.lights.ambient.intensity = intensity;
-                }
-            }
-        }
-
-        // ==================== FEATURE COMPONENTS ====================
-        
-        class ThreeJSViewer {
-            constructor(container, state) {
-                this.container = container;
-                this.state = state;
-                this.mouseControls = {
-                    isDragging: false,
-                    previousMousePosition: { x: 0, y: 0 }
-                };
-                this.init();
-            }
-
-            init() {
-                this.setupScene();
-                this.setupCamera();
-                this.setupRenderer();
-                this.setupLights();
-                this.setupModel();
-                this.setupControls();
-                this.startRenderLoop();
-                
-                // Hide loading indicator
-                document.getElementById('loading').style.display = 'none';
-            }
-
-            setupScene() {
-                this.state.scene = new THREE.Scene();
-                this.state.scene.background = new THREE.Color(0x222222);
-                
-                // Add fog for depth perception
-                this.state.scene.fog = new THREE.Fog(0x222222, 1, 100);
-            }
-
-            setupCamera() {
-                this.state.camera = new THREE.PerspectiveCamera(
-                    75,
-                    this.container.clientWidth / this.container.clientHeight,
-                    0.1,
-                    1000
-                );
-                this.state.camera.position.set(0, 0, 5);
-            }
-
-            setupRenderer() {
-                this.state.renderer = new THREE.WebGLRenderer({ 
-                    antialias: true,
-                    alpha: true 
-                });
-                this.state.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-                this.state.renderer.setPixelRatio(window.devicePixelRatio);
-                this.state.renderer.shadowMap.enabled = true;
-                this.state.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                this.state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.state.renderer.toneMappingExposure = 1;
-                this.container.appendChild(this.state.renderer.domElement);
-
-                // Handle window resize
-                window.addEventListener('resize', () => this.handleResize());
-            }
-
-            setupLights() {
-                // Ambient light
-                this.state.lights.ambient = new THREE.AmbientLight(0x404040, 0.4);
-                this.state.scene.add(this.state.lights.ambient);
-
-                // Directional light
-                this.state.lights.directional = new THREE.DirectionalLight(0xffffff, 1);
-                this.state.lights.directional.position.set(5, 5, 5);
-                this.state.lights.directional.castShadow = true;
-                this.state.lights.directional.shadow.mapSize.width = 2048;
-                this.state.lights.directional.shadow.mapSize.height = 2048;
-                this.state.scene.add(this.state.lights.directional);
-
-                // Point light for additional illumination
-                const pointLight = new THREE.PointLight(0xffffff, 0.5, 100);
-                pointLight.position.set(-5, 5, 5);
-                this.state.scene.add(pointLight);
-            }
-
-            setupModel() {
-                // Create a more interesting default model (torus knot)
-                const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
-                const material = new THREE.MeshStandardMaterial({
-                    color: 0x4CAF50,
-                    metalness: 0.1,
-                    roughness: 0.8,
-                    envMapIntensity: 1
-                });
-
-                this.state.model = new THREE.Mesh(geometry, material);
-                this.state.model.castShadow = true;
-                this.state.model.receiveShadow = true;
-                this.state.scene.add(this.state.model);
-
-                // Add a ground plane
-                const groundGeometry = new THREE.PlaneGeometry(20, 20);
-                const groundMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0x999999, 
-                    transparent: true, 
-                    opacity: 0.3 
-                });
-                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-                ground.rotation.x = -Math.PI / 2;
-                ground.position.y = -2;
-                ground.receiveShadow = true;
-                this.state.scene.add(ground);
-            }
-
-            setupControls() {
-                const canvas = this.state.renderer.domElement;
-
-                // Mouse controls
-                canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-                canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-                canvas.addEventListener('mouseup', () => this.onMouseUp());
-                canvas.addEventListener('wheel', (e) => this.onWheel(e));
-
-                // Touch controls for mobile
-                canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
-                canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
-                canvas.addEventListener('touchend', () => this.onTouchEnd());
-            }
-
-            onMouseDown(event) {
-                this.mouseControls.isDragging = true;
-                this.mouseControls.previousMousePosition = {
-                    x: event.clientX,
-                    y: event.clientY
-                };
-            }
-
-            onMouseMove(event) {
-                if (!this.mouseControls.isDragging) return;
-
-                const deltaMove = {
-                    x: event.clientX - this.mouseControls.previousMousePosition.x,
-                    y: event.clientY - this.mouseControls.previousMousePosition.y
-                };
-
-                // Rotate the model based on mouse movement
-                if (this.state.model) {
-                    this.state.model.rotation.y += deltaMove.x * 0.01;
-                    this.state.model.rotation.x += deltaMove.y * 0.01;
-                }
-
-                this.mouseControls.previousMousePosition = {
-                    x: event.clientX,
-                    y: event.clientY
-                };
-
-                this.state.updateCameraInfo();
-            }
-
-            onMouseUp() {
-                this.mouseControls.isDragging = false;
-            }
-
-            onWheel(event) {
-                event.preventDefault();
-                const delta = event.deltaY > 0 ? 1.1 : 0.9;
-                this.state.camera.position.multiplyScalar(delta);
-                this.state.updateCameraInfo();
-            }
-
-            onTouchStart(event) {
-                if (event.touches.length === 1) {
-                    this.onMouseDown({
-                        clientX: event.touches[0].clientX,
-                        clientY: event.touches[0].clientY
-                    });
-                }
-            }
-
-            onTouchMove(event) {
-                if (event.touches.length === 1) {
-                    this.onMouseMove({
-                        clientX: event.touches[0].clientX,
-                        clientY: event.touches[0].clientY
-                    });
-                }
-            }
-
-            onTouchEnd() {
-                this.onMouseUp();
-            }
-
-            handleResize() {
-                const width = this.container.clientWidth;
-                const height = this.container.clientHeight;
-
-                this.state.camera.aspect = width / height;
-                this.state.camera.updateProjectionMatrix();
-
-                this.state.renderer.setSize(width, height);
-            }
-
-            startRenderLoop() {
-                const animate = () => {
-                    requestAnimationFrame(animate);
-
-                    // Auto rotation
-                    if (this.state.autoRotate && this.state.model) {
-                        this.state.model.rotation.y += this.state.rotationSpeed;
-                    }
-
-                    this.state.renderer.render(this.state.scene, this.state.camera);
-                    this.state.updateCameraInfo();
-                };
-
-                animate();
-            }
-        }
-
-        // ==================== MAIN APPLICATION ====================
-        
-        class App {
-            constructor() {
-                this.state = new ViewerState();
-            }
-
-            async init() {
-                try {
-                    // Initialize components
-                    const viewerContainer = document.querySelector('.viewer-container');
-                    const infoElement = document.getElementById('info');
-
-                    // Create viewer
-                    this.viewer = new ThreeJSViewer(viewerContainer, this.state);
-                    
-                    // Create UI components
-                    this.infoDisplay = new InfoDisplay(infoElement);
-                    this.controlPanel = new ControlPanel(this.state);
-
-                    // Subscribe to state changes
-                    this.state.subscribe((data) => {
-                        if (data.type === 'camera') {
-                            this.infoDisplay.update(data);
-                        }
-                    });
-
-                    // Test functionality
-                    this.testComponent();
-
-                } catch (error) {
-                    console.error('Failed to initialize app:', error);
-                    document.getElementById('loading').innerHTML = 
-                        '<div style="color: #ff6b6b;">Failed to load 3D viewer. Please refresh the page.</div>';
-                }
-            }
-
-            testComponent() {
-                // Basic functionality test
-                console.log('✅ Testing 3D Model Viewer...');
-                
-                // Test state management
-                if (this.state && this.state.scene && this.state.camera && this.state.renderer) {
-                    console.log('✅ Three.js components initialized successfully');
-                }
-                
-                // Test UI components
-                if (this.infoDisplay && this.controlPanel) {
-                    console.log('✅ UI components initialized successfully');
-                }
-                
-                // Test controls
-                const testControls = document.querySelectorAll('.control-input').length > 0;
-                if (testControls) {
-                    console.log('✅ Control inputs are present and functional');
-                }
-                
-                console.log('✅ All tests passed - 3D Model Viewer is ready!');
-            }
-        }
-
-        // Initialize the application when Three.js is loaded
-        function initializeApp() {
-            const app = new App();
-            app.init();
-        }
-
-        // Make Three.js available globally for debugging
-        window.THREE = THREE;
-    </script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

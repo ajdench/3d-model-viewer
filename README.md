@@ -1,43 +1,155 @@
 # 3D Model Viewer
 
-An interactive 3D model viewer built with Three.js that allows you to:
+A professional, interactive 3D model viewer built with Three.js, now refactored to be completely self-contained for offline use. It provides complete control over camera positioning, model manipulation, and material properties. Features real-time coordinate tracking, custom model loading, and preset management.
 
-- View and manipulate 3D models in real-time
-- Track camera position, rotation, and zoom
-- Adjust material properties (color, metalness, roughness)
-- Control lighting and model scale
-- Auto-rotation and manual controls
+![Three.js](https://img.shields.io/badge/Three.js-Managed%20via%20npm-blue)
+![Vite](https://img.shields.io/badge/Vite-Build%20Tool-purple)
+![HTML5](https://img.shields.io/badge/HTML5-Canvas-orange)
 
-## Features
+## 	✨ Features
 
-- **Real-time Camera Tracking**: Display current camera position, rotation, and zoom
-- **Material Editor**: Change colors, metalness, roughness, and emissive properties
-- **Interactive Controls**: Mouse/touch controls for model manipulation
-- **Lighting Controls**: Adjust ambient and directional lighting
-- **Responsive Design**: Works on desktop and mobile devices
+### 	🎮 Interactive Controls
+- **Mouse Controls**: Left-click orbits the camera, right-click pans the camera.
+- **Real-time Coordinate Tracking**: Live display of camera and model positions
+- **Precision Controls**: Sliders with editable number inputs for exact positioning
+- **One-click Reset**: Separate reset buttons for camera and model
 
-## How to Use
+### 	📐 Camera Management
+- **6-Axis Camera Control**: Position (X,Y,Z) and Rotation (X,Y,Z) with degree precision
+- **Dynamic Zoom**: Scroll wheel or manual control with distance-based calculation
+- **Spherical Camera Movement**: Smooth orbital navigation around models
+- **Viewport Adaptation**: Responsive to window resizing and fullscreen mode
 
-1. **Camera Controls**: Use the sliders to move the camera position
-2. **Mouse/Touch**: Click and drag to rotate the model
-3. **Scroll/Pinch**: Zoom in and out
-4. **Material Controls**: Change appearance with color and material sliders
-5. **Auto Rotation**: Toggle automatic model rotation
+### 	🎨 Material Properties
+- **Real-time Material Editor**: Color, metalness, roughness adjustment
+- **Transparency Control**: Variable opacity with automatic transparent flag management
+- **Professional Lighting**: Balanced ambient and directional lighting (left and right) without harsh shadows
+- **Live Preview**: Instant visual feedback for all material changes
 
-## Live Demo
+### 	📁 Model Loading System
+- **Built-in Model Library**: 
+  - Default Torus Knot (mathematical precision)
+  - Geometric primitives (Cube, Sphere, Pyramid)
+  - Example models (Utah Teapot, Suzanne Monkey)
+- **Custom Model Support**: 
+  - ✅ **OBJ Files**: Wavefront format with the official Three.js loader
+  - ✅ **STL Files**: Binary STL support with the official Three.js loader
+  - ✅ **GLTF/GLB Files**: GL Transmission Format support with the official Three.js loader.
+- **Drag & Drop Interface**: Intuitive file upload with visual feedback
+- **Auto-processing**: Automatic centering, scaling, and material application
 
-Visit: https://ajdench.github.io/3d-model-viewer
+### 	💾 Preset Management
+- **Save/Load System**: Store complete viewer configurations
+- **Persistent Storage**: Browser localStorage for cross-session persistence
+- **Configuration Scope**: Saves camera, model, material, and lighting settings
+- **Quick Access**: Dropdown selection and manual naming
 
-## Technologies Used
+### 	📸 Image Capture
+- **Save to File**: Capture a 2D PNG image of the current model view with a transparent background.
+- **Save to Clipboard**: *Currently disabled due to technical issues.*
 
-- Three.js for 3D rendering
-- HTML5 Canvas
-- CSS3 with modern effects (glassmorphism, backdrop-filter)
-- Vanilla JavaScript with modular architecture
+## 	🏛️ Architecture
 
-## Browser Support
+This project has been refactored for robustness and offline deployment.
 
-- Chrome/Edge 88+
-- Firefox 84+
-- Safari 14+
-- Mobile browsers with WebGL support
+*   **Self-Contained:** All dependencies, including the Three.js library, are bundled into the application. It does **not** require an internet connection to run.
+*   **Build Process:** The project uses **Vite** as a build tool to bundle and optimize all assets (JavaScript, CSS).
+*   **Modular Code:** The codebase is organized into separate HTML, CSS, and JavaScript files (`index.html`, `style.css`, `main.js`) and uses modern ES6 modules.
+*   **Reliable Loaders:** The old custom 3D model parsers have been replaced with the official, battle-tested `OBJLoader` and `STLLoader` from the Three.js library, ensuring better compatibility and performance.
+
+## 	🚀 Installation and Usage
+
+An internet connection is required for the initial setup (to download dependencies). After the build step, the application is fully offline-capable.
+
+### 1. Installation
+
+First, clone the repository and install the required `npm` dependencies.
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/3d-model-viewer.git
+cd 3d-model-viewer
+
+# Install dependencies (requires internet)
+npm install
+```
+
+### 2. Development
+
+To run the application in a local development environment with hot-reloading:
+
+```bash
+# Run the development server
+npm run dev
+```
+
+Vite will start a server and provide a local URL (usually `http://localhost:5173`). Open this URL in your browser.
+
+Alternatively, you can use the provided shell script to start the server and open the browser automatically:
+
+```bash
+./start-dev.sh
+```
+
+### 3. Building for Production (Offline Deployment)
+
+To create a self-contained, production-ready build:
+
+```bash
+# Build the application
+npm run build
+```
+
+This command creates a new `dist` directory. This directory contains your entire application, fully optimized and with all dependencies included.
+
+### 4. Deployment
+
+Copy the contents of the `dist` directory to your private web server. The application is now ready to be served and will work without an internet connection.
+
+## 	🛠️ Technical Specifications
+
+### Core Technologies
+- **Three.js**: 3D rendering and scene management (managed via npm).
+- **Vite**: Modern frontend build tool for development and bundling.
+- **Vanilla JavaScript (ES6 Modules)**: No framework dependencies.
+- **HTML5 Canvas**: Hardware-accelerated graphics.
+- **CSS3**: Modern styling.
+- **localStorage API**: Client-side data persistence for presets.
+
+## 	🐛 Troubleshooting
+
+### Common Issues
+
+**Q: Models appear too small or large**
+A: The auto-scaling system should handle this, but you can adjust `targetSize` in `centerAndScaleModel()` in `main.js`.
+
+**Q: Browser shows security errors when running locally**
+A: Ensure you are using the `npm run dev` command to start the Vite development server, rather than opening the `index.html` file directly in your browser.
+
+**Q: Preset loading fails**
+A: Check your browser's developer console for localStorage errors. Private or incognito browsing modes may disable localStorage.
+
+### Performance Optimization
+- **Large Models**: Consider decimating complex models before uploading them.
+- **File Size**: A 50MB limit is enforced, but smaller files will always load faster.
+- **Browser Performance**: Close other tabs or resource-intensive applications if you experience slowdowns.
+
+## 	🤝 Contributing
+
+### Development Setup
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature-name`.
+3. Make your changes and test them thoroughly using the development server.
+4. Commit with descriptive messages.
+5. Submit a pull request for review.
+
+### Code Style
+- Use modern ES6+ JavaScript.
+- Follow the existing indentation and formatting.
+- Add comments to explain complex or non-obvious functionality.
+
+## 	📄 License
+
+This project is licensed under the MIT License.
+
+
