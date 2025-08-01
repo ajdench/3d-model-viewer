@@ -279,11 +279,11 @@ Extend the capture functionality by:
    - Problem: No event listener for `linePosY` slider changes
    - Solution: Added `safeAddEventListener('linePosY', 'input', callback)`
 3. **Thickness Value Mismatch** ✅ FIXED
-   - Problem: State had `thickness: 5` but HTML expected `0.05` (range 0.01-1)
-   - Solution: Updated state initialization to `thickness: 0.05`
+   - Problem: State had mismatched thickness values between HTML and JavaScript
+   - Solution: Updated to consistent integer range (0-100) with proper viewport unit conversion
 4. **Incorrect Thickness Units** ✅ FIXED
    - Problem: Using `px` units instead of responsive viewport units
-   - Solution: Changed to `${state.guideLine.thickness * 100}vh`
+   - Solution: Changed to `${state.guideLine.thickness / 1000 * 100}vh` for responsive scaling
 5. **Missing UI Initialization** ✅ FIXED
    - Problem: Guide line controls not initialized to match state values
    - Solution: Added proper `safeSetValue()` calls in `initializeViewer()`
@@ -305,8 +305,8 @@ safeAddEventListener('linePosY', 'input', (e) => {
 });
 
 // 3. Fixed thickness value and units
-thickness: 0.05, // Changed from 5
-guideLine.style.height = `${state.guideLine.thickness * 100}vh`;
+thickness: 5, // Integer range 0-100 with viewport unit conversion
+guideLine.style.height = `${state.guideLine.thickness / 1000 * 100}vh`;
 
 // 4. Added proper UI initialization
 safeSetValue('lineThickness', state.guideLine.thickness);
@@ -358,11 +358,12 @@ safeSetValue('linePosY', state.guideLine.posY);
 - **Responsive Design**: Both panels adapt to page width changes with breakpoints
 - **Z-index**: Proper layering to ensure visibility over 3D content
 
-### Guide Line Default Values (v2.3)
+### Guide Line Default Values (v2.3+)
 - **Color**: Changed from red (#FF0000) to light gray (#CCCCCC)
-- **Thickness**: Reduced from 0.05 to 0.01 for subtler appearance
+- **Thickness**: Updated to integer range (0-100) with default value 5 for better user control
 - **Transparency**: Changed from 1.0 (opaque) to 0.5 (semi-transparent)
-- **Impact**: More professional, less intrusive guide lines by default
+- **Vertical Position**: New control with range -50 to 50, default 0 (centered)
+- **Impact**: More professional, less intrusive guide lines with enhanced positioning control
 
 ## Recent Critical Fixes (v2.0+)
 
@@ -538,3 +539,33 @@ safeSetValue('linePosY', state.guideLine.posY);
 14. **Test responsive units**: Verify viewport-based thickness scaling works across devices
 15. **Validate state synchronization**: Ensure UI controls always match internal state values
 16. **Test lighting controls layout**: Verify perfect alignment of vertical sliders with positioning area, proper label placement, and optimal container sizing
+
+## Guide Line Controls Configuration (v2.4+)
+
+### Updated Guide Line Values
+The guide line system has been updated with new value ranges and calculations:
+
+**HTML Controls (index.html)**:
+- **Thickness**: Range 0-100, step 1, default value 5
+- **Vertical Position**: Range -50 to 50, step 1, default value 0 (centered)
+- **Transparency**: Range 0-1, step 0.01, default value 0.5
+- **Angle**: Range -90 to 90, step 1, default value 0
+
+**JavaScript State (main.js)**:
+- `thickness: 5` - Integer value matching HTML range (0-100)
+- `posY: 0` - Centered position, maps to 50% from top
+- `transparency: 0.5` - Semi-transparent default
+- `angle: 0` - Horizontal default
+
+**CSS Calculations**:
+- **Thickness conversion**: `${state.guideLine.thickness / 1000 * 100}vh` - Converts 0-100 range to responsive viewport units
+- **Position mapping**: `top: ${50 - state.guideLine.posY}%` - Maps -50 to 50 range to 100% to 0% from top
+- **Transform**: `translateY(-50%) rotate(${angle}deg)` - Centers line and applies rotation
+
+**Key Implementation Notes**:
+- Thickness uses viewport height units (vh) for responsive scaling
+- Position uses percentage-based positioning for consistent placement
+- Transform origin ensures rotation around the true center
+- Values are synchronized between HTML inputs and JavaScript state
+
+This system provides intuitive control ranges while maintaining responsive behavior across different screen sizes.

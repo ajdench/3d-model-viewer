@@ -65,6 +65,36 @@ This project is a self-contained 3D model viewer that has been refactored to run
 
 - **Guide Line Overlay (2D):**
   - **Option 1: Single HTML `div` with CSS Transforms (Current Implementation)**
+
+## Guide Line Controls Configuration (v2.4+)
+
+### Updated Guide Line Values
+The guide line system has been updated with new value ranges and calculations:
+
+**HTML Controls (index.html)**:
+- **Thickness**: Range 0-100, step 1, default value 5
+- **Vertical Position**: Range -50 to 50, step 1, default value 0 (centered)
+- **Transparency**: Range 0-1, step 0.01, default value 0.5
+- **Angle**: Range -90 to 90, step 1, default value 0
+
+**JavaScript State (main.js)**:
+- `thickness: 5` - Integer value matching HTML range (0-100)
+- `posY: 0` - Centered position, maps to 50% from top
+- `transparency: 0.5` - Semi-transparent default
+- `angle: 0` - Horizontal default
+
+**CSS Calculations**:
+- **Thickness conversion**: `${state.guideLine.thickness / 1000 * 100}vh` - Converts 0-100 range to responsive viewport units
+- **Position mapping**: `top: ${50 - state.guideLine.posY}%` - Maps -50 to 50 range to 100% to 0% from top
+- **Transform**: `translateY(-50%) rotate(${angle}deg)` - Centers line and applies rotation
+
+**Key Implementation Notes**:
+- Thickness uses viewport height units (vh) for responsive scaling
+- Position uses percentage-based positioning for consistent placement
+- Transform origin ensures rotation around the true center
+- Values are synchronized between HTML inputs and JavaScript state
+
+This system provides intuitive control ranges while maintaining responsive behavior across different screen sizes.
     - **Concept:** Uses a `div` element positioned absolutely over the viewer. The line itself is another `div` inside, styled and transformed using CSS (`rotate`, `scaleY` for thickness, `background-color`, `opacity`).
     - **Pros:** Pure CSS/HTML, true overlay (fixed to screen), relatively simple, easy capture exclusion (toggle `display`).
     - **Cons:** Limited to straight lines.

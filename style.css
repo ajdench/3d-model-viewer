@@ -516,7 +516,6 @@
             height: 5px; /* Default thickness */
             background-color: red; /* Default color */
             transform-origin: 50% 50%; /* Always rotate from the true center of the element */
-            transform: translateY(-50%); /* Vertically center the line based on its own height */
         }
 
         .instructions-display {

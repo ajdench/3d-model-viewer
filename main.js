@@ -15,11 +15,11 @@ let state = {
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
     controlScheme: 'standard', // 'standard' or 'legacy'
     guideLine: {
-        thickness: 0.01,
+        thickness: 5,
         color: '#CCCCCC',
         transparency: 0.5,
         angle: 0,
-        posY: 50 // New: Vertical position (0-100%)
+        posY: 0 // New: Vertical position (0-100%)
     }
 };
 
@@ -512,7 +512,7 @@ function updateGuideLine() {
     guideLine.style.left = '0';
 
     // Apply thickness (convert percentage to viewport height)
-    guideLine.style.height = `${state.guideLine.thickness * 100}vh`;
+    guideLine.style.height = `${state.guideLine.thickness / 1000 * 100}vh`;
 
     // Apply color
     guideLine.style.backgroundColor = state.guideLine.color;
@@ -523,11 +523,11 @@ function updateGuideLine() {
     // Apply angle
     let angle = state.guideLine.angle;
 
-    // Apply vertical position
-    guideLine.style.top = `${state.guideLine.posY}%`;
+    // Apply vertical position (map -50 to 50 range to 100% to 0% top)
+    guideLine.style.top = `${50 - state.guideLine.posY}%`;
 
-    // Apply rotation
-    guideLine.style.transform = `rotate(${angle}deg)`;
+    // Apply rotation and vertical centering
+    guideLine.style.transform = `translateY(-50%) rotate(${angle}deg)`;
 }
 
 // ----------------------------------------------------------------
