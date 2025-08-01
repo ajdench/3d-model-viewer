@@ -63,6 +63,130 @@ This project is a self-contained 3D model viewer that has been refactored to run
   - **Option 1 (Simple):** Implement vertical sliders to control the Y-axis (height) of the directional lights.
   - **Option 3 (Complex):** Enhance the 2D control pad by adding separate Z-axis (depth) sliders for each light, providing full 3D positional control.
 
+### Advanced Lighting Modes System (v2.5+)
+- **Issue**: Users needed both simple positioning and advanced directional lighting control
+- **Solution**: Implemented dual-mode lighting system with dedicated Basic and Complex mode buttons
+- **New Features**:
+  - **Dedicated Mode Buttons**: Two separate buttons in title bar for "BASIC" and "COMPLEX" modes
+  - **State Management**: `lightingMode: 'basic'` state variable tracks current mode
+  - **Basic Mode**: Simple light positioning without rotation or targeting (default behavior)
+  - **Complex Mode**: Advanced features with icon rotation and light targeting
+    - **Icon Rotation**: Light icons rotate based on vertical position in pad
+    - **Left Icon**: Rotates 0° to 90° clockwise as moved from top to bottom
+    - **Right Icon**: Rotates 0° to -90° counter-clockwise as moved from top to bottom
+    - **Light Targeting**: Directional lights target specific Y-coordinates based on icon position
+    - **Target Calculation**: `targetY = (0.5 - verticalPercent) * 10` maps position to world coordinates
+  - **Mode Switching**: Automatic reset of rotations and targets when switching to Basic mode
+- **Button Design & Layout**: 
+  - **Dual Buttons**: COMPLEX (red) and BASIC (green) buttons positioned in title bar
+  - **Precise Positioning**: COMPLEX button at `right: 68px`, BASIC at `right: 10px` with 10px gap between
+  - **Color-coded States**: 
+    - **BASIC Selected**: Green background (`#4CAF50`) with green hover glow
+    - **COMPLEX Selected**: Red background (`#ff6b6b`) with red hover glow
+    - **Unselected**: Grey background (`#ccc`) with reduced opacity (0.6)
+  - **Equal Padding**: `4px` on all sides for consistent button appearance
+  - **Responsive Design**: Auto-width based on content with consistent 18px height
+- **JavaScript Architecture**:
+  - **Separate Event Handlers**: `basicModeButton` and `complexModeButton` click events
+  - **`updateLightingModeButtons()`**: Function manages visual state and color transitions
+  - **Enhanced `makeDraggable()`**: Checks `lightingMode` state for conditional behavior
+  - **Initialization**: Button states set on application startup
+- **Light Targets**: Each directional light has dedicated Three.js Object3D target for precise aiming
+- **Impact**: Provides intuitive, color-coded mode selection with clear visual feedback and precise 10px spacing
+
+### Advanced Lighting Modes System (v2.5+)
+- **Issue**: Users needed both simple positioning and advanced directional lighting control
+- **Solution**: Implemented dual-mode lighting system with dedicated Basic and Complex mode buttons
+- **New Features**:
+  - **Dedicated Mode Buttons**: Two separate buttons in title bar for "BASIC" and "COMPLEX" modes
+  - **State Management**: `lightingMode: 'basic'` state variable tracks current mode
+  - **Basic Mode**: Simple light positioning without rotation or targeting (default behavior)
+  - **Complex Mode**: Advanced features with icon rotation and light targeting
+    - **Icon Rotation**: Light icons rotate based on vertical position in pad
+    - **Left Icon**: Rotates 0° to 90° clockwise as moved from top to bottom
+    - **Right Icon**: Rotates 0° to -90° counter-clockwise as moved from top to bottom
+    - **Light Targeting**: Directional lights target specific Y-coordinates based on icon position
+    - **Target Calculation**: `targetY = (0.5 - verticalPercent) * 10` maps position to world coordinates
+  - **Mode Switching**: Automatic reset of rotations and targets when switching to Basic mode
+- **Button Design & Layout**: 
+  - **Dual Buttons**: COMPLEX (red) and BASIC (green) buttons positioned in title bar
+  - **Precise Positioning**: COMPLEX button at `right: 68px`, BASIC at `right: 10px` with 10px gap between
+  - **Color-coded States**: 
+    - **BASIC Selected**: Green background (`#4CAF50`) with green hover glow
+    - **COMPLEX Selected**: Red background (`#ff6b6b`) with red hover glow
+    - **Unselected**: Grey background (`#ccc`) with reduced opacity (0.6)
+  - **Equal Padding**: `4px` on all sides for consistent button appearance
+  - **Responsive Design**: Auto-width based on content with consistent 18px height
+- **JavaScript Architecture**:
+  - **Separate Event Handlers**: `basicModeButton` and `complexModeButton` click events
+  - **`updateLightingModeButtons()`**: Function manages visual state and color transitions
+  - **Enhanced `makeDraggable()`**: Checks `lightingMode` state for conditional behavior
+  - **Initialization**: Button states set on application startup
+- **Light Targets**: Each directional light has dedicated Three.js Object3D target for precise aiming
+- **Impact**: Provides intuitive, color-coded mode selection with clear visual feedback and precise 10px spacing
+
+### Advanced Lighting Modes System (v2.5+)
+- **Issue**: Users needed both simple positioning and advanced directional lighting control
+- **Solution**: Implemented dual-mode lighting system with dedicated Basic and Complex mode buttons
+- **New Features**:
+  - **Dedicated Mode Buttons**: Two separate buttons in title bar for "BASIC" and "COMPLEX" modes
+  - **State Management**: `lightingMode: 'basic'` state variable tracks current mode
+  - **Basic Mode**: Simple light positioning without rotation or targeting (default behavior)
+  - **Complex Mode**: Advanced features with icon rotation and light targeting
+    - **Icon Rotation**: Light icons rotate based on vertical position in pad
+    - **Left Icon**: Rotates 0° to 90° clockwise as moved from top to bottom
+    - **Right Icon**: Rotates 0° to -90° counter-clockwise as moved from top to bottom
+    - **Light Targeting**: Directional lights target specific Y-coordinates based on icon position
+    - **Target Calculation**: `targetY = (0.5 - verticalPercent) * 10` maps position to world coordinates
+  - **Mode Switching**: Automatic reset of rotations and targets when switching to Basic mode
+- **Button Design & Layout**: 
+  - **Dual Buttons**: COMPLEX (red) and BASIC (green) buttons positioned in title bar
+  - **Precise Positioning**: COMPLEX button at `right: 68px`, BASIC at `right: 10px` with 10px gap between
+  - **Color-coded States**: 
+    - **BASIC Selected**: Green background (`#4CAF50`) with green hover glow
+    - **COMPLEX Selected**: Red background (`#ff6b6b`) with red hover glow
+    - **Unselected**: Grey background (`#ccc`) with reduced opacity (0.6)
+  - **Equal Padding**: `4px` on all sides for consistent button appearance
+  - **Responsive Design**: Auto-width based on content with consistent 18px height
+- **JavaScript Architecture**:
+  - **Separate Event Handlers**: `basicModeButton` and `complexModeButton` click events
+  - **`updateLightingModeButtons()`**: Function manages visual state and color transitions
+  - **Enhanced `makeDraggable()`**: Checks `lightingMode` state for conditional behavior
+  - **Initialization**: Button states set on application startup
+- **Light Targets**: Each directional light has dedicated Three.js Object3D target for precise aiming
+- **Impact**: Provides intuitive, color-coded mode selection with clear visual feedback and precise 10px spacing
+
+### Advanced Lighting Modes System (v2.5+)
+- **Issue**: Users needed both simple positioning and advanced directional lighting control
+- **Solution**: Implemented dual-mode lighting system with dedicated Basic and Complex mode buttons
+- **New Features**:
+  - **Dedicated Mode Buttons**: Two separate buttons in title bar for "BASIC" and "COMPLEX" modes
+  - **State Management**: `lightingMode: 'basic'` state variable tracks current mode
+  - **Basic Mode**: Simple light positioning without rotation or targeting (default behavior)
+  - **Complex Mode**: Advanced features with icon rotation and light targeting
+    - **Icon Rotation**: Light icons rotate based on vertical position in pad
+    - **Left Icon**: Rotates 0° to 90° clockwise as moved from top to bottom
+    - **Right Icon**: Rotates 0° to -90° counter-clockwise as moved from top to bottom
+    - **Light Targeting**: Directional lights target specific Y-coordinates based on icon position
+    - **Target Calculation**: `targetY = (0.5 - verticalPercent) * 10` maps position to world coordinates
+  - **Mode Switching**: Automatic reset of rotations and targets when switching to Basic mode
+- **Button Design & Layout**: 
+  - **Dual Buttons**: COMPLEX (red) and BASIC (green) buttons positioned in title bar
+  - **Precise Positioning**: COMPLEX button at `right: 68px`, BASIC at `right: 10px` with 10px gap between
+  - **Color-coded States**: 
+    - **BASIC Selected**: Green background (`#4CAF50`) with green hover glow
+    - **COMPLEX Selected**: Red background (`#ff6b6b`) with red hover glow
+    - **Unselected**: Grey background (`#ccc`) with reduced opacity (0.6)
+  - **Equal Padding**: `4px` on all sides for consistent button appearance
+  - **Responsive Design**: Auto-width based on content with consistent 18px height
+- **JavaScript Architecture**:
+  - **Separate Event Handlers**: `basicModeButton` and `complexModeButton` click events
+  - **`updateLightingModeButtons()`**: Function manages visual state and color transitions
+  - **Enhanced `makeDraggable()`**: Checks `lightingMode` state for conditional behavior
+  - **Initialization**: Button states set on application startup
+- **Light Targets**: Each directional light has dedicated Three.js Object3D target for precise aiming
+- **Impact**: Provides intuitive, color-coded mode selection with clear visual feedback and precise 10px spacing
+
 - **Guide Line Overlay (2D):**
   - **Option 1: Single HTML `div` with CSS Transforms (Current Implementation)**
 

@@ -53,6 +53,7 @@ The application now uses Vite for development with a modular structure:
 - No explicit clear color set - uses natural transparency
 - Advanced lighting setup: ambient (0.4 intensity) + dual directional lights (left 0.6, right 0.0 default)
 - **Compact Lighting Controls**: Redesigned LIGHTING CONTROLS panel with vertical sliders flanking interactive light pad
+- **Dual Lighting Modes**: Basic mode for simple positioning, Complex mode with icon rotation and light targeting
 - Interactive light positioning via draggable light pad interface with boundary constraints and overlap prevention
 
 #### Model Loading System
@@ -87,7 +88,7 @@ The application now uses Vite for development with a modular structure:
 - **Capture System**: Screenshot capture to file download with transparent backgrounds (clipboard feature removed)
 - **Guide Line System**: Overlay guide lines with customizable thickness, color, transparency, angle, and position
 - **Control Schemes**: Dual interaction modes (Standard: camera-centric, Legacy: model-centric)
-- **Advanced Lighting**: Compact vertical slider controls with interactive positioning pad and ambient light controls
+- **Advanced Lighting**: Compact vertical slider controls with dual-mode interactive positioning (Basic/Complex) and ambient light controls
 - **Keyboard Shortcuts**: F key for focus model on screen, Ctrl+drag for model rotation
 
 ### File Structure
@@ -352,9 +353,10 @@ safeSetValue('linePosY', state.guideLine.posY);
 - **VIEW STATUS** now displays: Camera Position, Model Rotation, Zoom, Model (camera rotation removed)
 - **Panel Layout**: Streamlined information display focusing on essential view parameters
 
-### Interface Layout Updates (v2.3)
-- **INTERACTION CONTROLS**: Repositioned to bottom-left of viewer area
-- **LIGHTING CONTROLS**: Repositioned to top-right of viewer area with compact design
+### Interface Layout Updates (v2.3+)
+- **INTERACTION CONTROLS**: Repositioned to bottom-left of viewer area with "INTERACTION" header
+- **VIEW STATUS**: Renamed from "VIEWER STATS" with "VIEW" header for compactness
+- **LIGHTING CONTROLS**: Repositioned to top-right of viewer area with "LIGHTING" header and mode toggle
 - **Responsive Design**: Both panels adapt to page width changes with breakpoints
 - **Z-index**: Proper layering to ensure visibility over 3D content
 
@@ -417,6 +419,37 @@ safeSetValue('linePosY', state.guideLine.posY);
 - **Container Optimization**: Overall LIGHTING CONTROLS box reduced to 230px width for perfect left/right border symmetry
 - **Responsive Updates**: All breakpoints updated to maintain proper proportions across screen sizes
 - **Impact**: Compact, intuitive lighting interface with professional appearance and improved usability
+
+### Advanced Lighting Modes System (v2.5+)
+- **Issue**: Users needed both simple positioning and advanced directional lighting control
+- **Solution**: Implemented dual-mode lighting system with dedicated Basic and Complex mode buttons
+- **New Features**:
+  - **Dedicated Mode Buttons**: Two separate buttons in title bar for "BASIC" and "COMPLEX" modes
+  - **State Management**: `lightingMode: 'basic'` state variable tracks current mode
+  - **Basic Mode**: Simple light positioning without rotation or targeting (default behavior)
+  - **Complex Mode**: Advanced features with icon rotation and light targeting
+    - **Icon Rotation**: Light icons rotate based on vertical position in pad
+    - **Left Icon**: Rotates 0° to 90° clockwise as moved from top to bottom
+    - **Right Icon**: Rotates 0° to -90° counter-clockwise as moved from top to bottom
+    - **Light Targeting**: Directional lights target specific Y-coordinates based on icon position
+    - **Target Calculation**: `targetY = (0.5 - verticalPercent) * 10` maps position to world coordinates
+  - **Mode Switching**: Automatic reset of rotations and targets when switching to Basic mode
+- **Button Design & Layout**: 
+  - **Dual Buttons**: COMPLEX (red) and BASIC (green) buttons positioned in title bar
+  - **Precise Positioning**: COMPLEX button at `right: 68px`, BASIC at `right: 10px` with 10px gap between
+  - **Color-coded States**: 
+    - **BASIC Selected**: Green background (`#4CAF50`) with green hover glow
+    - **COMPLEX Selected**: Red background (`#ff6b6b`) with red hover glow
+    - **Unselected**: Grey background (`#ccc`) with reduced opacity (0.6)
+  - **Equal Padding**: `4px` on all sides for consistent button appearance
+  - **Responsive Design**: Auto-width based on content with consistent 18px height
+- **JavaScript Architecture**:
+  - **Separate Event Handlers**: `basicModeButton` and `complexModeButton` click events
+  - **`updateLightingModeButtons()`**: Function manages visual state and color transitions
+  - **Enhanced `makeDraggable()`**: Checks `lightingMode` state for conditional behavior
+  - **Initialization**: Button states set on application startup
+- **Light Targets**: Each directional light has dedicated Three.js Object3D target for precise aiming
+- **Impact**: Provides intuitive, color-coded mode selection with clear visual feedback and precise 10px spacing
 
 ## Key Functions Reference
 
@@ -490,7 +523,7 @@ safeSetValue('linePosY', state.guideLine.posY);
 10. **Test deployment**: Use `npm run deploy` to test GitHub Pages deployment
 11. **Test control schemes**: Verify both Standard and Legacy interaction modes work correctly
 12. **Test guide lines**: ✅ FIXED - Guide line overlay now works correctly with positioning and capture hiding
-13. **Test lighting controls**: Verify compact vertical sliders, interactive light positioning, boundary constraints, and overlap prevention
+13. **Test lighting controls**: Verify compact vertical sliders, dual lighting modes (Basic/Complex), icon rotation in Complex mode, light targeting, and boundary constraints
 14. **Validate guide line initialization**: Ensure all guide line controls sync properly with state values
 15. **Test responsive thickness**: Verify guide line thickness scales properly with viewport
 
@@ -539,6 +572,8 @@ safeSetValue('linePosY', state.guideLine.posY);
 14. **Test responsive units**: Verify viewport-based thickness scaling works across devices
 15. **Validate state synchronization**: Ensure UI controls always match internal state values
 16. **Test lighting controls layout**: Verify perfect alignment of vertical sliders with positioning area, proper label placement, and optimal container sizing
+17. **Test lighting mode switching**: Verify dedicated BASIC/COMPLEX buttons, color-coded selection states, icon rotation behavior, target reset functionality, and precise 10px button spacing
+18. **Test button interactions**: Verify green/red hover glows, selected state colors (green for BASIC, red for COMPLEX), and grey unselected states
 
 ## Guide Line Controls Configuration (v2.4+)
 

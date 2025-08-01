@@ -15,7 +15,7 @@
             </div>
             <div class="info-panel">
                 <div id="info" class="info-display">
-                    <h4>VIEW STATUS</h4>
+                    <h4>VIEW</h4>
                     <p><b>Camera Position:</b> (0, 0, 5)</p>
                     <!-- SUNSET: Camera Rotation display removed -->
                     <!-- <p><b>Camera Rotation:</b> (0, 0, 0)</p> -->
@@ -25,7 +25,7 @@
                 </div>
             </div>
             <div id="instructions" class="info-display instructions-display">
-                <h4>INTERACTION CONTROLS</h4>
+                <h4>INTERACTION</h4>
                 <div id="standard-instructions">
                     <p><b>Left-click + Drag:</b> Rotate Model</p>
                     <p><b>Right-click + Drag:</b> Pan Camera</p>
@@ -40,7 +40,11 @@
                 </div>
             </div>
             <div id="light-controls" class="info-display">
-                <h4>LIGHTING CONTROLS</h4>
+                <div class="title-container">
+                    <h4>LIGHTING</h4>
+                    <button id="complexModeButton" class="button small">COMPLEX</button>
+                    <button id="basicModeButton" class="button small">BASIC</button>
+                </div>
                 <div class="lighting-controls-container">
                     <div class="light-slider-container left-slider">
                         <input type="range" id="directionalLight" class="vertical-slider" min="0" max="2" step="0.1" value="0.6" orient="vertical">

@@ -498,7 +498,66 @@
             right: 10px;
         }
 
-        .guide-line-overlay {
+        .title-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+            /* Make it span full width of parent including padding */
+            width: calc(100% + 30px); /* 100% of content area + 15px left + 15px right padding */
+            margin-left: -15px; /* Pull it left by parent's left padding */
+            padding: 0 15px; /* Add back padding to its own content */
+            position: relative;
+        }
+
+        .title-container h4 {
+            margin: 0;
+        }
+
+        #basicModeButton {
+            width: auto; /* Auto width based on content */
+            height: 18px; /* Slightly taller than title */
+            padding: 4px 4px; /* Equal padding all sides for square borders */
+            font-size: 10px; /* Back to correct text size */
+            font-weight: 600;
+            /* Ensure text is vertically centered within the button */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1; /* Reset line-height for precise control */
+            position: absolute;
+            right: 10px; /* Match the gap from top of button to control box */
+            top: calc(50% - 1px); /* Center vertically in container, nudged up 1px */
+            transform: translateY(-50%); /* Adjust to true center */
+        }
+
+        #complexModeButton {
+            width: auto; /* Auto width based on content */
+            height: 18px; /* Same height as main button */
+            padding: 4px 4px; /* Equal padding all sides for square borders */
+            font-size: 10px; /* Same text size */
+            font-weight: 600;
+            /* Ensure text is vertically centered within the button */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1; /* Reset line-height for precise control */
+            position: absolute;
+            right: 68px; /* Right edge 10px from left edge of BASIC button */
+            top: calc(50% - 1px); /* Same vertical position */
+            transform: translateY(-50%); /* Adjust to true center */
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24); /* Red background */
+        }
+
+        #complexModeButton:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4); /* Red glow on hover */
+        }
+
+        #basicModeButton:hover {
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4); /* Green glow on hover */
+        }
+
+         .guide-line-overlay {
             position: absolute;
             top: 0;
             left: 0;

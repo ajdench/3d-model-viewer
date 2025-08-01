@@ -11,7 +11,7 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 ### 	🎮 Interactive Controls
 - **Mouse Controls**: Left-click orbits the camera, right-click pans the camera.
 - **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. Supports both slider and click-and-drag adjustments, and is excluded from image captures.
-- **Real-time View Status**: Live display of camera position, model rotation, zoom level, and current model
+- **Real-time View**: Live display of camera position, model rotation, zoom level, and current model
 - **Precision Controls**: Sliders with editable number inputs for exact positioning
 - **One-click Reset**: Separate reset buttons for camera and model
 - **Focus Function**: F key automatically centers and focuses the model on screen
@@ -31,6 +31,7 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
   - **Vertical Sliders**: For intuitive control of left and right directional light intensity.
   - **Interactive Light Pad**: A 2D pad for visually positioning the lights.
   - **Ambient Light Control**: A dedicated slider for adjusting the overall ambient light.
+  - **Dual Lighting Modes**: Switch between Basic (simple positioning) and Complex (icon rotation and light targeting) modes.
 - **Live Preview**: Instant visual feedback for all material changes
 
 ### 	📁 Model Loading System
@@ -61,7 +62,7 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 ### Simplified Control Scheme
 - **Unified Mouse Controls**: Streamlined interaction model with left-click always rotating the model
 - **Camera Rotation Controls Removed**: Eliminated complex camera rotation sliders to focus on model manipulation
-- **VIEW STATUS Panel**: Renamed from "VIEWER STATS" with cleaner information display
+- **VIEW Panel**: Renamed from "VIEWER STATS" with cleaner information display
 - **Interface Layout**: Repositioned control panels for better user experience
 
 ### Enhanced User Experience

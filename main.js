@@ -14,6 +14,7 @@ let state = {
     currentModelType: 'Default Torus Knot',
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
     controlScheme: 'standard', // 'standard' or 'legacy'
+    lightingMode: 'basic', // 'basic' or 'complex'
     guideLine: {
         thickness: 5,
         color: '#CCCCCC',
@@ -81,6 +82,29 @@ function safeAddEventListener(id, event, handler) {
         el.addEventListener(event, handler);
     } else {
         console.warn(`Element with ID '${id}' not found for safeAddEventListener.`);
+    }
+}
+
+function updateLightingModeButtons() {
+    const basicButton = document.getElementById('basicModeButton');
+    const complexButton = document.getElementById('complexModeButton');
+    
+    if (basicButton && complexButton) {
+        if (state.lightingMode === 'basic') {
+            // BASIC selected - green
+            basicButton.style.opacity = '1';
+            basicButton.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+            // COMPLEX unselected - grey
+            complexButton.style.opacity = '0.6';
+            complexButton.style.background = 'linear-gradient(45deg, #ccc, #999)';
+        } else {
+            // COMPLEX selected - red
+            complexButton.style.opacity = '1';
+            complexButton.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5a24)';
+            // BASIC unselected - grey
+            basicButton.style.opacity = '0.6';
+            basicButton.style.background = 'linear-gradient(45deg, #ccc, #999)';
+        }
     }
 }
 
@@ -1318,6 +1342,25 @@ function setupControls() {
         }
     });
 
+    // Basic mode button
+    safeAddEventListener('basicModeButton', 'click', () => {
+        state.lightingMode = 'basic';
+        updateLightingModeButtons();
+        // Reset icon rotations and light targets
+        const leftLightIcon = document.getElementById('left-light-icon');
+        const rightLightIcon = document.getElementById('right-light-icon');
+        leftLightIcon.style.transform = 'translate(-50%, -50%)';
+        rightLightIcon.style.transform = 'translate(-50%, -50%) scaleX(-1)';
+        state.lights.directional.target.position.set(0, 0, 0);
+        state.lights.directionalRight.target.position.set(0, 0, 0);
+    });
+
+    // Complex mode button
+    safeAddEventListener('complexModeButton', 'click', () => {
+        state.lightingMode = 'complex';
+        updateLightingModeButtons();
+    });
+
     // Guide Line controls
     syncSliderNumber('lineThickness', 'lineThicknessNum');
     syncSliderNumber('lineTransparency', 'lineTransparencyNum');
@@ -1371,20 +1414,15 @@ function setupLightControls() {
 
     if (!lightPad || !leftLightIcon || !rightLightIcon) return;
 
-    // Get fresh boundaries each time we need them
     const getLightPadRect = () => lightPad.getBoundingClientRect();
 
-    // Initial positions (set from default light positions)
-    // Map 3D world coordinates to 2D pad coordinates
     const mapToPad = (lightPos) => {
         const rect = getLightPadRect();
-        // Normalize world coordinates (e.g., from -10 to 10) to a 0-1 range
         const x = (lightPos.x + 10) / 20;
         const y = (lightPos.y + 10) / 20;
-        // Convert to pad coordinates
         return {
             x: x * rect.width,
-            y: (1 - y) * rect.height // Invert Y-axis for screen coordinates
+            y: (1 - y) * rect.height
         };
     };
 
@@ -1393,19 +1431,16 @@ function setupLightControls() {
         icon.style.top = `${pos.y}px`;
     };
 
-    // Function to check if two icons would overlap
     const checkOverlap = (pos1, pos2, minDistance = 30) => {
         const dx = pos1.x - pos2.x;
         const dy = pos1.y - pos2.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance < minDistance;
+        return Math.sqrt(dx * dx + dy * dy) < minDistance;
     };
 
-    // Initialize positions
     setIconPosition(leftLightIcon, mapToPad(state.lights.directional.position));
     setIconPosition(rightLightIcon, mapToPad(state.lights.directionalRight.position));
 
-    function makeDraggable(icon, light, otherIcon) {
+    function makeDraggable(icon, light, otherIcon, iconSide) {
         let isDragging = false;
 
         icon.addEventListener('mousedown', (e) => {
@@ -1417,52 +1452,54 @@ function setupLightControls() {
             if (!isDragging) return;
 
             const lightPadRect = getLightPadRect();
-            
-            // Get mouse position relative to the light pad
             let x = e.clientX - lightPadRect.left;
             let y = e.clientY - lightPadRect.top;
 
-            // Clamp position within the pad boundaries with icon size margin
-            const iconSize = 20; // Approximate icon size
+            const iconSize = 20;
             const margin = iconSize / 2;
             x = Math.max(margin, Math.min(lightPadRect.width - margin, x));
             y = Math.max(margin, Math.min(lightPadRect.height - margin, y));
 
-            // Check for overlap with other icon
             const otherIconRect = otherIcon.getBoundingClientRect();
             const otherIconPadPos = {
                 x: otherIconRect.left - lightPadRect.left + iconSize / 2,
                 y: otherIconRect.top - lightPadRect.top + iconSize / 2
             };
 
-            const newPos = { x, y };
-            if (checkOverlap(newPos, otherIconPadPos)) {
-                // Adjust position to avoid overlap
-                const dx = newPos.x - otherIconPadPos.x;
-                const dy = newPos.y - otherIconPadPos.y;
+            if (checkOverlap({ x, y }, otherIconPadPos)) {
+                const dx = x - otherIconPadPos.x;
+                const dy = y - otherIconPadPos.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance > 0) {
-                    const minDistance = 30;
-                    const scale = minDistance / distance;
+                    const scale = 30 / distance;
                     x = otherIconPadPos.x + dx * scale;
                     y = otherIconPadPos.y + dy * scale;
-                    
-                    // Re-clamp after adjustment
                     x = Math.max(margin, Math.min(lightPadRect.width - margin, x));
                     y = Math.max(margin, Math.min(lightPadRect.height - margin, y));
                 }
             }
 
-            // Update icon position
             setIconPosition(icon, { x, y });
 
-            // Map 2D pad coordinates back to 3D world coordinates
             const worldX = (x / lightPadRect.width) * 20 - 10;
             const worldY = (1 - (y / lightPadRect.height)) * 20 - 10;
-
-            // Update the light's position
             light.position.x = worldX;
             light.position.y = worldY;
+
+            if (state.lightingMode === 'complex') {
+                const verticalPercent = y / lightPadRect.height;
+                let rotation = (iconSide === 'left') 
+                    ? verticalPercent * 90  // Left icon: rotates 0 -> 90 deg (clockwise)
+                    : verticalPercent * -90; // Right icon: rotates 0 -> -90 deg (anti-clockwise)
+
+                icon.style.transform = `translate(-50%, -50%) rotate(${rotation}deg) ${icon.classList.contains('flipped') ? 'scaleX(-1)' : ''}`;
+
+                const targetY = (0.5 - verticalPercent) * 10;
+                light.target.position.y = targetY;
+            } else {
+                icon.style.transform = `translate(-50%, -50%) ${icon.classList.contains('flipped') ? 'scaleX(-1)' : ''}`;
+                light.target.position.set(0, 0, 0);
+            }
         });
 
         window.addEventListener('mouseup', () => {
@@ -1471,8 +1508,8 @@ function setupLightControls() {
         });
     }
 
-    makeDraggable(leftLightIcon, state.lights.directional, rightLightIcon);
-    makeDraggable(rightLightIcon, state.lights.directionalRight, leftLightIcon);
+    makeDraggable(leftLightIcon, state.lights.directional, rightLightIcon, 'left');
+    makeDraggable(rightLightIcon, state.lights.directionalRight, leftLightIcon, 'right');
 }
 
 // ----------------------------------------------------------------
@@ -1522,10 +1559,18 @@ function initThreeJS() {
     state.lights.directional.castShadow = false;
     state.scene.add(state.lights.directional);
 
+    // Create a target for the left light
+    state.lights.directional.target = new THREE.Object3D();
+    state.scene.add(state.lights.directional.target);
+
     state.lights.directionalRight = new THREE.DirectionalLight(0xffffff, 0.0);
     state.lights.directionalRight.position.set(-5, 5, 5);
     state.lights.directionalRight.castShadow = false;
     state.scene.add(state.lights.directionalRight);
+
+    // Create a target for the right light
+    state.lights.directionalRight.target = new THREE.Object3D();
+    state.scene.add(state.lights.directionalRight.target);
     
     // Create initial model
     createModel('default');
@@ -1548,6 +1593,7 @@ async function initializeViewer() {
         setupLightControls();
         loadPresetsList();
         updateControlInstructions(); // Call initially to set correct instructions
+        updateLightingModeButtons(); // Initialize button states
         setupMouseControls(); // Call here after DOM is ready
         
         // Initialize guide line controls to match state
