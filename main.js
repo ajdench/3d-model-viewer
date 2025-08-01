@@ -15,9 +15,9 @@ let state = {
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
     controlScheme: 'standard', // 'standard' or 'legacy'
     guideLine: {
-        thickness: 0.05,
-        color: '#FF0000',
-        transparency: 1.0,
+        thickness: 0.01,
+        color: '#CCCCCC',
+        transparency: 0.5,
         angle: 0,
         posY: 50 // New: Vertical position (0-100%)
     }
@@ -250,9 +250,15 @@ function handleFileUpload(file) {
 // ----------------------------------------------------------------
 function handleMouseDown(e) {
     mouseControls.isDragging = true;
-    mouseControls.isCtrlDrag = e.ctrlKey;
+    // SUNSET: isCtrlDrag removed - no longer needed since Ctrl+Click functionality sunset
+    // mouseControls.isCtrlDrag = e.ctrlKey;
     mouseControls.previousMousePosition = { x: e.clientX, y: e.clientY };
 
+    // SUNSET: Control schemes now identical - both use Left=Model Rotate, Right=Pan Camera
+    mouseControls.isLeftButton = e.button === 0; // Left for Model Rotate
+    mouseControls.isRightButton = e.button === 2; // Right for Pan Camera
+    
+    /* SUNSET: Previous control scheme differences
     if (state.controlScheme === 'standard') {
         mouseControls.isLeftButton = e.button === 0; // Left for Orbit or Model Rotate
         mouseControls.isRightButton = e.button === 2; // Right for Pan
@@ -260,6 +266,7 @@ function handleMouseDown(e) {
         mouseControls.isLeftButton = e.button === 0; // Left for Model Rotate
         mouseControls.isRightButton = e.button === 2; // Right for Camera Orbit
     }
+    */
 }
 
 function handleMouseMove(e) {
@@ -270,8 +277,10 @@ function handleMouseMove(e) {
         y: e.clientY - mouseControls.previousMousePosition.y
     };
 
-    // Ctrl+Drag for model rotation
-    if (mouseControls.isCtrlDrag && mouseControls.isLeftButton && state.model) {
+    // SUNSET: Ctrl+Drag functionality removed - now left-click always rotates model
+    // Both control schemes now use the same simplified behavior
+    if (mouseControls.isLeftButton && state.model) {
+        // Left click: Rotate model (was previously Ctrl+Left or Legacy Left)
         const rotSpeed = 0.005;
 
         // Get camera's local right and up vectors in world space
@@ -288,41 +297,24 @@ function handleMouseMove(e) {
         state.model.quaternion.premultiply(horizontalRot);
         state.model.quaternion.premultiply(verticalRot);
 
-    } else if (state.controlScheme === 'standard') {
-        if (mouseControls.isLeftButton) {
-            // Left click: Orbit camera
-            const spherical = new THREE.Spherical();
-            spherical.setFromVector3(state.camera.position);
-            spherical.theta -= deltaMove.x * 0.01;
-            spherical.phi += deltaMove.y * 0.01;
-            spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-            state.camera.position.setFromSpherical(spherical);
-            state.camera.lookAt(0, 0, 0);
-        } else if (mouseControls.isRightButton) {
-            // Right click: Pan camera
-            const panSpeed = 0.01;
-            const vector = new THREE.Vector3(deltaMove.x * panSpeed, -deltaMove.y * panSpeed, 0);
-            vector.applyQuaternion(state.camera.quaternion);
-            state.camera.position.add(vector);
-        }
-    } else { // legacy
-        if (mouseControls.isLeftButton) {
-            // Left click: Rotate model
-            if (state.model) {
-                state.model.rotation.y += deltaMove.x * 0.01;
-                state.model.rotation.x += deltaMove.y * 0.01;
-            }
-        } else if (mouseControls.isRightButton) {
-            // Right click: Orbit camera
-            const spherical = new THREE.Spherical();
-            spherical.setFromVector3(state.camera.position);
-            spherical.theta -= deltaMove.x * 0.01;
-            spherical.phi += deltaMove.y * 0.01;
-            spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-            state.camera.position.setFromSpherical(spherical);
-            state.camera.lookAt(0, 0, 0);
-        }
+    } else if (mouseControls.isRightButton) {
+        // Right click: Pan camera (same for both control schemes)
+        const panSpeed = 0.01;
+        const vector = new THREE.Vector3(deltaMove.x * panSpeed, -deltaMove.y * panSpeed, 0);
+        vector.applyQuaternion(state.camera.quaternion);
+        state.camera.position.add(vector);
     }
+    
+    /* SUNSET: Camera orbit functionality removed
+    // Previous standard mode camera orbit:
+    const spherical = new THREE.Spherical();
+    spherical.setFromVector3(state.camera.position);
+    spherical.theta -= deltaMove.x * 0.01;
+    spherical.phi += deltaMove.y * 0.01;
+    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+    state.camera.position.setFromSpherical(spherical);
+    state.camera.lookAt(0, 0, 0);
+    */
     
     mouseControls.previousMousePosition = { x: e.clientX, y: e.clientY };
     updateCameraInfo();
@@ -370,17 +362,19 @@ function updateCameraInfo() {
         safeSetValue('posYNum', formatNumber(pos.y));
         safeSetValue('posZNum', formatNumber(pos.z));
         
-        // Update camera rotation controls
+        // SUNSET: Camera rotation controls - commented out but calculations preserved
         const rotXDeg = radToDeg(rot.x);
         const rotYDeg = radToDeg(rot.y);
         const rotZDeg = radToDeg(rot.z);
         
+        /*
         safeSetValue('rotX', Math.round(rotXDeg));
         safeSetValue('rotY', Math.round(rotYDeg));
         safeSetValue('rotZ', Math.round(rotZDeg));
         safeSetValue('rotXNum', Math.round(rotXDeg));
         safeSetValue('rotYNum', Math.round(rotYDeg));
         safeSetValue('rotZNum', Math.round(rotZDeg));
+        */
         
         // Update model rotation controls
         const modelRotXDeg = radToDeg(modelRot.x);
@@ -403,13 +397,14 @@ function updateCameraInfo() {
         const infoEl = document.getElementById('info');
         if (infoEl) {
             infoEl.innerHTML = `
-                <h4>VIEWER STATS</h4>
+                <h4>VIEW STATUS</h4>
                 <p><b>Camera Position:</b> (${formatNumber(pos.x)}, ${formatNumber(pos.y)}, ${formatNumber(pos.z)})</p>
-                <p><b>Camera Rotation:</b> (${formatNumber(rotXDeg)}°, ${formatNumber(rotYDeg)}°, ${formatNumber(rotZDeg)}°)</p>
                 <p><b>Model Rotation:</b> (${formatNumber(modelRotXDeg)}°, ${formatNumber(modelRotYDeg)}°, ${formatNumber(modelRotZDeg)}°)</p>
                 <p><b>Zoom:</b> ${formatNumber(zoom)}</p>
                 <p><b>Model:</b> ${state.currentModelType}</p>
             `;
+            // SUNSET: Camera Rotation display removed from VIEW STATUS
+            // <p><b>Camera Rotation:</b> (${formatNumber(rotXDeg)}°, ${formatNumber(rotYDeg)}°, ${formatNumber(rotZDeg)}°)</p>
         }
     }
 }
@@ -950,9 +945,10 @@ function setupControls() {
     syncSliderNumber('posX', 'posXNum');
     syncSliderNumber('posY', 'posYNum');
     syncSliderNumber('posZ', 'posZNum');
-    syncSliderNumber('rotX', 'rotXNum');
-    syncSliderNumber('rotY', 'rotYNum');
-    syncSliderNumber('rotZ', 'rotZNum');
+    // SUNSET: Camera rotation controls - commented out but functions preserved
+    // syncSliderNumber('rotX', 'rotXNum');
+    // syncSliderNumber('rotY', 'rotYNum');
+    // syncSliderNumber('rotZ', 'rotZNum');
     syncSliderNumber('modelRotX', 'modelRotXNum');
     syncSliderNumber('modelRotY', 'modelRotYNum');
     syncSliderNumber('modelRotZ', 'modelRotZNum');
@@ -977,6 +973,8 @@ function setupControls() {
         state.camera.position.z = parseFloat(e.target.value);
     });
     
+    // SUNSET: Camera rotation event listeners - commented out but functions preserved
+    /*
     safeAddEventListener('rotX', 'input', (e) => {
         state.camera.rotation.x = degToRad(parseFloat(e.target.value));
     });
@@ -988,13 +986,14 @@ function setupControls() {
     safeAddEventListener('rotZ', 'input', (e) => {
         state.camera.rotation.z = degToRad(parseFloat(e.target.value));
     });
+    */
     
     safeAddEventListener('resetCamera', 'click', () => {
         state.camera.position.set(0, 0, 5);
         state.camera.rotation.set(0, 0, 0);
         
-        // Reset camera controls
-        ['posX', 'posY', 'posXNum', 'posYNum', 'rotX', 'rotY', 'rotZ', 'rotXNum', 'rotYNum', 'rotZNum'].forEach(id => {
+        // Reset camera controls (rotation controls sunset but kept in array for reference)
+        ['posX', 'posY', 'posXNum', 'posYNum' /*'rotX', 'rotY', 'rotZ', 'rotXNum', 'rotYNum', 'rotZNum'*/].forEach(id => {
             if (id.includes('posZ') || id.includes('posZNum')) {
                 safeSetValue(id, 5);
             } else {
@@ -1164,10 +1163,11 @@ function setupControls() {
             camera: {
                 x: state.camera.position.x,
                 y: state.camera.position.y,
-                z: state.camera.position.z,
-                rotX: state.camera.rotation.x,
-                rotY: state.camera.rotation.y,
-                rotZ: state.camera.rotation.z
+                z: state.camera.position.z
+                // SUNSET: Camera rotation no longer saved in presets
+                // rotX: state.camera.rotation.x,
+                // rotY: state.camera.rotation.y,
+                // rotZ: state.camera.rotation.z
             },
             model: {
                 rotX: state.model?.rotation.x,
@@ -1209,21 +1209,26 @@ function setupControls() {
         // Apply camera settings
         if (preset.camera) {
             state.camera.position.set(preset.camera.x, preset.camera.y, preset.camera.z);
-            state.camera.rotation.set(preset.camera.rotX || 0, preset.camera.rotY || 0, preset.camera.rotZ || 0);
+            // SUNSET: Camera rotation no longer loaded from presets
+            // state.camera.rotation.set(preset.camera.rotX || 0, preset.camera.rotY || 0, preset.camera.rotZ || 0);
             
-            // Update camera controls
+            // Update camera position controls
             safeSetValue('posX', preset.camera.x);
             safeSetValue('posY', preset.camera.y);
             safeSetValue('posZ', preset.camera.z);
             safeSetValue('posXNum', preset.camera.x);
             safeSetValue('posYNum', preset.camera.y);
             safeSetValue('posZNum', preset.camera.z);
+            
+            // SUNSET: Camera rotation UI updates removed
+            /*
             safeSetValue('rotX', Math.round(radToDeg(preset.camera.rotX || 0)));
             safeSetValue('rotY', Math.round(radToDeg(preset.camera.rotY || 0)));
             safeSetValue('rotZ', Math.round(radToDeg(preset.camera.rotZ || 0)));
             safeSetValue('rotXNum', Math.round(radToDeg(preset.camera.rotX || 0)));
             safeSetValue('rotYNum', Math.round(radToDeg(preset.camera.rotY || 0)));
             safeSetValue('rotZNum', Math.round(radToDeg(preset.camera.rotZ || 0)));
+            */
         }
         
         // Apply model settings

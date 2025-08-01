@@ -30,6 +30,7 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Lighting**: 
   - Sliders to control the intensity of ambient and directional lights.
   - An interactive 2D control pad to visually adjust the X/Y position of the directional lights.
+- **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. It remains fixed in the viewer, independent of 3D scene movements, and is excluded from image captures.
 - **Presets**: Users can save and load their own presets for camera, model, material, and lighting settings.
 - **Reset Functionality**: Buttons to reset the camera and model to their default states.
 - **Responsive Viewer**: The 3D viewer resizes to fit its container.
@@ -48,8 +49,8 @@ This project is a self-contained 3D model viewer that has been refactored to run
   - **Option 3 (Complex):** Enhance the 2D control pad by adding separate Z-axis (depth) sliders for each light, providing full 3D positional control.
 
 - **Guide Line Overlay (2D):**
-  - **Option 1: Single HTML `div` with CSS Transforms (Recommended for simple lines)**
-    - **Concept:** Use a `div` element positioned absolutely over the viewer. The line itself is another `div` inside, styled and transformed using CSS (`rotate`, `scaleY` for thickness, `background-color`, `opacity`).
+  - **Option 1: Single HTML `div` with CSS Transforms (Current Implementation)**
+    - **Concept:** Uses a `div` element positioned absolutely over the viewer. The line itself is another `div` inside, styled and transformed using CSS (`rotate`, `scaleY` for thickness, `background-color`, `opacity`).
     - **Pros:** Pure CSS/HTML, true overlay (fixed to screen), relatively simple, easy capture exclusion (toggle `display`).
     - **Cons:** Limited to straight lines.
   - **Option 2: HTML `canvas` Element with 2D Drawing**

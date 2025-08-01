@@ -65,18 +65,17 @@ The application now uses Vite for development with a modular structure:
 - **Upload System**: Robust callback-based system with timeout and error handling
 
 #### Mouse Controls (`setupMouseControls()`)
-**Standard Mode (Camera-centric)**:
-- **Left Click + Drag**: Orbits camera around model using spherical coordinates
-- **Ctrl + Left Click + Drag**: Rotates the 3D model using camera-relative axes
+**Unified Control Scheme (v2.3+)**:
+- **Left Click + Drag**: Rotates the 3D model using camera-relative axes
 - **Right Click + Drag**: Pans camera position
 - **Mouse Wheel**: Zoom in/out by scaling camera distance
 
-**Legacy Mode (Model-centric)**:
-- **Left Click + Drag**: Rotates the 3D model
-- **Right Click + Drag**: Orbits camera around model using spherical coordinates
-- **Mouse Wheel**: Zoom in/out by scaling camera distance
+**SUNSET Features (v2.3+)**:
+- ~~**Camera Orbit Controls**: Removed - camera no longer orbits via mouse~~
+- ~~**Ctrl + Left Click + Drag**: Removed - left-click now always rotates model~~
+- ~~**Control Scheme Differences**: Both Standard and Legacy modes now identical~~
 
-**Both Modes**:
+**Legacy Documentation (pre-v2.3)**:
 - **Context Menu**: Disabled to prevent interference
 - **F Key**: Focus model on screen with automatic camera positioning
 
@@ -162,6 +161,8 @@ The application now uses Vite for development with a modular structure:
 - **Button Groups**: Preset controls use consistent button-group styling
 - **Guide Line CSS**: Separate positioning (top) and transformation (rotate) properties
 - **Transform Order**: Apply CSS transforms in correct sequence to avoid conflicts
+- **Responsive Units**: Use viewport units (vh) for thickness instead of fixed pixels
+- **State Synchronization**: Always initialize UI controls to match state values
 
 ## Adding New Features
 
@@ -196,6 +197,13 @@ Extend the capture functionality by:
 6. Implementing custom background options for captures
 
 ## Troubleshooting & Known Issues
+
+### Camera Control Migration (v2.3+)
+**Symptom**: Looking for camera rotation controls or Ctrl+Left-click not working
+**Solution**: These features were sunset in v2.3:
+- Camera rotation controls removed from UI - use camera position controls instead
+- Left-click + drag now always rotates the model (no Ctrl needed)
+- For camera positioning, use the Position X/Y/Z sliders or right-click + drag to pan
 
 ### Loading Problems
 **Symptom**: Application stuck at "Loading 3D Viewer..." screen with spinning wheel
@@ -260,27 +268,51 @@ Extend the capture functionality by:
 **Current Behavior**: Only FILE button available for downloading PNG captures
 **Benefits**: More reliable across all browsers and environments
 
-### Guide Line System Issues
-**Symptom**: Guide line positioning or dragging not working correctly
-**Common Causes & Solutions**:
-1. **CSS Transform Conflicts**: Multiple transform properties overwriting each other
-   - Solution: Use separate CSS properties for positioning (top) and rotation (transform)
-   - Ensure `updateGuideLine()` applies properties in correct order
-2. **Vertical Position Mapping**: Percentage values not mapping correctly to screen coordinates
-   - Solution: Verify `state.guideLine.posY` maps correctly to CSS `top` percentage
-   - Check that slider values (0-100) match expected behavior
-3. **Event Handler Conflicts**: Multiple event listeners or missing event cleanup
-   - Solution: Ensure proper event listener setup in `setupControls()`
-   - Verify slider-number sync is working for guide line controls
+### Guide Line System Issues (RESOLVED)
+**Previous Issues**: Guide line positioning and control synchronization problems
+**Root Causes Identified & Fixed**:
+1. **Missing Vertical Position Control** ✅ FIXED
+   - Problem: No `syncSliderNumber('linePosY', 'linePosYNum')` call
+   - Solution: Added proper slider-number synchronization
+2. **Missing Event Handler** ✅ FIXED
+   - Problem: No event listener for `linePosY` slider changes
+   - Solution: Added `safeAddEventListener('linePosY', 'input', callback)`
+3. **Thickness Value Mismatch** ✅ FIXED
+   - Problem: State had `thickness: 5` but HTML expected `0.05` (range 0.01-1)
+   - Solution: Updated state initialization to `thickness: 0.05`
+4. **Incorrect Thickness Units** ✅ FIXED
+   - Problem: Using `px` units instead of responsive viewport units
+   - Solution: Changed to `${state.guideLine.thickness * 100}vh`
+5. **Missing UI Initialization** ✅ FIXED
+   - Problem: Guide line controls not initialized to match state values
+   - Solution: Added proper `safeSetValue()` calls in `initializeViewer()`
 
-### GEMINI CLI Loop Issue
-**Symptom**: GEMINI CLI gets stuck in endless loop trying to fix guide line functionality
-**Cause**: String matching failures in edit operations due to complex multi-line replacements
-**Solutions**:
-1. **Stop the Loop**: Interrupt GEMINI CLI session and restart
-2. **Manual Fixes**: Apply guide line fixes manually using direct file editing
-3. **Simpler Edits**: Break complex edits into smaller, single-line changes
-4. **Alternative Tools**: Use Claude Code for complex guide line debugging instead
+### GEMINI CLI Loop Issue (RESOLVED)
+**Previous Problem**: GEMINI CLI stuck in endless loop trying to fix guide line functionality
+**Root Cause**: Multiple interconnected issues in guide line system caused edit failures
+**Resolution**: All guide line issues have been systematically identified and fixed
+
+**What Was Fixed**:
+```javascript
+// 1. Added missing slider sync
+syncSliderNumber('linePosY', 'linePosYNum');
+
+// 2. Added missing event handler
+safeAddEventListener('linePosY', 'input', (e) => {
+    state.guideLine.posY = parseFloat(e.target.value);
+    updateGuideLine();
+});
+
+// 3. Fixed thickness value and units
+thickness: 0.05, // Changed from 5
+guideLine.style.height = `${state.guideLine.thickness * 100}vh`;
+
+// 4. Added proper UI initialization
+safeSetValue('lineThickness', state.guideLine.thickness);
+safeSetValue('linePosY', state.guideLine.posY);
+```
+
+**Prevention**: Guide line system now has comprehensive error handling and proper initialization
 
 ### Scaling System Issues (v2.1)
 **Symptom**: Models appear incorrectly sized after reload or multiple uploads
@@ -299,24 +331,56 @@ Extend the capture functionality by:
 3. **File Type Validation**: Pre-validates file types before processing
 4. **Drop Effect**: Added proper dropEffect for better UX
 
-## Recent Critical Fixes (v2.0)
+## Major Changes and Sunset Features (v2.3)
 
-### Fixed Loading System
+### Camera Rotation Controls Sunset (v2.3)
+- **Change**: Removed camera rotation controls from UI and simplified mouse interactions
+- **Reason**: Streamlined user experience by focusing on model manipulation rather than camera control
+- **Impact**: 
+  - Left-click + drag now always rotates the model (was previously Ctrl+Left or Legacy mode only)
+  - Camera orbit controls removed from mouse interactions
+  - Camera rotation sliders/inputs removed from control panel
+  - Camera rotation display removed from VIEW STATUS panel
+  - Both "Standard" and "Legacy" control schemes now identical
+  - Ctrl+Left-click functionality sunset
+- **Code**: Functions preserved but commented out for potential future restoration
+- **Migration**: Existing presets automatically ignore camera rotation data
+
+### UI Panel Updates (v2.3)
+- **VIEWER STATS** renamed to **VIEW STATUS** for clearer terminology
+- **VIEW STATUS** now displays: Camera Position, Model Rotation, Zoom, Model (camera rotation removed)
+- **Panel Layout**: Streamlined information display focusing on essential view parameters
+
+### Interface Layout Updates (v2.3)
+- **INTERACTION CONTROLS**: Repositioned to bottom-left of viewer area
+- **LIGHTING POSITION**: Repositioned to top-right of viewer area
+- **Responsive Design**: Both panels adapt to page width changes with breakpoints
+- **Z-index**: Proper layering to ensure visibility over 3D content
+
+### Guide Line Default Values (v2.3)
+- **Color**: Changed from red (#FF0000) to light gray (#CCCCCC)
+- **Thickness**: Reduced from 0.05 to 0.01 for subtler appearance
+- **Transparency**: Changed from 1.0 (opaque) to 0.5 (semi-transparent)
+- **Impact**: More professional, less intrusive guide lines by default
+
+## Recent Critical Fixes (v2.0+)
+
+### Fixed Loading System (v2.0)
 - **Issue**: Application would hang at loading screen due to CDN timing issues
 - **Fix**: Migrated to ES6 modules with npm-managed dependencies and Vite bundling
 - **Impact**: Reliable loading with no network dependencies for core libraries
 
-### Fixed Function Structure
+### Fixed Function Structure (v2.0)
 - **Issue**: Malformed code with nested function definitions causing runtime errors
-- **Fix**: Reorganized all functions to top-level scope
+- **Fix**: Reorganized all functions to top-level scope with modular organization
 - **Impact**: Proper code execution and maintainability
 
-### Fixed Material Controls
+### Fixed Material Controls (v2.0)
 - **Issue**: Material controls only worked for basic geometries, not loaded models
 - **Fix**: Implemented proper material update functions that traverse object hierarchies
 - **Impact**: Material controls now work for all model types
 
-### Fixed Model Loaders
+### Fixed Model Loaders (v2.0)
 - **Issue**: OBJ/STL loaders had broken code and incorrect material application
 - **Fix**: Completely rewrote loader functions with proper error handling
 - **Impact**: Reliable custom model loading
@@ -330,6 +394,12 @@ Extend the capture functionality by:
 - **Issue**: Model scaling malfunctioned on reload due to cumulative transformations
 - **Fix**: Added proper transform reset and enhanced bounding box validation
 - **Impact**: Consistent model scaling regardless of reload frequency or model complexity
+
+### Fixed Guide Line System (v2.2)
+- **Issue**: Guide line positioning, thickness, and control synchronization failures
+- **Root Causes**: Missing event handlers, value mismatches, incorrect units, no UI initialization
+- **Fix**: Comprehensive guide line system overhaul with proper initialization and responsive units
+- **Impact**: Fully functional guide line overlay with smooth positioning and capture integration
 
 ## Key Functions Reference
 
@@ -364,7 +434,7 @@ Extend the capture functionality by:
 - **`focusModelOnScreen()`** (line ~492): Automatic camera positioning to focus on model
 - **`captureFrame(callback)`** (line ~525): Simplified capture function with guide line hiding
 - **`animate()`** (line ~540): Main render loop
-- **`updateGuideLine()`** (line ~546): Updates guide line overlay properties
+- **`updateGuideLine()`** (line ~511): **FIXED** - Updates guide line overlay with proper positioning, responsive thickness, and transform handling
 
 ### Section 6: Model Creation Functions (lines ~574-575)
 - **`createModel(modelType)`** (line ~576): Creates built-in geometric models
@@ -374,19 +444,19 @@ Extend the capture functionality by:
 - **`createExampleTeapot()`** (line ~761): Creates procedural Utah Teapot example
 - **`createExampleSuzanne()`** (line ~809): Creates procedural Suzanne Monkey example
 
-### Section 7: UI Setup & Control Functions (lines ~577-1255)
+### Section 7: UI Setup & Control Functions (lines ~577-1270)
 - **`syncSliderNumber(sliderId, numberId)`** (line ~580): Bidirectional slider-number synchronization
 - **`loadPresetsList()`** (line ~598): Loads saved presets into dropdown
 - **`updateControlInstructions()`** (line ~612): Updates control instruction display based on scheme
 - **`setupMouseControls()`** (line ~629): Mouse interaction handlers with scheme support
-- **`setupControls()`** (line ~646): Main UI control binding with comprehensive feature support
-- **`setupLightControls()`** (line ~1186): Interactive light positioning with draggable icons
+- **`setupControls()`** (line ~646): **ENHANCED** - Main UI control binding with comprehensive feature support including fixed guide line controls
+- **`setupLightControls()`** (line ~1371): Interactive light positioning with draggable icons
 
-### Section 8: Main Initialization Functions (lines ~1257-1355)
-- **`handleResize()`** (line ~1260): Handles window resize events
-- **`initThreeJS()`** (line ~1273): Three.js scene setup with dual lighting
-- **`initializeViewer()`** (line ~1323): Main initialization with all systems
-- **`showLoadingError(message)`** (line ~1339): Error display system
+### Section 8: Main Initialization Functions (lines ~1257-1375)
+- **`handleResize()`** (line ~1275): Handles window resize events
+- **`initThreeJS()`** (line ~1288): Three.js scene setup with dual lighting
+- **`initializeViewer()`** (line ~1514): **ENHANCED** - Main initialization with all systems including proper guide line control initialization
+- **`showLoadingError(message)`** (line ~1554): Error display system
 
 ## Development Best Practices
 
@@ -402,21 +472,23 @@ Extend the capture functionality by:
 9. **Test capture functionality**: Verify file download works in target browsers
 10. **Test deployment**: Use `npm run deploy` to test GitHub Pages deployment
 11. **Test control schemes**: Verify both Standard and Legacy interaction modes work correctly
-12. **Test guide lines**: Check guide line overlay functionality and capture hiding
+12. **Test guide lines**: ✅ FIXED - Guide line overlay now works correctly with positioning and capture hiding
 13. **Test lighting controls**: Verify interactive light positioning and dual light setup
+14. **Validate guide line initialization**: Ensure all guide line controls sync properly with state values
+15. **Test responsive thickness**: Verify guide line thickness scales properly with viewport
 
 ### AI Assistant Workflows
 **When Using GEMINI CLI**:
-- Avoid complex multi-line edits for guide line functionality
-- Use simple, single-line replacements when possible
-- Be prepared to interrupt loops and switch to manual editing
-- Test guide line CSS transforms separately from positioning
+- ✅ Guide line issues resolved - no longer causes infinite loops
+- Still use simple, single-line replacements when possible
+- Complex guide line debugging is now stable
+- Multi-line edits work better with fixed foundation
 
 **When Using Claude Code**:
-- Preferred for complex guide line system debugging
-- Better for multi-file architectural changes
-- More reliable for CSS transform troubleshooting
-- Superior for comprehensive documentation updates
+- Excellent for systematic debugging like the recent guide line fixes
+- Superior for multi-file architectural changes
+- Best for comprehensive error analysis and resolution
+- Ideal for documentation updates and function reference maintenance
 
 ### Upload System Best Practices (v2.1)
 1. **Always use callbacks**: New loader functions require onSuccess/onError callbacks
@@ -446,5 +518,6 @@ Extend the capture functionality by:
 10. **Test capture functionality**: Verify file download works in target browsers
 11. **Maintain file quality**: Ensure proper newlines at end of files for git compatibility
 12. **Validate HTML**: Check that file input accept attributes match supported formats
-13. **Avoid GEMINI CLI for complex guide line edits**: Use Claude Code for guide line system debugging
-14. **Test guide line transforms**: Verify CSS transform and positioning properties don't conflict
+13. **Guide line system is now stable**: All major guide line issues have been resolved
+14. **Test responsive units**: Verify viewport-based thickness scaling works across devices
+15. **Validate state synchronization**: Ensure UI controls always match internal state values

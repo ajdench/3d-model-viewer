@@ -1,6 +1,6 @@
 # 3D Model Viewer
 
-A professional, interactive 3D model viewer built with Three.js, now refactored to be completely self-contained for offline use. It provides complete control over camera positioning, model manipulation, and material properties. Features real-time coordinate tracking, custom model loading, and preset management.
+A professional, interactive 3D model viewer built with Three.js, designed to be completely self-contained for offline use. It provides intuitive model manipulation, camera positioning, and material properties control. Features real-time view status tracking, custom model loading, and preset management with simplified, unified controls.
 
 ![Three.js](https://img.shields.io/badge/Three.js-Managed%20via%20npm-blue)
 ![Vite](https://img.shields.io/badge/Vite-Build%20Tool-purple)
@@ -10,15 +10,18 @@ A professional, interactive 3D model viewer built with Three.js, now refactored 
 
 ### 	🎮 Interactive Controls
 - **Mouse Controls**: Left-click orbits the camera, right-click pans the camera.
-- **Real-time Coordinate Tracking**: Live display of camera and model positions
+- **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. Supports both slider and click-and-drag adjustments, and is excluded from image captures.
+- **Real-time View Status**: Live display of camera position, model rotation, zoom level, and current model
 - **Precision Controls**: Sliders with editable number inputs for exact positioning
 - **One-click Reset**: Separate reset buttons for camera and model
+- **Focus Function**: F key automatically centers and focuses the model on screen
 
 ### 	📐 Camera Management
-- **6-Axis Camera Control**: Position (X,Y,Z) and Rotation (X,Y,Z) with degree precision
-- **Dynamic Zoom**: Scroll wheel or manual control with distance-based calculation
-- **Spherical Camera Movement**: Smooth orbital navigation around models
+- **3-Axis Camera Position**: Position controls (X,Y,Z) for precise camera placement
+- **Dynamic Zoom**: Scroll wheel control with distance-based calculation
+- **Camera Panning**: Right-click drag for smooth camera movement
 - **Viewport Adaptation**: Responsive to window resizing and fullscreen mode
+- **Streamlined Interface**: Simplified controls focused on model manipulation rather than complex camera rotation
 
 ### 	🎨 Material Properties
 - **Real-time Material Editor**: Color, metalness, roughness adjustment
@@ -41,12 +44,26 @@ A professional, interactive 3D model viewer built with Three.js, now refactored 
 ### 	💾 Preset Management
 - **Save/Load System**: Store complete viewer configurations
 - **Persistent Storage**: Browser localStorage for cross-session persistence
-- **Configuration Scope**: Saves camera, model, material, and lighting settings
+- **Configuration Scope**: Saves camera position, model settings, material properties, and lighting configurations
 - **Quick Access**: Dropdown selection and manual naming
+- **Backward Compatibility**: Existing presets automatically adapt to simplified control scheme
 
 ### 	📸 Image Capture
 - **Save to File**: Capture a 2D PNG image of the current model view with a transparent background.
 - **Save to Clipboard**: *Currently disabled due to technical issues.*
+
+## 🔄 Recent Updates (v2.3)
+
+### Simplified Control Scheme
+- **Unified Mouse Controls**: Streamlined interaction model with left-click always rotating the model
+- **Camera Rotation Controls Removed**: Eliminated complex camera rotation sliders to focus on model manipulation
+- **VIEW STATUS Panel**: Renamed from "VIEWER STATS" with cleaner information display
+- **Interface Layout**: Repositioned control panels for better user experience
+
+### Enhanced User Experience
+- **Guide Line Improvements**: New default values (light gray, thinner, semi-transparent) for professional appearance
+- **Responsive Layout**: Interface elements adapt dynamically to different screen sizes
+- **Backward Compatibility**: Existing presets automatically adapt to simplified control scheme
 
 ## 	🏛️ Architecture
 
@@ -151,5 +168,3 @@ A: Check your browser's developer console for localStorage errors. Private or in
 ## 	📄 License
 
 This project is licensed under the MIT License.
-
-
