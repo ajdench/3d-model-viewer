@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
-  <script type="module" crossorigin src="/3d-model-viewer/assets/index-BRY-yFuN.js"></script>
-  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-MsYHTJmc.css">
+  <script type="module" crossorigin src="/3d-model-viewer/assets/index-CNw590kG.js"></script>
+  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-BV-D_fq-.css">
 </head>
 <body>
     <div class="container">
@@ -41,10 +41,27 @@
                 </div>
             </div>
             <div id="light-controls" class="info-display">
-                <h4>LIGHTING POSITION</h4>
-                <div class="light-pad">
-                    <div id="left-light-icon" class="light-icon">🔦</div>
-                    <div id="right-light-icon" class="light-icon flipped">🔦</div>
+                <h4>LIGHTING CONTROLS</h4>
+                <div class="lighting-controls-container">
+                    <div class="light-slider-container left-slider">
+                        <input type="range" id="directionalLight" class="vertical-slider" min="0" max="2" step="0.1" value="0.6" orient="vertical">
+                    </div>
+                    <div class="light-pad">
+                        <div id="left-light-icon" class="light-icon">🔦</div>
+                        <div id="right-light-icon" class="light-icon flipped">🔦</div>
+                        <label class="corner-label left-label">LEFT</label>
+                        <label class="corner-label right-label">RIGHT</label>
+                    </div>
+                    <div class="light-slider-container right-slider">
+                        <input type="range" id="directionalLightRight" class="vertical-slider" min="0" max="2" step="0.1" value="0.0" orient="vertical">
+                    </div>
+                </div>
+                <div class="ambient-light-controls">
+                    <label class="ambient-label">Ambient Light</label>
+                    <div class="ambient-slider-container">
+                        <input type="range" id="ambientLight" class="horizontal-slider" min="0" max="1" step="0.1" value="0.4">
+                        <input type="number" id="ambientLightNum" class="number-input-small" min="0" max="1" step="0.1" value="0.4">
+                    </div>
                 </div>
             </div>
         <div id="guideLineOverlay" class="guide-line-overlay">
@@ -271,30 +288,6 @@
                 </div>
             </div>
 
-            <div class="control-section">
-                <h3>Lighting</h3>
-                <div class="control-group">
-                    <label>Ambient Light</label>
-                    <div class="slider-container">
-                        <input type="range" id="ambientLight" class="slider-input" min="0" max="1" step="0.1" value="0.4">
-                        <input type="number" id="ambientLightNum" class="number-input" min="0" max="1" step="0.1" value="0.4">
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label>Left Directional Light</label>
-                    <div class="slider-container">
-                        <input type="range" id="directionalLight" class="slider-input" min="0" max="2" step="0.1" value="0.6">
-                        <input type="number" id="directionalLightNum" class="number-input" min="0" max="2" step="0.1" value="0.6">
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label>Right Directional Light</label>
-                    <div class="slider-container">
-                        <input type="range" id="directionalLightRight" class="slider-input" min="0" max="2" step="0.1" value="0.0">
-                        <input type="number" id="directionalLightRightNum" class="number-input" min="0" max="2" step="0.1" value="0.0">
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </body>
