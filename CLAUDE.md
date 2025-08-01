@@ -92,7 +92,7 @@ The application now uses Vite for development with a modular structure:
 ### File Structure
 ```
 /
-├── index.html          # HTML structure and UI elements with complete controls
+├── index.html         # HTML structure and UI elements with complete controls
 ├── main.js            # Main JavaScript application logic with ES6 modules (separated from HTML)
 ├── style.css          # CSS styles separated for better organization
 ├── package.json       # Dependencies (Three.js r178, Vite, gh-pages) with npm scripts
