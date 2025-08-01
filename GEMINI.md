@@ -42,6 +42,21 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - The mouse controls were updated to remove middle-click functionality and reassign right-click to panning.
 - A right directional light was added to provide more control over model lighting.
 
+### Lighting Controls Redesign (v2.4)
+- **Issue**: Previous lighting controls were scattered across the right panel, taking up excessive space
+- **Fix**: Complete redesign of LIGHTING CONTROLS panel with compact, integrated layout
+- **New Design Features**:
+  - **Vertical Sliders**: Left and Right directional light controls positioned as vertical sliders flanking the light positioning pad
+  - **Perfect Alignment**: Sliders exactly match the height of the dark grey positioning area (150px)
+  - **Corner Labels**: LEFT and RIGHT labels positioned in bottom corners of the positioning pad with proper spacing (10px inset)
+  - **Integrated Ambient Controls**: Ambient light slider and value input positioned below the main controls
+  - **Precise Sizing**: Dark grey box width (128px) perfectly matches ambient controls width for visual consistency
+  - **Boundary Constraints**: Light icons constrained within positioning area with overlap prevention (30px minimum distance)
+  - **Dynamic Boundaries**: JavaScript recalculates positioning boundaries in real-time instead of using cached values
+- **Container Optimization**: Overall LIGHTING CONTROLS box reduced to 230px width for perfect left/right border symmetry
+- **Responsive Updates**: All breakpoints updated to maintain proper proportions across screen sizes
+- **Impact**: Compact, intuitive lighting interface with professional appearance and improved usability
+
 ### Future Development Ideas
 
 - **Advanced Lighting Controls:**

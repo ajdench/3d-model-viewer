@@ -27,6 +27,10 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 - **Real-time Material Editor**: Color, metalness, roughness adjustment
 - **Transparency Control**: Variable opacity with automatic transparent flag management
 - **Professional Lighting**: Balanced ambient and directional lighting (left and right) without harsh shadows
+- **Compact Lighting Controls**: A redesigned, compact control panel for lighting, featuring:
+  - **Vertical Sliders**: For intuitive control of left and right directional light intensity.
+  - **Interactive Light Pad**: A 2D pad for visually positioning the lights.
+  - **Ambient Light Control**: A dedicated slider for adjusting the overall ambient light.
 - **Live Preview**: Instant visual feedback for all material changes
 
 ### 	📁 Model Loading System

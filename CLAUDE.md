@@ -52,7 +52,8 @@ The application now uses Vite for development with a modular structure:
 - WebGL renderer with antialiasing, alpha channel, preserveDrawingBuffer, and high pixel ratio support
 - No explicit clear color set - uses natural transparency
 - Advanced lighting setup: ambient (0.4 intensity) + dual directional lights (left 0.6, right 0.0 default)
-- Interactive light positioning via draggable light pad interface
+- **Compact Lighting Controls**: Redesigned LIGHTING CONTROLS panel with vertical sliders flanking interactive light pad
+- Interactive light positioning via draggable light pad interface with boundary constraints and overlap prevention
 
 #### Model Loading System
 - **Built-in Models**: Torus knot (default), cube, sphere, pyramid
@@ -86,13 +87,13 @@ The application now uses Vite for development with a modular structure:
 - **Capture System**: Screenshot capture to file download with transparent backgrounds (clipboard feature removed)
 - **Guide Line System**: Overlay guide lines with customizable thickness, color, transparency, angle, and position
 - **Control Schemes**: Dual interaction modes (Standard: camera-centric, Legacy: model-centric)
-- **Advanced Lighting**: Dual directional lights with interactive positioning controls
+- **Advanced Lighting**: Compact vertical slider controls with interactive positioning pad and ambient light controls
 - **Keyboard Shortcuts**: F key for focus model on screen, Ctrl+drag for model rotation
 
 ### File Structure
 ```
 /
-├── index.html          # HTML structure and UI elements with complete controls
+├── index.html         # HTML structure and UI elements with complete controls
 ├── main.js            # Main JavaScript application logic with ES6 modules (separated from HTML)
 ├── style.css          # CSS styles separated for better organization
 ├── package.json       # Dependencies (Three.js r178, Vite, gh-pages) with npm scripts
@@ -353,7 +354,7 @@ safeSetValue('linePosY', state.guideLine.posY);
 
 ### Interface Layout Updates (v2.3)
 - **INTERACTION CONTROLS**: Repositioned to bottom-left of viewer area
-- **LIGHTING POSITION**: Repositioned to top-right of viewer area
+- **LIGHTING CONTROLS**: Repositioned to top-right of viewer area with compact design
 - **Responsive Design**: Both panels adapt to page width changes with breakpoints
 - **Z-index**: Proper layering to ensure visibility over 3D content
 
@@ -400,6 +401,21 @@ safeSetValue('linePosY', state.guideLine.posY);
 - **Root Causes**: Missing event handlers, value mismatches, incorrect units, no UI initialization
 - **Fix**: Comprehensive guide line system overhaul with proper initialization and responsive units
 - **Impact**: Fully functional guide line overlay with smooth positioning and capture integration
+
+### Lighting Controls Redesign (v2.4)
+- **Issue**: Previous lighting controls were scattered across the right panel, taking up excessive space
+- **Fix**: Complete redesign of LIGHTING CONTROLS panel with compact, integrated layout
+- **New Design Features**:
+  - **Vertical Sliders**: Left and Right directional light controls positioned as vertical sliders flanking the light positioning pad
+  - **Perfect Alignment**: Sliders exactly match the height of the dark grey positioning area (150px)
+  - **Corner Labels**: LEFT and RIGHT labels positioned in bottom corners of the positioning pad with proper spacing (10px inset)
+  - **Integrated Ambient Controls**: Ambient light slider and value input positioned below the main controls
+  - **Precise Sizing**: Dark grey box width (128px) perfectly matches ambient controls width for visual consistency
+  - **Boundary Constraints**: Light icons constrained within positioning area with overlap prevention (30px minimum distance)
+  - **Dynamic Boundaries**: JavaScript recalculates positioning boundaries in real-time instead of using cached values
+- **Container Optimization**: Overall LIGHTING CONTROLS box reduced to 230px width for perfect left/right border symmetry
+- **Responsive Updates**: All breakpoints updated to maintain proper proportions across screen sizes
+- **Impact**: Compact, intuitive lighting interface with professional appearance and improved usability
 
 ## Key Functions Reference
 
@@ -450,7 +466,7 @@ safeSetValue('linePosY', state.guideLine.posY);
 - **`updateControlInstructions()`** (line ~612): Updates control instruction display based on scheme
 - **`setupMouseControls()`** (line ~629): Mouse interaction handlers with scheme support
 - **`setupControls()`** (line ~646): **ENHANCED** - Main UI control binding with comprehensive feature support including fixed guide line controls
-- **`setupLightControls()`** (line ~1371): Interactive light positioning with draggable icons
+- **`setupLightControls()`** (line ~1371): **ENHANCED** - Interactive light positioning with boundary-constrained draggable icons, overlap prevention, and dynamic boundary calculation
 
 ### Section 8: Main Initialization Functions (lines ~1257-1375)
 - **`handleResize()`** (line ~1275): Handles window resize events
@@ -473,7 +489,7 @@ safeSetValue('linePosY', state.guideLine.posY);
 10. **Test deployment**: Use `npm run deploy` to test GitHub Pages deployment
 11. **Test control schemes**: Verify both Standard and Legacy interaction modes work correctly
 12. **Test guide lines**: ✅ FIXED - Guide line overlay now works correctly with positioning and capture hiding
-13. **Test lighting controls**: Verify interactive light positioning and dual light setup
+13. **Test lighting controls**: Verify compact vertical sliders, interactive light positioning, boundary constraints, and overlap prevention
 14. **Validate guide line initialization**: Ensure all guide line controls sync properly with state values
 15. **Test responsive thickness**: Verify guide line thickness scales properly with viewport
 
@@ -521,3 +537,4 @@ safeSetValue('linePosY', state.guideLine.posY);
 13. **Guide line system is now stable**: All major guide line issues have been resolved
 14. **Test responsive units**: Verify viewport-based thickness scaling works across devices
 15. **Validate state synchronization**: Ensure UI controls always match internal state values
+16. **Test lighting controls layout**: Verify perfect alignment of vertical sliders with positioning area, proper label placement, and optimal container sizing

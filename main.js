@@ -1371,18 +1371,20 @@ function setupLightControls() {
 
     if (!lightPad || !leftLightIcon || !rightLightIcon) return;
 
-    const lightPadRect = lightPad.getBoundingClientRect();
+    // Get fresh boundaries each time we need them
+    const getLightPadRect = () => lightPad.getBoundingClientRect();
 
     // Initial positions (set from default light positions)
     // Map 3D world coordinates to 2D pad coordinates
     const mapToPad = (lightPos) => {
+        const rect = getLightPadRect();
         // Normalize world coordinates (e.g., from -10 to 10) to a 0-1 range
         const x = (lightPos.x + 10) / 20;
         const y = (lightPos.y + 10) / 20;
         // Convert to pad coordinates
         return {
-            x: x * lightPadRect.width,
-            y: (1 - y) * lightPadRect.height // Invert Y-axis for screen coordinates
+            x: x * rect.width,
+            y: (1 - y) * rect.height // Invert Y-axis for screen coordinates
         };
     };
 
@@ -1391,10 +1393,19 @@ function setupLightControls() {
         icon.style.top = `${pos.y}px`;
     };
 
+    // Function to check if two icons would overlap
+    const checkOverlap = (pos1, pos2, minDistance = 30) => {
+        const dx = pos1.x - pos2.x;
+        const dy = pos1.y - pos2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < minDistance;
+    };
+
+    // Initialize positions
     setIconPosition(leftLightIcon, mapToPad(state.lights.directional.position));
     setIconPosition(rightLightIcon, mapToPad(state.lights.directionalRight.position));
 
-    function makeDraggable(icon, light) {
+    function makeDraggable(icon, light, otherIcon) {
         let isDragging = false;
 
         icon.addEventListener('mousedown', (e) => {
@@ -1405,13 +1416,42 @@ function setupLightControls() {
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
 
+            const lightPadRect = getLightPadRect();
+            
             // Get mouse position relative to the light pad
             let x = e.clientX - lightPadRect.left;
             let y = e.clientY - lightPadRect.top;
 
-            // Clamp position within the pad boundaries
-            x = Math.max(0, Math.min(lightPadRect.width, x));
-            y = Math.max(0, Math.min(lightPadRect.height, y));
+            // Clamp position within the pad boundaries with icon size margin
+            const iconSize = 20; // Approximate icon size
+            const margin = iconSize / 2;
+            x = Math.max(margin, Math.min(lightPadRect.width - margin, x));
+            y = Math.max(margin, Math.min(lightPadRect.height - margin, y));
+
+            // Check for overlap with other icon
+            const otherIconRect = otherIcon.getBoundingClientRect();
+            const otherIconPadPos = {
+                x: otherIconRect.left - lightPadRect.left + iconSize / 2,
+                y: otherIconRect.top - lightPadRect.top + iconSize / 2
+            };
+
+            const newPos = { x, y };
+            if (checkOverlap(newPos, otherIconPadPos)) {
+                // Adjust position to avoid overlap
+                const dx = newPos.x - otherIconPadPos.x;
+                const dy = newPos.y - otherIconPadPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance > 0) {
+                    const minDistance = 30;
+                    const scale = minDistance / distance;
+                    x = otherIconPadPos.x + dx * scale;
+                    y = otherIconPadPos.y + dy * scale;
+                    
+                    // Re-clamp after adjustment
+                    x = Math.max(margin, Math.min(lightPadRect.width - margin, x));
+                    y = Math.max(margin, Math.min(lightPadRect.height - margin, y));
+                }
+            }
 
             // Update icon position
             setIconPosition(icon, { x, y });
@@ -1431,8 +1471,8 @@ function setupLightControls() {
         });
     }
 
-    makeDraggable(leftLightIcon, state.lights.directional);
-    makeDraggable(rightLightIcon, state.lights.directionalRight);
+    makeDraggable(leftLightIcon, state.lights.directional, rightLightIcon);
+    makeDraggable(rightLightIcon, state.lights.directionalRight, leftLightIcon);
 }
 
 // ----------------------------------------------------------------
