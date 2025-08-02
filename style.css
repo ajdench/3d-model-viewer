@@ -302,7 +302,7 @@
         }
 
         #info {
-            width: 300px;
+            width: 287px; /* Precise width: 120px label + 15px gap + 152px values = 287px total content */
         }
 
         #instructions {
@@ -319,8 +319,64 @@
         }
 
         .info-display p {
-            margin-bottom: 5px;
+            margin-bottom: 8px; /* Increased gap between rows */
             line-height: 1.4;
+            display: flex;
+            align-items: center; /* Vertically center label and boxes */
+            gap: 15px; /* Explicit gap between label and content - fixes alignment issues */
+        }
+
+        .info-label {
+            display: inline-block;
+            width: 120px; /* Increased width to prevent "Camera Position:" wrapping */
+            font-weight: bold;
+            color: #555;
+        }
+
+        .info-values-container {
+            display: inline-flex;
+            align-items: center;
+            width: 152px; /* Fixed width for consistent alignment: 3 × 50px + 2 × 1px margin = 152px */
+        }
+
+        .info-value-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: #333;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: normal;
+            text-align: center;
+            width: 50px; /* Fixed width */
+            height: 26px; /* Fixed height to match model box */
+            margin: 0 1px; /* Reduced margin to fix alignment: 3*50px + 6*1px = 156px (fits in 158px container) */
+            box-sizing: border-box;
+            line-height: 1.2; /* Consistent line height */
+        }
+
+        .model-name-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background: white;
+            color: #333;
+            padding: 4px 6px; /* Match coordinate boxes padding */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: normal;
+            text-align: left;
+            height: 26px; /* Match coordinate boxes height */
+            width: 152px; /* Exact match to info-values-container width */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            line-height: 1.2; /* Consistent line height */
         }
 
         .light-pad {
