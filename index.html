@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
-  <script type="module" crossorigin src="/3d-model-viewer/assets/index-5a56jtK2.js"></script>
-  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-CS0xjyKX.css">
+  <script type="module" crossorigin src="/3d-model-viewer/assets/index-DcgHOg1i.js"></script>
+  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-RQHvx-AY.css">
 </head>
 <body>
     <div class="container">
@@ -21,23 +21,30 @@
                     <!-- SUNSET: Camera Rotation display removed -->
                     <!-- <p><b>Camera Rotation:</b> (0, 0, 0)</p> -->
                     <p><b>Model Rotation:</b> (0, 0, 0)</p>
-                    <p><b>Zoom:</b> 1.00</p>
+                    <!-- SUNSET: Zoom display removed -->
+                    <!-- <p><b>Zoom:</b> 1.00</p> -->
                     <p><b>Model:</b> Default Torus Knot</p>
                 </div>
             </div>
             <div id="instructions" class="info-display instructions-display">
                 <h4>INTERACTION</h4>
-                <div id="standard-instructions">
-                    <p><b>Left-click + Drag:</b> Rotate Model</p>
-                    <p><b>Right-click + Drag:</b> Pan Camera</p>
-                    <p><b>Scroll Wheel:</b> Zoom Camera</p>
-                    <p><b>F Key:</b> Focus Model on Screen</p>
-                </div>
-                <div id="legacy-instructions" style="display: none;">
-                    <p><b>Left-click + Drag:</b> Rotate Model</p>
-                    <p><b>Right-click + Drag:</b> Pan Camera</p>
-                    <p><b>Scroll Wheel:</b> Zoom Camera</p>
-                    <p><b>F Key:</b> Focus Model on Screen</p>
+                <div id="standard-instructions" class="interaction-table">
+                    <div class="interaction-row">
+                        <span class="interaction-label"><b>Left-click and Drag:</b></span>
+                        <span class="interaction-action">Rotate Model</span>
+                    </div>
+                    <div class="interaction-row">
+                        <span class="interaction-label"><b>Right-click and Drag:</b></span>
+                        <span class="interaction-action">Pan Camera</span>
+                    </div>
+                    <div class="interaction-row">
+                        <span class="interaction-label"><b>Scroll Wheel:</b></span>
+                        <span class="interaction-action">Zoom Camera</span>
+                    </div>
+                    <div class="interaction-row">
+                        <span class="interaction-label"><b>F Key:</b></span>
+                        <span class="interaction-action">Focus Model on Screen</span>
+                    </div>
                 </div>
             </div>
             <div id="light-controls" class="info-display">
@@ -74,15 +81,7 @@
         </div>
         
         <div class="controls-panel">
-            <div class="control-section">
-                <h3>Control Scheme</h3>
-                <div class="control-group">
-                    <select id="controlSchemeSelector" class="control-input">
-                        <option value="standard">Standard (Camera-centric)</option>
-                        <option value="legacy">Legacy (Model-centric)</option>
-                    </select>
-                </div>
-            </div>
+            <h3 class="panel-title">CONTROLS</h3>
             <div class="control-section">
                 <h3>Capture</h3>
                 <div class="button-group">
@@ -91,17 +90,17 @@
                 </div>
             </div>
             <div class="control-section">
-                <h3>Guide Line Controls</h3>
+                <h3>Guide Line</h3>
+                <div class="control-group">
+                    <label>Colour</label>
+                    <input type="color" id="lineColour" class="color-input" value="#CCCCCC">
+                </div>
                 <div class="control-group">
                     <label>Thickness</label>
                     <div class="slider-container">
                         <input type="range" id="lineThickness" class="slider-input" min="0" max="100" step="1" value="5">
                         <input type="number" id="lineThicknessNum" class="number-input" min="0" max="100" step="1" value="5">
                     </div>
-                </div>
-                <div class="control-group">
-                    <label>Color</label>
-                    <input type="color" id="lineColor" class="color-input" value="#CCCCCC">
                 </div>
                 <div class="control-group">
                     <label>Transparency</label>
@@ -126,7 +125,7 @@
                 </div>
             </div>
             <div class="control-section">
-                <h3>Camera Controls</h3>
+                <h3>Camera</h3>
                 <div class="control-group">
                     <label>Position X</label>
                     <div class="slider-container">
@@ -176,7 +175,7 @@
             </div>
 
             <div class="control-section">
-                <h3>Model Controls</h3>
+                <h3>Model</h3>
                 <div class="control-group">
                     <label>Rotation X</label>
                     <div class="slider-container">
@@ -198,6 +197,7 @@
                         <input type="number" id="modelRotZNum" class="number-input" min="-180" max="180" step="1" value="0">
                     </div>
                 </div>
+                <!-- SUNSET: Zoom Controls
                 <div class="control-group">
                     <label>Zoom</label>
                     <div class="slider-container">
@@ -205,13 +205,14 @@
                         <input type="number" id="modelZoomNum" class="number-input" min="0.5" max="3" step="0.1" value="1">
                     </div>
                 </div>
+                -->
                 <button id="resetModel" class="button">Reset Model</button>
             </div>
 
             <div class="control-section">
-                <h3>Material Properties</h3>
+                <h3>Material</h3>
                 <div class="control-group">
-                    <label>Material Color</label>
+                    <label>Colour</label>
                     <input type="color" id="materialColor" class="color-input" value="#4CAF50">
                 </div>
                 <div class="control-group">
@@ -238,7 +239,7 @@
             </div>
 
             <div class="control-section">
-                <h3>Model Library</h3>
+                <h3>Library</h3>
                 <div class="control-group">
                     <label>Load Model</label>
                     <select id="modelSelector" class="control-input">
@@ -275,7 +276,7 @@
             </div>
 
             <div class="control-section">
-                <h3>Save/Load Presets</h3>
+                <h3>Presets</h3>
                 <div class="control-group">
                     <label>Preset Name</label>
                     <input type="text" id="presetName" class="preset-name" placeholder="Enter preset name">
