@@ -9,9 +9,9 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 ## 	✨ Features
 
 ### 	🎮 Interactive Controls
-- **Mouse Controls**: Left-click orbits the camera, right-click pans the camera.
-- **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. Supports both slider and click-and-drag adjustments, and is excluded from image captures.
-- **Real-time View**: Live display of camera position, model rotation, zoom level, and current model
+- **Mouse Controls**: Left-click rotates the model, right-click pans the camera.
+- **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. It remains fixed in the viewer, independent of 3D scene movements, and is excluded from image captures.
+- **Real-time View**: Live display of camera position, model rotation, and current model
 - **Precision Controls**: Sliders with editable number inputs for exact positioning
 - **One-click Reset**: Separate reset buttons for camera and model
 - **Focus Function**: F key automatically centers and focuses the model on screen
@@ -57,18 +57,36 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 - **Save to File**: Capture a 2D PNG image of the current model view with a transparent background.
 - **Save to Clipboard**: *Currently disabled due to technical issues.*
 
-## 🔄 Recent Updates (v2.3)
+## 🔄 Recent Updates
 
-### Simplified Control Scheme
-- **Unified Mouse Controls**: Streamlined interaction model with left-click always rotating the model
-- **Camera Rotation Controls Removed**: Eliminated complex camera rotation sliders to focus on model manipulation
-- **VIEW Panel**: Renamed from "VIEWER STATS" with cleaner information display
-- **Interface Layout**: Repositioned control panels for better user experience
+### Version 2.7: UI Refinements
+- **Boxless Design**: Removed backgrounds, borders, and shadows from VIEW, LIGHTING, and INTERACTION panels for a cleaner appearance.
+- **Text Standardization**: Unified all panel text to 12px for consistent typography.
+- **Spacing Optimization**: Standardized control panel positioning to 10px from model pane edges.
 
-### Enhanced User Experience
-- **Guide Line Improvements**: New default values (light gray, thinner, semi-transparent) for professional appearance
-- **Responsive Layout**: Interface elements adapt dynamically to different screen sizes
-- **Backward Compatibility**: Existing presets automatically adapt to simplified control scheme
+### Version 2.6: UI Alignment
+- **Pixel-perfect Flexbox Gaps**: Achieved precise spacing and alignment using flexbox.
+- **CSS Table Layout**: Utilized CSS table properties for structured content.
+- **Mathematical Precision**: Ensured pixel-perfect alignment through precise calculations.
+
+### Version 2.5: Advanced Lighting Modes
+- **Dual Modes**: Implemented dual-mode lighting system with "BASIC" and "COMPLEX" buttons.
+- **Icon Rotation & Light Targeting**: Advanced features for complex mode, including icon rotation and light targeting based on vertical position.
+
+### Version 2.4: Lighting Controls Redesign
+- **Compact Layout**: Complete redesign of LIGHTING CONTROLS panel with compact, integrated layout.
+- **Vertical Sliders**: Left and Right directional light controls positioned as vertical sliders.
+- **Integrated Ambient Controls**: Ambient light slider and value input positioned below main controls.
+
+### Version 2.3: Simplified Control Scheme
+- **Unified Mouse Controls**: Streamlined interaction model with left-click always rotating the model.
+- **Camera Rotation Controls Removed**: Eliminated complex camera rotation sliders to focus on model manipulation.
+- **VIEW Panel**: Renamed from "VIEWER STATS" with cleaner information display.
+- **Interface Layout**: Repositioned control panels for better user experience.
+
+### Version 2.2: Guide Line Improvements
+- **New Default Values**: Light gray, thinner, semi-transparent guide line for professional appearance.
+- **Responsive Layout**: Interface elements adapt dynamically to different screen sizes.
 
 ## 	🏛️ Architecture
 

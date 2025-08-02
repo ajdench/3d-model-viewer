@@ -38,6 +38,14 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
+        .panel-title {
+            color: #333;
+            margin-bottom: 19px; /* 75% of control-section spacing (25px × 0.75 = 18.75px ≈ 19px) */
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         .control-section {
             margin-bottom: 25px;
             padding: 15px;
@@ -279,8 +287,8 @@
 
         .info-panel {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 10px;
+            left: 10px;
             display: flex;
             gap: 10px;
             pointer-events: none; /* Allow interactions to pass through */
@@ -291,27 +299,27 @@
         }
 
         .info-display {
-            background: rgba(0, 0, 0, 0.05);
+            background: transparent; /* Boxless design */
             color: #333;
-            padding: 15px;
+            padding: 15px 15px 7px 15px;
             border-radius: 10px;
             font-family: 'Arial', sans-serif;
             font-size: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border: none; /* Boxless design */
+            box-shadow: none; /* Boxless design */
         }
 
         #info {
-            width: 287px; /* Precise width: 120px label + 15px gap + 152px values = 287px total content */
+            width: 315px; /* Adjusted width to prevent label wrapping: 135px label + 15px gap + 160px values = 310px total content, plus padding */
         }
 
         #instructions {
-            width: 250px;
+            width: 315px; /* Adjusted to match #info width */
         }
 
         .info-display h4 {
             margin-bottom: 10px;
-            font-size: 14px;
+            font-size: 12px; /* Reduced from 14px to match body text */
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -323,12 +331,13 @@
             line-height: 1.4;
             display: flex;
             align-items: center; /* Vertically center label and boxes */
-            gap: 15px; /* Explicit gap between label and content - fixes alignment issues */
+            gap: 9px; /* Explicit gap between label and content - fixes alignment issues */
+            font-size: 12px; /* Ensure consistent text size */
         }
 
         .info-label {
             display: inline-block;
-            width: 120px; /* Increased width to prevent "Camera Position:" wrapping */
+            width: 135px; /* Further increased width to prevent "Camera Position:" and "Model Rotation:" wrapping */
             font-weight: bold;
             color: #555;
         }
@@ -336,7 +345,7 @@
         .info-values-container {
             display: inline-flex;
             align-items: center;
-            width: 152px; /* Fixed width for consistent alignment: 3 × 50px + 2 × 1px margin = 152px */
+            width: 155px; /* Fixed width for consistent alignment: 3 × 50px + 2 × 2.5px margin = 155px */
         }
 
         .info-value-box {
@@ -353,10 +362,35 @@
             text-align: center;
             width: 50px; /* Fixed width */
             height: 26px; /* Fixed height to match model box */
-            margin: 0 1px; /* Reduced margin to fix alignment: 3*50px + 6*1px = 156px (fits in 158px container) */
+            margin: 0 2.5px; /* Consistent margin for even gaps: 3*50px + 4*2.5px = 160px (fits in 155px container) */
             box-sizing: border-box;
             line-height: 1.2; /* Consistent line height */
         }
+
+        /* Old .model-name-box style for easy reversion */
+        /*
+        .model-name-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background: white;
+            color: #333;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: normal;
+            text-align: left;
+            height: 26px;
+            width: 151px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            line-height: 1.2;
+            margin: 0 2px;
+        }
+        */
 
         .model-name-box {
             display: flex;
@@ -371,12 +405,13 @@
             font-weight: normal;
             text-align: left;
             height: 26px; /* Match coordinate boxes height */
-            width: 152px; /* Exact match to info-values-container width */
+            width: 155px; /* Updated to match new info-values-container width */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             box-sizing: border-box;
             line-height: 1.2; /* Consistent line height */
+            margin: 0 2px 0 3px; /* Do not change from 3px (left margin only) as addressed fiddly alignment issue */
         }
 
         .light-pad {
@@ -635,8 +670,8 @@
 
         .instructions-display {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            bottom: 10px;
+            left: 10px;
             width: 280px;
             z-index: 10;
         }
@@ -648,8 +683,8 @@
         
         #light-controls {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 16px;
             width: 230px;
             z-index: 10;
         }
@@ -708,7 +743,7 @@
             left: 20px;
             background: rgba(0, 0, 0, 0.05);
             color: #333;
-            padding: 15px;
+            padding: 15px 15px 7px 15px;
             border-radius: 10px;
             font-family: 'Arial', sans-serif;
             font-size: 12px;
@@ -747,4 +782,30 @@
             border-radius: 15px;
             width: 100% !important;
             height: 100% !important;
+        }
+
+        /* INTERACTION table styling */
+        .interaction-table {
+            /* Container for interaction instructions */
+        }
+
+        .interaction-row {
+            margin-bottom: 8px; /* Spacing between lines */
+            line-height: 1.4;
+            display: flex;
+            align-items: baseline;
+            gap: 9px; /* Explicit gap between label and action */
+        }
+
+        .interaction-label {
+            display: inline-block;
+            width: 140px; /* Fixed width for labels to align with "Right-click and Drag:" */
+            flex-shrink: 0; /* Prevent shrinking */
+            font-size: 12px; /* Ensure consistent text size */
+        }
+
+        .interaction-action {
+            flex: 1; /* Take remaining space */
+            margin-left: 0; /* No extra margin since flex gap handles spacing */
+            font-size: 12px; /* Ensure consistent text size */
         }

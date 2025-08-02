@@ -1,606 +1,326 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Development guidance for Claude Code when working with this repository.
+
+## Memory Management System
+
+Claude-dementia v3.0 compressed memory system with 10,000 token budget optimized for Claude Code workflows.
+
+### Core Architecture
+```yaml
+Token Budget: 10,000 (Hard Limit)
+├── CLAUDE.md: 1,000 tokens (Core guide)
+├── Active Memory: 3,000 tokens (Current work)
+│   ├── status.md (Session updates & progress)
+│   └── context.md (Task context & priorities)
+├── Reference Memory: 5,000 tokens (Stable patterns)
+│   ├── architecture.md (System design)
+│   ├── patterns.md (Code patterns)
+│   └── decisions.md (Technical decisions)
+└── Buffer: 1,000 tokens (Overflow space)
+```
+
+### Session Protocol
+**Every Session Start**: `cat memory/active/status.md memory/active/context.md`
+**Load As Needed**: `cat memory/reference/[relevant-file].md memory/patterns/[pattern].md`
+
+### Memory Management Commands
+```bash
+# Core operations
+./memory/update.sh "changes"     # Update with auto-compression
+./memory/compress.sh             # Check usage and compress
+./memory/weekly-maintenance.sh   # Auto-archive old content
+
+# Quick access
+grep -r "pattern" memory/        # Search all memory
+cat memory/active/status.md      # Current status dashboard
+```
+
+### Python Automation Suite (`/scripts/`)
+
+**🏆 Highest ROI**: `session-logger.py` - Auto-generates session summaries from git commits
+```bash
+python scripts/session-logger.py  # Creates memory/current-session.md
+# Time saved: 5-10 minutes per session
+```
+
+**Pattern Detection**: `pattern-detector.py` - Discovers reusable code patterns automatically
+```bash
+python scripts/pattern-detector.py  # Finds error handling, validation, API patterns
+# Value: Builds pattern library without manual effort
+```
+
+**Question Management**: `question-tracker.py` - Prevents important questions from being forgotten
+```bash
+python scripts/question-tracker.py  # Reports open questions, reminds about old ones
+# Value: Never lose important clarifications
+```
+
+**Memory Search**: `memory-search.py` - Fast weighted search across all memory files
+```bash
+python scripts/memory-search.py "error handling"
+python scripts/memory-search.py "timeout" --type fix
+# Value: Find previous solutions in seconds
+```
+
+**Central Orchestration**: `memory-assistant.py` - Single interface to all tools
+```bash
+python scripts/memory-assistant.py start  # Session start routine
+python scripts/memory-assistant.py end    # Session end routine
+python scripts/memory-assistant.py search "topic"  # Quick search
+```
+
+### Daily Workflow Integration
+```bash
+# Morning routine
+python scripts/memory-assistant.py start
+# Shows: unanswered questions, last session summary
+
+# During development
+python scripts/memory-search.py "cors error"  # When hitting familiar problems
+
+# End of session
+python scripts/memory-assistant.py end
+# Runs: session logger, pattern detector, question check, index rebuild
+```
+
+### Documentation Templates
+**Fix Documentation**: `memory/fixes/YYYY-MM-DD-name.md`
+```markdown
+## Problem: [One line description]
+## Cause: [Root cause analysis]  
+## Fix: [Solution implemented]
+## Prevention: [Test/check added]
+```
+
+**Question Tracking**: `memory/questions/YYYY-MM-DD-topic.md`
+```markdown
+## Status: OPEN|ANSWERED
+## Q: [Specific question with context]
+## Context: [Why this question matters]
+## Options: [Considered approaches]
+## Answer: [When received, with rationale]
+```
+
+**Pattern Documentation**: `memory/patterns/pattern-name.md`
+```markdown
+## Use When: [Specific scenario]
+## Solution: [Approach and code example]
+## Example: path/to/implementation
+## Trade-offs: [Considerations and alternatives]
+```
+
+### ROI Analysis
+**Time Investment**: 5min setup + 2-3min daily + 10min weekly = ~30min/week
+**Time Saved**: 5-10min/day (documentation) + 10-30min/incident (search) + hours/month (patterns)
+**Quality Improvements**: Consistent documentation, growing pattern library, no lost context
 
 ## Project Overview
 
-This is a professional 3D Model Viewer built with Three.js r178 that provides interactive control over camera positioning, model manipulation, material properties, lighting, and guide lines. The application is a modern single-page web application that runs entirely in the browser with no backend dependencies, using ES6 modules and Vite for development and build tooling. Features dual control schemes, advanced lighting controls, and GitHub Pages deployment support.
+Professional 3D Model Viewer built with Three.js r178. Single-page web app with interactive controls for camera, models, materials, lighting, and guide lines. Uses ES6 modules + Vite, deploys to GitHub Pages.
 
-## Development Commands
-
-The application now uses Vite for development with a modular structure:
-
-- **Development Server**: 
-  ```bash
-  npm run dev
-  # Starts Vite dev server with hot reload
-  ```
-- **Production Build**: 
-  ```bash
-  npm run build
-  # Creates optimized production build
-  ```
-- **Preview Build**: 
-  ```bash
-  npm run preview
-  # Preview the production build locally
-  ```
-- **GitHub Pages Deployment**:
-  ```bash
-  npm run predeploy  # Builds the project
-  npm run deploy     # Deploys to GitHub Pages
-  ```
-- **Dependencies**: The project uses Three.js (r178) as a dependency, with Vite for development and build tooling
-- **Module System**: ES6 modules with separated HTML/CSS/JS files for better organization
-- **Deployment**: GitHub Pages support via gh-pages package
+## Commands
+```bash
+npm run dev        # Development server with hot reload
+npm run build      # Production build  
+npm run preview    # Preview production build
+npm run deploy     # Deploy to GitHub Pages
+```
 
 ## Architecture
 
 ### Core Structure
-- **Modular Application**: HTML (`index.html`), CSS (`style.css`), and JavaScript (`main.js`) separated for better organization
-- **Three.js Integration**: Uses Three.js r178 for 3D rendering and scene management
-- **State Management**: Global `state` object manages camera, scene, renderer, model, lights, presets, control schemes, and guide lines
-- **Event-Driven**: Heavy use of event listeners for UI controls and user interactions
-- **Module System**: Uses ES6 modules with Vite for development server support
-- **Modular Code Structure**: Functions organized in numbered sections with clear separation of concerns
+- **Files**: `index.html`, `main.js`, `style.css` (separated)
+- **State**: Global `state` object manages all scene components
+- **Event-Driven**: UI controls with real-time 3D updates
+- **ES6 Modules**: Vite development + bundling
 
-### Key Components
+### Key Systems
 
-#### Scene Management (`initThreeJS()`)
-- Scene with transparent background (null) for flexible capture options
-- Perspective camera with 50° FOV, positioned at (0,0,5)
-- WebGL renderer with antialiasing, alpha channel, preserveDrawingBuffer, and high pixel ratio support
-- No explicit clear color set - uses natural transparency
-- Advanced lighting setup: ambient (0.4 intensity) + dual directional lights (left 0.6, right 0.0 default)
-- **Compact Lighting Controls**: Redesigned LIGHTING CONTROLS panel with vertical sliders flanking interactive light pad
-- **Dual Lighting Modes**: Basic mode for simple positioning, Complex mode with icon rotation and light targeting
-- Interactive light positioning via draggable light pad interface with boundary constraints and overlap prevention
+**Scene**: Transparent background, perspective camera (50° FOV), WebGL renderer with antialiasing
+**Lighting**: Ambient + dual directional lights, compact vertical sliders, Basic/Complex modes
+**Models**: Built-in (torus, cube, sphere, pyramid) + file upload (OBJ/STL/GLTF/GLB)
+**Controls**: Left-drag=rotate model, right-drag=pan camera, wheel=zoom
+**Materials**: PBR with color/metalness/roughness/transparency
+**Presets**: Save/load complete configurations to localStorage
+**Capture**: PNG download with transparent backgrounds
+**Guide Lines**: Overlay with customizable appearance and position
 
-#### Model Loading System
-- **Built-in Models**: Torus knot (default), cube, sphere, pyramid
-- **Custom File Support**: 
-  - OBJ files via Three.js `OBJLoader` from `three/examples/jsm/loaders/OBJLoader.js`
-  - STL files via Three.js `STLLoader` from `three/examples/jsm/loaders/STLLoader.js`
-  - GLTF/GLB files via Three.js `GLTFLoader` from `three/examples/jsm/loaders/GLTFLoader.js`
-- **Model Processing**: Enhanced auto-centering and scaling via `centerAndScaleModel()` with transform reset
-- **Material Application**: Standard PBR materials with customizable properties (applied to all meshes in complex models)
-- **Upload System**: Robust callback-based system with timeout and error handling
-
-#### Mouse Controls (`setupMouseControls()`)
-**Unified Control Scheme (v2.3+)**:
-- **Left Click + Drag**: Rotates the 3D model using camera-relative axes
-- **Right Click + Drag**: Pans camera position
-- **Mouse Wheel**: Zoom in/out by scaling camera distance
-
-**SUNSET Features (v2.3+)**:
-- ~~**Camera Orbit Controls**: Removed - camera no longer orbits via mouse~~
-- ~~**Ctrl + Left Click + Drag**: Removed - left-click now always rotates model~~
-- ~~**Control Scheme Differences**: Both Standard and Legacy modes now identical~~
-
-**Legacy Documentation (pre-v2.3)**:
-- **Context Menu**: Disabled to prevent interference
-- **F Key**: Focus model on screen with automatic camera positioning
-
-#### UI Control System
-- **Slider-Number Sync**: Bidirectional sync between range sliders and number inputs
-- **Real-time Updates**: All controls update 3D scene immediately
-- **State Persistence**: Camera/model states saved to localStorage as presets
-- **Capture System**: Screenshot capture to file download with transparent backgrounds (clipboard feature removed)
-- **Guide Line System**: Overlay guide lines with customizable thickness, color, transparency, angle, and position
-- **Control Schemes**: Dual interaction modes (Standard: camera-centric, Legacy: model-centric)
-- **Advanced Lighting**: Compact vertical slider controls with dual-mode interactive positioning (Basic/Complex) and ambient light controls
-- **Keyboard Shortcuts**: F key for focus model on screen, Ctrl+drag for model rotation
-
-### File Structure
-```
-/
-├── index.html         # HTML structure and UI elements with complete controls
-├── main.js            # Main JavaScript application logic with ES6 modules (separated from HTML)
-├── style.css          # CSS styles separated for better organization
-├── package.json       # Dependencies (Three.js r178, Vite, gh-pages) with npm scripts
-├── CLAUDE.md          # Development guidelines and documentation
-├── README.md          # Comprehensive documentation
-├── models/            # Empty directory for local model storage
-└── node_modules/      # NPM dependencies
-```
-
-### Material System
-- Uses Three.js `MeshStandardMaterial` for PBR rendering
-- Supports color, metalness, roughness, and transparency controls
-- Handles both single meshes and groups (for loaded models)
-- Material updates traverse object hierarchies for complex models
-
-### Preset Management
-- Save/load complete viewer configurations to localStorage
-- Includes camera position/rotation, model transform, material properties, lighting
-- Dropdown selection and manual name entry
-- Persistent across browser sessions
+### Mouse Controls (v2.3+)
+- **Left + Drag**: Rotate model
+- **Right + Drag**: Pan camera  
+- **Wheel**: Zoom
+- **F Key**: Focus model
+- **SUNSET**: Camera rotation controls, Ctrl+drag, control scheme differences
 
 ## Development Guidelines
 
 ### Code Organization
-- JavaScript is properly separated into `main.js` using ES6 modules
-- Functions are organized by feature: model loading, controls, utilities, etc.
-- Heavy use of utility functions like `safeSetValue()` and `safeAddEventListener()` for DOM safety
-- **CRITICAL**: All functions are at the top level scope with proper modular structure
+- **Functions**: Top-level scope, organized by feature (loading, controls, utilities)
+- **Safety**: Use `safeSetValue()` and `safeAddEventListener()` for DOM operations
+- **Modules**: ES6 imports for Three.js and loaders from examples
+- **Material Updates**: Helper functions handle both single meshes and groups
 
-### Initialization System
-- **`initializeViewer()`**: Simplified initialization function using ES6 imports
-- **Direct Import**: Three.js loaded directly via `import * as THREE from 'three'`
-- **Module Loaders**: OBJLoader, STLLoader, and GLTFLoader imported from Three.js examples
-- **Error Display**: `showLoadingError()` provides user-friendly error messages when initialization fails
-- **No CDN Dependencies**: All dependencies managed through npm and bundled with Vite
-- **Clean Architecture**: No retry logic needed - direct module imports are reliable
+### Requirements
+- **Browser**: Chrome 88+, Firefox 84+, Safari 14+ (WebGL + ES6 modules)
+- **Files**: 50MB upload limit, supports .obj/.stl/.gltf/.glb
+- **Performance**: requestAnimationFrame, preserveDrawingBuffer for capture
 
-### Error Handling
-- File validation for uploads (format and size limits)
-- Graceful fallbacks for missing DOM elements
-- Status display system for user feedback during operations
-- **Module Loading**: Direct ES6 imports eliminate loading issues
-- **Material Updates**: All material controls use helper functions (`updateMaterialColor()`, `updateMaterialProperty()`, `updateMaterialTransparency()`) to handle both single meshes and groups
+### Quality Standards
+- File endings with newlines, consistent slider-number patterns
+- State synchronization between UI and internal values
+- Viewport units (vh) for responsive thickness
+- Proper CSS transform order to avoid conflicts
 
-### Browser Compatibility
-- Requires WebGL support and ES6 modules compatibility
-- Designed for Chrome 88+, Firefox 84+, Safari 14+
-- Uses modern JavaScript features like async/await, const/let, arrow functions
-- **Module Dependencies**: Application uses npm-managed dependencies bundled with Vite
+## Adding Features
 
-### Performance Considerations
-- 50MB file size limit for model uploads
-- Efficient model loading with progress indicators
-- Canvas resizing handled via resize event listeners
-- Optimized render loop using requestAnimationFrame
-- Transparent background rendering with no clear color for optimal performance
-- PreserveDrawingBuffer enabled for capture functionality
-- Guide line overlay rendering optimized for capture hiding
+**Model Formats**: Add to `validateFile()` → create loader function → add to `handleFileUpload()` → import Three.js loader
+**Controls**: Add HTML → setup slider-number sync → event listeners → include in presets  
+**Materials**: Modify creation in loaders → add UI controls → update helper functions → add to presets
+**Capture**: Add formats to UI → modify `captureFrame()` → add post-processing/batch features
 
-### Code Quality Notes
-- **File Endings**: Ensure all files end with proper newlines for better git compatibility
-- **HTML Structure**: Complete control panels with all supported file formats properly documented
-- **File Input**: Accept attribute correctly set to `.obj,.stl,.gltf,.glb`
-- **UI Consistency**: All control groups follow consistent slider-number input pattern
-- **Drop Zone Display**: Visual indicator shows all supported formats to users
-- **Button Groups**: Preset controls use consistent button-group styling
-- **Guide Line CSS**: Separate positioning (top) and transformation (rotate) properties
-- **Transform Order**: Apply CSS transforms in correct sequence to avoid conflicts
-- **Responsive Units**: Use viewport units (vh) for thickness instead of fixed pixels
-- **State Synchronization**: Always initialize UI controls to match state values
+## Troubleshooting
 
-## Adding New Features
+### Control Migrations
+**Camera Rotation (v2.3+)**: Sunset - use camera position controls or right-click + drag
+**Zoom Controls (v2.6+)**: Sunset - use mouse wheel or camera Z position
 
-### New Model Formats
-Extend the file upload system by:
-1. Adding new format to `validateFile()` function
-2. Creating new loader function following the pattern of OBJ/STL/GLTF loaders
-3. Adding new loader case in `handleFileUpload()`
-4. Importing required Three.js loader from examples directory
+### Common Issues
+**Loading Stuck**: Check browser compatibility (Chrome 88+, Firefox 84+, Safari 14+), run `npm run dev`
+**Material Controls Don't Work**: Use helper functions (`updateMaterialColor()`, `updateMaterialProperty()`, `updateMaterialTransparency()`)
+**Code Errors**: Keep functions at top level, use try-catch, check object existence
+**Model Loading Fails**: Check file format (.obj/.stl/.gltf/.glb), size (<50MB), file integrity
+**Performance Issues**: Reduce model complexity, check file size, close browser tabs
+**Upload Issues**: Wait 30s for timeout, ensure correct file types, file input clears after upload
 
-### New Control Types
-Add new controls by:
-1. Adding HTML elements to the controls panel
-2. Setting up slider-number sync in `setupControls()`
-3. Adding event listeners with proper state updates
-4. Including new properties in preset save/load system
+### Resolved Issues
+**Guide Lines (v2.2)** ✅: Fixed positioning, thickness units, event handlers, UI initialization
+**Scaling (v2.1)** ✅: Fixed transform resets, bounding box validation  
+**Drag & Drop (v2.1)** ✅: Fixed visual feedback, file validation
 
-### Material Extensions
-Extend material system by:
-1. Modifying material creation in `createModel()` and model loaders
-2. Adding new control elements for material properties
-3. Updating `updateMaterialProperty()` and related functions
-4. Including new properties in preset management
+## Major Changes (v2.3+)
 
-### Capture System Extensions
-Extend the capture functionality by:
-1. Adding new capture formats or options to the capture controls
-2. Modifying `captureFrame()` function for different output formats
-3. Adding post-processing options for captured images
-4. Implementing batch capture or animation recording features
-5. Adding clipboard API fallbacks for browsers that don't support it
-6. Implementing custom background options for captures
+### Sunset Features
+**Camera Rotation Controls (v2.3)**: Removed UI controls, simplified mouse interactions, focused on model manipulation
+**Zoom Controls (v2.6)**: Removed UI controls, use mouse wheel or camera position instead
 
-## Troubleshooting & Known Issues
+### UI Updates (v2.3+)
+**Panel Renames**: VIEWER STATS → VIEW STATUS, streamlined display
+**Layout**: INTERACTION (bottom-left), VIEW (top-right), LIGHTING (top-right with mode toggle)
+**Guide Lines**: Gray color, semi-transparent, integer thickness (0-100), vertical position control
 
-### Camera Control Migration (v2.3+)
-**Symptom**: Looking for camera rotation controls or Ctrl+Left-click not working
-**Solution**: These features were sunset in v2.3:
-- Camera rotation controls removed from UI - use camera position controls instead
-- Left-click + drag now always rotates the model (no Ctrl needed)
-- For camera positioning, use the Position X/Y/Z sliders or right-click + drag to pan
+### UI Refinements (v2.7+)
+**Boxless Design**: Removed backgrounds, borders, and shadows from VIEW, LIGHTING, and INTERACTION panels for cleaner appearance
+**Text Standardization**: Unified all panel text to 12px for consistent typography across interface
+**Spacing Optimization**: Standardized all control panel positioning to 10px from model pane edges, refined CONTROLS title spacing to 19px
+**Layout Precision**: LIGHTING panel positioned at 16px from right edge for optimal visual balance
 
-### Loading Problems
-**Symptom**: Application stuck at "Loading 3D Viewer..." screen with spinning wheel
-**Causes & Solutions**:
-1. **Module Loading Issues**: ES6 modules not supported or JavaScript disabled
-   - Solution: Use Chrome 88+, Firefox 84+, or Safari 14+ with JavaScript enabled
-2. **Build Issues**: Development server not running or build artifacts missing
-   - Solution: Run `npm run dev` for development or `npm run build` then `npm run preview`
-3. **Browser Compatibility**: Older browsers may not support required features
-   - Solution: Use Chrome 88+, Firefox 84+, or Safari 14+
+### Code Impact
+- Functions preserved but commented out with "SUNSET" markers
+- Presets automatically ignore sunset control data
+- Enhanced responsive design with proper Z-index layering
+- CSS cleanup from malformed styles and improved maintainability
 
-### Material Control Issues
-**Symptom**: Material controls (color, metalness, roughness) don't affect loaded models
-**Cause**: Directly accessing `state.model.material` fails for OBJ/STL models (which are groups)
-**Solution**: Always use helper functions:
-- `updateMaterialColor(colorValue)` for color changes
-- `updateMaterialProperty(property, value)` for metalness/roughness
-- `updateMaterialTransparency(opacity)` for transparency
+## Critical Fixes (v2.0+)
 
-### Code Structure Issues
-**Symptom**: Functions not working, JavaScript errors in console
-**Cause**: Nested function definitions or malformed code structure
-**Prevention**: 
-- Keep all functions at the top level (never nest function definitions)
-- Use proper try-catch blocks around all Three.js operations
-- Always check for object existence before accessing properties
+### Core System Fixes
+**Loading (v2.0)**: Fixed CDN timing issues → ES6 modules + Vite bundling
+**Functions (v2.0)**: Fixed nested definitions → top-level scope organization  
+**Materials (v2.0)**: Fixed geometry-only controls → helper functions traverse object hierarchies
+**Model Loaders (v2.0)**: Rewrote OBJ/STL loaders with proper error handling
+**Upload (v2.1)**: Added callback system with 30s timeout and cleanup
+**Scaling (v2.1)**: Fixed cumulative transforms → proper resets and bounding box validation
+**Guide Lines (v2.2)**: Fixed positioning, thickness units, event handlers, UI initialization
 
-### Model Loading Failures
-**Symptom**: Custom models fail to load or display incorrectly
-**Common Issues**:
-1. **File Format**: OBJ, STL, GLTF, and GLB formats are supported
-2. **File Size**: 50MB limit enforced
-3. **File Corruption**: Invalid file structure
-4. **Material Assignment**: Models may need material reapplication
-5. **GLTF Dependencies**: Some GLTF files may have missing textures or dependencies
+### UI/UX Improvements  
+**Lighting Controls (v2.4)**: Compact design with vertical sliders, perfect alignment, boundary constraints
+**Lighting Modes (v2.5)**: Dual Basic/Complex modes with color-coded buttons, icon rotation, light targeting
+**UI Alignment (v2.6)**: Pixel-perfect flexbox gaps, CSS table layout, mathematical precision
+**Boxless Interface (v2.7)**: Clean panel design with transparent backgrounds, consistent 12px typography, optimized spacing (10px standard, LIGHTING at 16px for balance)
 
-### Performance Issues
-**Symptom**: Slow rendering, browser freezing
-**Solutions**:
-1. Reduce model complexity before upload
-2. Check file size (should be under 50MB)
-3. Close other browser tabs
-4. Use models with lower polygon counts
-
-### Upload System Issues (v2.1)
-**Symptom**: File uploads fail, time out, or don't provide feedback
-**Common Causes & Solutions**:
-1. **Upload Timeouts**: Large files or slow connections
-   - Solution: Wait up to 30 seconds - system has timeout protection
-   - Files over 50MB will be rejected with clear error message
-2. **Drag & Drop Not Working**: Files not recognized when dropped
-   - Solution: Ensure you're dropping .obj, .stl, .gltf, or .glb files only
-   - Added pre-validation before processing
-3. **Same File Upload**: Can't upload the same file twice
-   - Solution: File input now clears after each upload
-4. **No Progress Feedback**: Upload appears to hang
-   - Solution: Enhanced status display shows loading progress and clear error messages
-
-### Capture System Changes
-**Update**: Clipboard capture functionality has been removed
-**Reason**: Simplified capture system focusing on reliable file download
-**Current Behavior**: Only FILE button available for downloading PNG captures
-**Benefits**: More reliable across all browsers and environments
-
-### Guide Line System Issues (RESOLVED)
-**Previous Issues**: Guide line positioning and control synchronization problems
-**Root Causes Identified & Fixed**:
-1. **Missing Vertical Position Control** ✅ FIXED
-   - Problem: No `syncSliderNumber('linePosY', 'linePosYNum')` call
-   - Solution: Added proper slider-number synchronization
-2. **Missing Event Handler** ✅ FIXED
-   - Problem: No event listener for `linePosY` slider changes
-   - Solution: Added `safeAddEventListener('linePosY', 'input', callback)`
-3. **Thickness Value Mismatch** ✅ FIXED
-   - Problem: State had mismatched thickness values between HTML and JavaScript
-   - Solution: Updated to consistent integer range (0-100) with proper viewport unit conversion
-4. **Incorrect Thickness Units** ✅ FIXED
-   - Problem: Using `px` units instead of responsive viewport units
-   - Solution: Changed to `${state.guideLine.thickness / 1000 * 100}vh` for responsive scaling
-5. **Missing UI Initialization** ✅ FIXED
-   - Problem: Guide line controls not initialized to match state values
-   - Solution: Added proper `safeSetValue()` calls in `initializeViewer()`
-
-### GEMINI CLI Loop Issue (RESOLVED)
-**Previous Problem**: GEMINI CLI stuck in endless loop trying to fix guide line functionality
-**Root Cause**: Multiple interconnected issues in guide line system caused edit failures
-**Resolution**: All guide line issues have been systematically identified and fixed
-
-**What Was Fixed**:
-```javascript
-// 1. Added missing slider sync
-syncSliderNumber('linePosY', 'linePosYNum');
-
-// 2. Added missing event handler
-safeAddEventListener('linePosY', 'input', (e) => {
-    state.guideLine.posY = parseFloat(e.target.value);
-    updateGuideLine();
-});
-
-// 3. Fixed thickness value and units
-thickness: 5, // Integer range 0-100 with viewport unit conversion
-guideLine.style.height = `${state.guideLine.thickness / 1000 * 100}vh`;
-
-// 4. Added proper UI initialization
-safeSetValue('lineThickness', state.guideLine.thickness);
-safeSetValue('linePosY', state.guideLine.posY);
-```
-
-**Prevention**: Guide line system now has comprehensive error handling and proper initialization
-
-### Scaling System Issues (v2.1)
-**Symptom**: Models appear incorrectly sized after reload or multiple uploads
-**Root Cause**: Cumulative transformations not being reset
-**Solutions**:
-1. **Models Too Large/Small**: centerAndScaleModel now properly resets all transforms
-2. **Inconsistent Sizing**: Enhanced bounding box validation prevents empty box errors
-3. **Position Drift**: Final centering step ensures perfect positioning
-4. **Scale Factor Logging**: Console shows scaling details for debugging
-
-### Drag & Drop Issues (v2.1)
-**Symptom**: Drag and drop visual feedback inconsistent or missing
-**Fixed Issues**:
-1. **Missing dragenter Event**: Added proper dragenter handling
-2. **Visual Feedback**: Improved dragover/dragleave logic
-3. **File Type Validation**: Pre-validates file types before processing
-4. **Drop Effect**: Added proper dropEffect for better UX
-
-## Major Changes and Sunset Features (v2.3)
-
-### Camera Rotation Controls Sunset (v2.3)
-- **Change**: Removed camera rotation controls from UI and simplified mouse interactions
-- **Reason**: Streamlined user experience by focusing on model manipulation rather than camera control
-- **Impact**: 
-  - Left-click + drag now always rotates the model (was previously Ctrl+Left or Legacy mode only)
-  - Camera orbit controls removed from mouse interactions
-  - Camera rotation sliders/inputs removed from control panel
-  - Camera rotation display removed from VIEW STATUS panel
-  - Both "Standard" and "Legacy" control schemes now identical
-  - Ctrl+Left-click functionality sunset
-- **Code**: Functions preserved but commented out for potential future restoration
-- **Migration**: Existing presets automatically ignore camera rotation data
-
-### UI Panel Updates (v2.3)
-- **VIEWER STATS** renamed to **VIEW STATUS** for clearer terminology
-- **VIEW STATUS** now displays: Camera Position, Model Rotation, Zoom, Model (camera rotation removed)
-- **Panel Layout**: Streamlined information display focusing on essential view parameters
-
-### Interface Layout Updates (v2.3+)
-- **INTERACTION CONTROLS**: Repositioned to bottom-left of viewer area with "INTERACTION" header
-- **VIEW STATUS**: Renamed from "VIEWER STATS" with "VIEW" header for compactness
-- **LIGHTING CONTROLS**: Repositioned to top-right of viewer area with "LIGHTING" header and mode toggle
-- **Responsive Design**: Both panels adapt to page width changes with breakpoints
-- **Z-index**: Proper layering to ensure visibility over 3D content
-
-### Guide Line Default Values (v2.3+)
-- **Color**: Changed from red (#FF0000) to light gray (#CCCCCC)
-- **Thickness**: Updated to integer range (0-100) with default value 5 for better user control
-- **Transparency**: Changed from 1.0 (opaque) to 0.5 (semi-transparent)
-- **Vertical Position**: New control with range -50 to 50, default 0 (centered)
-- **Impact**: More professional, less intrusive guide lines with enhanced positioning control
-
-## Recent Critical Fixes (v2.0+)
-
-### Fixed Loading System (v2.0)
-- **Issue**: Application would hang at loading screen due to CDN timing issues
-- **Fix**: Migrated to ES6 modules with npm-managed dependencies and Vite bundling
-- **Impact**: Reliable loading with no network dependencies for core libraries
-
-### Fixed Function Structure (v2.0)
-- **Issue**: Malformed code with nested function definitions causing runtime errors
-- **Fix**: Reorganized all functions to top-level scope with modular organization
-- **Impact**: Proper code execution and maintainability
-
-### Fixed Material Controls (v2.0)
-- **Issue**: Material controls only worked for basic geometries, not loaded models
-- **Fix**: Implemented proper material update functions that traverse object hierarchies
-- **Impact**: Material controls now work for all model types
-
-### Fixed Model Loaders (v2.0)
-- **Issue**: OBJ/STL loaders had broken code and incorrect material application
-- **Fix**: Completely rewrote loader functions with proper error handling
-- **Impact**: Reliable custom model loading
-
-### Fixed Upload System (v2.1)
-- **Issue**: Unreliable file uploads, poor error handling, no timeout management
-- **Fix**: Implemented callback-based system with 30-second timeout and proper cleanup
-- **Impact**: Robust file upload system with comprehensive error recovery
-
-### Fixed Scaling System (v2.1)
-- **Issue**: Model scaling malfunctioned on reload due to cumulative transformations
-- **Fix**: Added proper transform reset and enhanced bounding box validation
-- **Impact**: Consistent model scaling regardless of reload frequency or model complexity
-
-### Fixed Guide Line System (v2.2)
-- **Issue**: Guide line positioning, thickness, and control synchronization failures
-- **Root Causes**: Missing event handlers, value mismatches, incorrect units, no UI initialization
-- **Fix**: Comprehensive guide line system overhaul with proper initialization and responsive units
-- **Impact**: Fully functional guide line overlay with smooth positioning and capture integration
+## Major Changes (v2.4+)
 
 ### Lighting Controls Redesign (v2.4)
-- **Issue**: Previous lighting controls were scattered across the right panel, taking up excessive space
-- **Fix**: Complete redesign of LIGHTING CONTROLS panel with compact, integrated layout
-- **New Design Features**:
-  - **Vertical Sliders**: Left and Right directional light controls positioned as vertical sliders flanking the light positioning pad
-  - **Perfect Alignment**: Sliders exactly match the height of the dark grey positioning area (150px)
-  - **Corner Labels**: LEFT and RIGHT labels positioned in bottom corners of the positioning pad with proper spacing (10px inset)
-  - **Integrated Ambient Controls**: Ambient light slider and value input positioned below the main controls
-  - **Precise Sizing**: Dark grey box width (128px) perfectly matches ambient controls width for visual consistency
-  - **Boundary Constraints**: Light icons constrained within positioning area with overlap prevention (30px minimum distance)
-  - **Dynamic Boundaries**: JavaScript recalculates positioning boundaries in real-time instead of using cached values
-- **Container Optimization**: Overall LIGHTING CONTROLS box reduced to 230px width for perfect left/right border symmetry
-- **Responsive Updates**: All breakpoints updated to maintain proper proportions across screen sizes
-- **Impact**: Compact, intuitive lighting interface with professional appearance and improved usability
+- **Compact Layout**: Redesigned LIGHTING CONTROLS panel with compact, integrated layout.
+- **Vertical Sliders**: Left and Right directional light controls positioned as vertical sliders.
+- **Integrated Ambient Controls**: Ambient light slider and value input positioned below main controls.
+- **Dynamic Boundaries**: JavaScript recalculates positioning boundaries in real-time.
 
 ### Advanced Lighting Modes System (v2.5+)
-- **Issue**: Users needed both simple positioning and advanced directional lighting control
-- **Solution**: Implemented dual-mode lighting system with dedicated Basic and Complex mode buttons
-- **New Features**:
-  - **Dedicated Mode Buttons**: Two separate buttons in title bar for "BASIC" and "COMPLEX" modes
-  - **State Management**: `lightingMode: 'basic'` state variable tracks current mode
-  - **Basic Mode**: Simple light positioning without rotation or targeting (default behavior)
-  - **Complex Mode**: Advanced features with icon rotation and light targeting
-    - **Icon Rotation**: Light icons rotate based on vertical position in pad
-    - **Left Icon**: Rotates 0° to 90° clockwise as moved from top to bottom
-    - **Right Icon**: Rotates 0° to -90° counter-clockwise as moved from top to bottom
-    - **Light Targeting**: Directional lights target specific Y-coordinates based on icon position
-    - **Target Calculation**: `targetY = (0.5 - verticalPercent) * 10` maps position to world coordinates
-  - **Mode Switching**: Automatic reset of rotations and targets when switching to Basic mode
-- **Button Design & Layout**: 
-  - **Dual Buttons**: COMPLEX (red) and BASIC (green) buttons positioned in title bar
-  - **Precise Positioning**: COMPLEX button at `right: 68px`, BASIC at `right: 10px` with 10px gap between
-  - **Color-coded States**: 
-    - **BASIC Selected**: Green background (`#4CAF50`) with green hover glow
-    - **COMPLEX Selected**: Red background (`#ff6b6b`) with red hover glow
-    - **Unselected**: Grey background (`#ccc`) with reduced opacity (0.6)
-  - **Equal Padding**: `4px` on all sides for consistent button appearance
-  - **Responsive Design**: Auto-width based on content with consistent 18px height
-- **JavaScript Architecture**:
-  - **Separate Event Handlers**: `basicModeButton` and `complexModeButton` click events
-  - **`updateLightingModeButtons()`**: Function manages visual state and color transitions
-  - **Enhanced `makeDraggable()`**: Checks `lightingMode` state for conditional behavior
-  - **Initialization**: Button states set on application startup
-- **Light Targets**: Each directional light has dedicated Three.js Object3D target for precise aiming
-- **Impact**: Provides intuitive, color-coded mode selection with clear visual feedback and precise 10px spacing
+- **Dual Modes**: Implemented dual-mode lighting system with "BASIC" and "COMPLEX" buttons.
+- **Basic Mode**: Simple light positioning.
+- **Complex Mode**: Advanced features including icon rotation and light targeting based on vertical position.
+- **Light Targets**: Each directional light has a dedicated Three.js Object3D target for precise aiming.
+
+### Guide Line Controls Configuration (v2.4+)
+- **Updated Value Ranges**: New value ranges and calculations for thickness, vertical position, transparency, and angle.
+- **Responsive Scaling**: Thickness uses viewport height units (vh) for responsive scaling.
+- **Position Mapping**: Position uses percentage-based positioning for consistent placement.
+- **Transform Origin**: Ensures rotation around the true center.
 
 ## Key Functions Reference
 
-### Section 1: Basic Utility Functions (lines ~37-130)
-- **`formatNumber(num)`** (line ~37): Number formatting for display
-- **`radToDeg(rad)`** / **`degToRad(deg)`** (line ~41-46): Angle conversion
-- **`safeSetValue(id, value)`** (line ~49): Safe DOM element value setter with warnings
-- **`showUploadStatus(message, type)`** (line ~58): Enhanced upload status display with timing
-- **`safeAddEventListener(id, event, handler)`** (line ~122): Safe event listener setup with warnings
+### Utilities (~37-130)
+`formatNumber()`, `radToDeg()`/`degToRad()`, `safeSetValue()`, `showUploadStatus()`, `safeAddEventListener()`
 
-### Section 2: Material Update Functions (lines ~131-187)
-- **`updateMaterialColor(colorValue)`** (line ~134): Updates material color for all model types
-- **`updateMaterialProperty(property, value)`** (line ~155): Updates metalness/roughness
-- **`updateMaterialTransparency(opacity)`** (line ~173): Updates transparency
+### Materials (~131-187)  
+`updateMaterialColor()`, `updateMaterialProperty()`, `updateMaterialTransparency()`
 
-### Section 3: File Handling & Model Loading (lines ~189-281)
-- **`validateFile(file)`** (line ~192): Enhanced file format and size validation supporting .obj, .stl, .gltf, .glb
-- **`resetModelControls()`** (line ~219): Resets model rotation/scale controls
-- **`resetMaterialControlsToDefault()`** (line ~228): Resets UI controls to default material values
-- **`handleFileUpload(file)`** (line ~239): Enhanced file upload handler with timeout and callbacks for all formats
+### File Handling (~189-281)
+`validateFile()`, `resetModelControls()`, `resetMaterialControlsToDefault()`, `handleFileUpload()`
 
-### Section 4: Mouse Event Handlers (lines ~284-387)
-- **`handleMouseDown(e)`** (line ~286): Handles mouse down events with control scheme detection
-- **`handleMouseMove(e)`** (line ~300): Advanced mouse movement handling with dual control schemes
-- **`handleMouseUp()`** (line ~366): Mouse up event cleanup
-- **`handleMouseWheel(e)`** (line ~373): Mouse wheel zoom functionality
-- **`handleContextMenu(e)`** (line ~385): Context menu prevention
+### Mouse Events (~284-387)
+`handleMouseDown()`, `handleMouseMove()`, `handleMouseUp()`, `handleMouseWheel()`, `handleContextMenu()`
 
-### Section 5: Core Model/Camera Functions (lines ~390-571)
-- **`updateCameraInfo()`** (line ~392): Updates UI displays and camera controls with enhanced formatting
-- **`centerAndScaleModel(object)`** (line ~452): Fixed auto-centering and scaling with transform reset
-- **`focusModelOnScreen()`** (line ~492): Automatic camera positioning to focus on model
-- **`captureFrame(callback)`** (line ~525): Simplified capture function with guide line hiding
-- **`animate()`** (line ~540): Main render loop
-- **`updateGuideLine()`** (line ~511): **FIXED** - Updates guide line overlay with proper positioning, responsive thickness, and transform handling
+### Core Model/Camera (~390-571)
+`updateCameraInfo()`, `centerAndScaleModel()`, `focusModelOnScreen()`, `captureFrame()`, `animate()`, `updateGuideLine()`
 
-### Section 6: Model Creation Functions (lines ~574-575)
-- **`createModel(modelType)`** (line ~576): Creates built-in geometric models
-- **`loadOBJModel(url, filename, onSuccess, onError)`** (line ~620): Enhanced OBJ file loader with callbacks
-- **`loadSTLModel(url, filename, onSuccess, onError)`** (line ~667): Enhanced STL file loader with callbacks
-- **`loadGLTFModel(url, filename, onSuccess, onError)`** (line ~714): GLTF/GLB file loader with scene traversal
-- **`createExampleTeapot()`** (line ~761): Creates procedural Utah Teapot example
-- **`createExampleSuzanne()`** (line ~809): Creates procedural Suzanne Monkey example
+### Model Creation (~574-575)
+`createModel()`, `loadOBJModel()`, `loadSTLModel()`, `loadGLTFModel()`, `createExampleTeapot()`, `createExampleSuzanne()`
 
-### Section 7: UI Setup & Control Functions (lines ~577-1270)
-- **`syncSliderNumber(sliderId, numberId)`** (line ~580): Bidirectional slider-number synchronization
-- **`loadPresetsList()`** (line ~598): Loads saved presets into dropdown
-- **`updateControlInstructions()`** (line ~612): Updates control instruction display based on scheme
-- **`setupMouseControls()`** (line ~629): Mouse interaction handlers with scheme support
-- **`setupControls()`** (line ~646): **ENHANCED** - Main UI control binding with comprehensive feature support including fixed guide line controls
-- **`setupLightControls()`** (line ~1371): **ENHANCED** - Interactive light positioning with boundary-constrained draggable icons, overlap prevention, and dynamic boundary calculation
+### UI Setup (~577-1270)
+`syncSliderNumber()`, `loadPresetsList()`, `updateControlInstructions()`, `setupMouseControls()`, `setupControls()`, `setupLightControls()`
 
-### Section 8: Main Initialization Functions (lines ~1257-1375)
-- **`handleResize()`** (line ~1275): Handles window resize events
-- **`initThreeJS()`** (line ~1288): Three.js scene setup with dual lighting
-- **`initializeViewer()`** (line ~1514): **ENHANCED** - Main initialization with all systems including proper guide line control initialization
-- **`showLoadingError(message)`** (line ~1554): Error display system
+### Initialization (~1257-1375)
+`handleResize()`, `initThreeJS()`, `initializeViewer()`, `showLoadingError()`
 
-## Development Best Practices
+## Best Practices
 
-### When Making Changes
-1. **Always test loading**: Run `npm run dev` and ensure the default model loads
-2. **Check console**: Look for JavaScript errors during development
-3. **Test material controls**: Verify color/metalness/roughness work on all model types
-4. **Test file uploads**: Try OBJ, STL, GLTF, and GLB files, including large files and edge cases
-5. **Verify example models**: Ensure Utah Teapot and Suzanne load correctly
-6. **Test scaling consistency**: Upload same model multiple times to verify consistent sizing
-7. **Verify drag & drop**: Test drag & drop with various file types (.obj, .stl, .gltf, .glb) and invalid files
-8. **Test build process**: Run `npm run build` and `npm run preview` to verify production builds
-9. **Test capture functionality**: Verify file download works in target browsers
-10. **Test deployment**: Use `npm run deploy` to test GitHub Pages deployment
-11. **Test control schemes**: Verify both Standard and Legacy interaction modes work correctly
-12. **Test guide lines**: ✅ FIXED - Guide line overlay now works correctly with positioning and capture hiding
-13. **Test lighting controls**: Verify compact vertical sliders, dual lighting modes (Basic/Complex), icon rotation in Complex mode, light targeting, and boundary constraints
-14. **Validate guide line initialization**: Ensure all guide line controls sync properly with state values
-15. **Test responsive thickness**: Verify guide line thickness scales properly with viewport
+### Testing Checklist
+1. Run `npm run dev` and verify default model loads
+2. Test material controls on all model types  
+3. Test file uploads (OBJ/STL/GLTF/GLB), drag & drop, edge cases
+4. Verify scaling consistency, guide lines, lighting controls
+5. Test build (`npm run build` → `npm run preview`) and deployment
+6. Check console for errors, verify capture functionality
 
-### AI Assistant Workflows
-**When Using GEMINI CLI**:
-- ✅ Guide line issues resolved - no longer causes infinite loops
-- Still use simple, single-line replacements when possible
-- Complex guide line debugging is now stable
-- Multi-line edits work better with fixed foundation
+### Code Standards
+- **Functions**: Top-level scope, never nested
+- **DOM Safety**: Use `safeSetValue()` and `safeAddEventListener()`
+- **Materials**: Use helper functions for single meshes and groups
+- **File Handling**: Always use callbacks, 30s timeouts, cleanup URLs
+- **Transforms**: Let `centerAndScaleModel()` handle resets
+- **UI Sync**: Initialize controls to match state values
 
-**When Using Claude Code**:
-- Excellent for systematic debugging like the recent guide line fixes
-- Superior for multi-file architectural changes
-- Best for comprehensive error analysis and resolution
-- Ideal for documentation updates and function reference maintenance
+### AI Workflows
+**GEMINI CLI**: Simple single-line replacements, guide line issues resolved
+**Claude Code**: Systematic debugging, multi-file changes, comprehensive analysis
 
-### Upload System Best Practices (v2.1)
-1. **Always use callbacks**: New loader functions require onSuccess/onError callbacks
-2. **Implement timeouts**: Use the 30-second timeout system for reliability
-3. **Validate early**: Pre-validate files before creating object URLs
-4. **Provide feedback**: Use `showUploadStatus()` for consistent user feedback
-5. **Clean up resources**: Ensure `URL.revokeObjectURL()` is called in all paths
-6. **Handle file input reset**: Clear file inputs to allow re-uploading same file
+### Common Pitfalls
+- Don't nest functions, assume single materials, skip error handling
+- Don't bypass build system, ignore timeouts, forget cleanup
+- Don't use positioning hacks, reduce widths without checking labels
+- Don't assume zoom controls exist (sunset v2.6)
+- Don't leave malformed CSS (standalone declarations), always validate syntax
+- Don't inconsistent text sizing - maintain 12px standard across panels
 
-### Scaling System Best Practices (v2.1)
-1. **Always reset transforms**: `centerAndScaleModel()` now handles this automatically
-2. **Validate bounding boxes**: Check for empty boxes before scaling operations
-3. **Log scaling operations**: Use console.log for debugging scale factors
-4. **Force matrix updates**: Call `updateMatrixWorld(true)` before bounding box calculations
-5. **Test with various models**: Verify scaling works with different model complexities
+## Guide Line Configuration (v2.4+)
 
-### Common Pitfalls to Avoid
-1. **Don't nest functions**: Keep all function definitions at the top level
-2. **Don't assume single material**: Use helper functions for material updates
-3. **Don't skip error handling**: Wrap Three.js operations in try-catch blocks
-4. **Don't hardcode DOM access**: Use `safeSetValue()` and `safeAddEventListener()`
-5. **Don't forget cleanup**: Always call `URL.revokeObjectURL()` after file loading
-6. **Don't skip transform resets**: Let `centerAndScaleModel()` handle transform resets
-7. **Don't ignore upload timeouts**: Use the callback system for proper timeout handling
-8. **Don't forget material UI updates**: Call `resetMaterialControlsToDefault()` after loading
-9. **Don't bypass the build system**: Always use `npm run dev` during development
-10. **Test capture functionality**: Verify file download works in target browsers
-11. **Maintain file quality**: Ensure proper newlines at end of files for git compatibility
-12. **Validate HTML**: Check that file input accept attributes match supported formats
-13. **Guide line system is now stable**: All major guide line issues have been resolved
-14. **Test responsive units**: Verify viewport-based thickness scaling works across devices
-15. **Validate state synchronization**: Ensure UI controls always match internal state values
-16. **Test lighting controls layout**: Verify perfect alignment of vertical sliders with positioning area, proper label placement, and optimal container sizing
-17. **Test lighting mode switching**: Verify dedicated BASIC/COMPLEX buttons, color-coded selection states, icon rotation behavior, target reset functionality, and precise 10px button spacing
-18. **Test button interactions**: Verify green/red hover glows, selected state colors (green for BASIC, red for COMPLEX), and grey unselected states
+**HTML Controls**: Thickness (0-100, default 5), Position (-50 to 50, default 0), Transparency (0-1, default 0.5), Angle (-90 to 90, default 0)
 
-## Guide Line Controls Configuration (v2.4+)
+**CSS Calculations**: 
+- Thickness: `${thickness / 1000 * 100}vh` (responsive viewport units)
+- Position: `top: ${50 - posY}%` (maps range to percentage)  
+- Transform: `translateY(-50%) rotate(${angle}deg)` (center + rotate)
 
-### Updated Guide Line Values
-The guide line system has been updated with new value ranges and calculations:
-
-**HTML Controls (index.html)**:
-- **Thickness**: Range 0-100, step 1, default value 5
-- **Vertical Position**: Range -50 to 50, step 1, default value 0 (centered)
-- **Transparency**: Range 0-1, step 0.01, default value 0.5
-- **Angle**: Range -90 to 90, step 1, default value 0
-
-**JavaScript State (main.js)**:
-- `thickness: 5` - Integer value matching HTML range (0-100)
-- `posY: 0` - Centered position, maps to 50% from top
-- `transparency: 0.5` - Semi-transparent default
-- `angle: 0` - Horizontal default
-
-**CSS Calculations**:
-- **Thickness conversion**: `${state.guideLine.thickness / 1000 * 100}vh` - Converts 0-100 range to responsive viewport units
-- **Position mapping**: `top: ${50 - state.guideLine.posY}%` - Maps -50 to 50 range to 100% to 0% from top
-- **Transform**: `translateY(-50%) rotate(${angle}deg)` - Centers line and applies rotation
-
-**Key Implementation Notes**:
-- Thickness uses viewport height units (vh) for responsive scaling
-- Position uses percentage-based positioning for consistent placement
-- Transform origin ensures rotation around the true center
-- Values are synchronized between HTML inputs and JavaScript state
-
-This system provides intuitive control ranges while maintaining responsive behavior across different screen sizes.
+**Implementation**: Synchronized HTML/JS state, responsive scaling, centered rotation origin

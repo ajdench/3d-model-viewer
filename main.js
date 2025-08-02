@@ -13,11 +13,10 @@ let state = {
     zoom: 1,
     currentModelType: 'Default Torus Knot',
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
-    controlScheme: 'standard', // 'standard' or 'legacy'
     lightingMode: 'basic', // 'basic' or 'complex'
     guideLine: {
         thickness: 5,
-        color: '#CCCCCC',
+        colour: '#FFFF00',
         transparency: 0.5,
         angle: 0,
         posY: 0 // New: Vertical position (0-100%)
@@ -111,7 +110,7 @@ function updateLightingModeButtons() {
 // ----------------------------------------------------------------
 // 2. Material Update Functions
 // ----------------------------------------------------------------
-function updateMaterialColor(colorValue) {
+function updateMaterialColour(colorValue) {
     console.log('Updating material color to:', colorValue);
     
     if (state.model) {
@@ -209,9 +208,12 @@ function resetModelControls() {
     ['modelRotX', 'modelRotY', 'modelRotZ', 'modelRotXNum', 'modelRotYNum', 'modelRotZNum'].forEach(id => {
         safeSetValue(id, 0);
     });
+    // SUNSET: Zoom reset removed
+    /*
     ['modelZoom', 'modelZoomNum'].forEach(id => {
         safeSetValue(id, 1);
     });
+    */
 }
 
 function resetMaterialControlsToDefault() {
@@ -412,16 +414,19 @@ function updateCameraInfo() {
         safeSetValue('modelRotYNum', Math.round(modelRotYDeg));
         safeSetValue('modelRotZNum', Math.round(modelRotZDeg));
         
-        // Update zoom control
+        // SUNSET: Zoom control update removed
+        /*
         const zoom = state.model.scale.x;
         safeSetValue('modelZoom', formatNumber(zoom));
         safeSetValue('modelZoomNum', formatNumber(zoom));
+        */
         
-        // Update info display with current model type
+        // SUNSET: Zoom display removed from VIEW STATUS
+        /*
         const infoEl = document.getElementById('info');
         if (infoEl) {
             infoEl.innerHTML = `
-                <h4>VIEW STATUS</h4>
+                <h4>VIEW</h4>
                 <p><b>Camera Position:</b> (${formatNumber(pos.x)}, ${formatNumber(pos.y)}, ${formatNumber(pos.z)})</p>
                 <p><b>Model Rotation:</b> (${formatNumber(modelRotXDeg)}°, ${formatNumber(modelRotYDeg)}°, ${formatNumber(modelRotZDeg)}°)</p>
                 <p><b>Zoom:</b> ${formatNumber(zoom)}</p>
@@ -429,6 +434,16 @@ function updateCameraInfo() {
             `;
             // SUNSET: Camera Rotation display removed from VIEW STATUS
             // <p><b>Camera Rotation:</b> (${formatNumber(rotXDeg)}°, ${formatNumber(rotYDeg)}°, ${formatNumber(rotZDeg)}°)</p>
+        }
+        */
+        const infoEl = document.getElementById('info');
+        if (infoEl) {
+            infoEl.innerHTML = `
+                <h4>VIEW</h4>
+                <p><span class="info-label">Camera Position:</span><span class="info-values-container"><span class="info-value-box">${Math.round(pos.x)}</span><span class="info-value-box">${Math.round(pos.y)}</span><span class="info-value-box">${Math.round(pos.z)}</span></span></p>
+                <p><span class="info-label">Model Rotation:</span><span class="info-values-container"><span class="info-value-box">${Math.round(modelRotXDeg)}°</span><span class="info-value-box">${Math.round(modelRotYDeg)}°</span><span class="info-value-box">${Math.round(modelRotZDeg)}°</span></span></p>
+                <p><span class="info-label">Model:</span><span class="info-values-container"><span class="model-name-box">${state.currentModelType}</span></span></p>
+            `;
         }
     }
 }
@@ -539,7 +554,7 @@ function updateGuideLine() {
     guideLine.style.height = `${state.guideLine.thickness / 1000 * 100}vh`;
 
     // Apply color
-    guideLine.style.backgroundColor = state.guideLine.color;
+    guideLine.style.backgroundColor = state.guideLine.colour;
 
     // Apply transparency
     guideLine.style.opacity = state.guideLine.transparency;
@@ -884,23 +899,6 @@ function loadPresetsList() {
     });
 }
 
-function updateControlInstructions() {
-    const standardInstructions = document.getElementById('standard-instructions');
-    const legacyInstructions = document.getElementById('legacy-instructions');
-
-    if (standardInstructions && legacyInstructions) {
-        if (state.controlScheme === 'standard') {
-            standardInstructions.style.display = 'block';
-            legacyInstructions.style.display = 'none';
-        } else {
-            standardInstructions.style.display = 'none';
-            legacyInstructions.style.display = 'block';
-        }
-    } else {
-        console.warn('Instruction elements not found for updateControlInstructions.');
-    }
-}
-
 function setupMouseControls() {
     const canvas = state.renderer.domElement;
 
@@ -939,13 +937,6 @@ function setupControls() {
         }
     });
 
-    // Control scheme selector
-    safeAddEventListener('controlSchemeSelector', 'change', (e) => {
-        state.controlScheme = e.target.value;
-        setupMouseControls(); // Re-apply controls based on new scheme
-        updateControlInstructions(); // Update instructions display
-    });
-
     // Slider-number sync function
     function syncSliderNumber(sliderId, numberId) {
         const slider = document.getElementById(sliderId);
@@ -976,7 +967,8 @@ function setupControls() {
     syncSliderNumber('modelRotX', 'modelRotXNum');
     syncSliderNumber('modelRotY', 'modelRotYNum');
     syncSliderNumber('modelRotZ', 'modelRotZNum');
-    syncSliderNumber('modelZoom', 'modelZoomNum');
+    // SUNSET: Zoom control sync removed
+    // syncSliderNumber('modelZoom', 'modelZoomNum');
     syncSliderNumber('metalness', 'metalnessNum');
     syncSliderNumber('roughness', 'roughnessNum');
     syncSliderNumber('transparency', 'transparencyNum');
@@ -1047,12 +1039,15 @@ function setupControls() {
         }
     });
     
+    // SUNSET: Zoom event listener removed
+    /*
     safeAddEventListener('modelZoom', 'input', (e) => {
         if (state.model) {
             const zoom = parseFloat(e.target.value);
             state.model.scale.set(zoom, zoom, zoom);
         }
     });
+    */
 
     // Reset model button
     safeAddEventListener('resetModel', 'click', () => {
@@ -1069,16 +1064,18 @@ function setupControls() {
                 safeSetValue(id, 0);
             });
 
-            // Update the zoom slider to reflect the new scale from centerAndScaleModel
+            // SUNSET: Zoom slider update removed
+            /*
             const zoom = state.model.scale.x;
             safeSetValue('modelZoom', formatNumber(zoom));
             safeSetValue('modelZoomNum', formatNumber(zoom));
+            */
         }
     });
 
     // Material controls
     safeAddEventListener('materialColor', 'input', (e) => {
-        updateMaterialColor(e.target.value);
+        updateMaterialColour(e.target.value);
     });
     
     safeAddEventListener('metalness', 'input', (e) => {
@@ -1196,8 +1193,9 @@ function setupControls() {
             model: {
                 rotX: state.model?.rotation.x,
                 rotY: state.model?.rotation.y,
-                rotZ: state.model?.rotation.z,
-                zoom: state.model?.scale.x
+                rotZ: state.model?.rotation.z
+                // SUNSET: Zoom no longer saved in presets
+                // zoom: state.model?.scale.x
             },
             material: {
                 color: state.model?.material?.color?.getHex(),
@@ -1262,8 +1260,11 @@ function setupControls() {
             const rotZ = preset.model.rotZ || 0;
             state.model.rotation.set(rotX, rotY, rotZ);
             
+            // SUNSET: Zoom no longer loaded from presets
+            /*
             const zoom = preset.model.zoom || 1;
             state.model.scale.set(zoom, zoom, zoom);
+            */
             
             // Update model controls
             safeSetValue('modelRotX', Math.round(radToDeg(rotX)));
@@ -1372,8 +1373,8 @@ function setupControls() {
         updateGuideLine();
     });
 
-    safeAddEventListener('lineColor', 'input', (e) => {
-        state.guideLine.color = e.target.value;
+    safeAddEventListener('lineColour', 'input', (e) => {
+        state.guideLine.colour = e.target.value;
         updateGuideLine();
     });
 
@@ -1592,14 +1593,13 @@ async function initializeViewer() {
         setupControls();
         setupLightControls();
         loadPresetsList();
-        updateControlInstructions(); // Call initially to set correct instructions
         updateLightingModeButtons(); // Initialize button states
         setupMouseControls(); // Call here after DOM is ready
         
         // Initialize guide line controls to match state
         safeSetValue('lineThickness', state.guideLine.thickness);
         safeSetValue('lineThicknessNum', state.guideLine.thickness);
-        safeSetValue('lineColor', state.guideLine.color);
+        safeSetValue('lineColour', state.guideLine.colour);
         safeSetValue('lineTransparency', state.guideLine.transparency);
         safeSetValue('lineTransparencyNum', state.guideLine.transparency);
         safeSetValue('lineAngle', state.guideLine.angle);
