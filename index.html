@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
-  <script type="module" crossorigin src="/3d-model-viewer/assets/index-DcgHOg1i.js"></script>
-  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-RQHvx-AY.css">
+  <script type="module" crossorigin src="/3d-model-viewer/assets/index-XwGRAyTq.js"></script>
+  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-BAiTHrN0.css">
 </head>
 <body>
     <div class="container">
@@ -78,105 +78,148 @@
         <div id="guideLineOverlay" class="guide-line-overlay">
             <div id="guideLine" class="guide-line"></div>
         </div>
+        
+        <!-- Bottom-right upload area -->
+        <div class="upload-area">
+            <div class="model-buttons">
+                <button id="torusButton" class="button secondary small">TORUS</button>
+                <button id="libraryButton" class="button secondary small">LIBRARY</button>
+            </div>
+            <div class="file-input">
+                <div id="dropZone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <div class="drop-icon">📁</div>
+                        <div class="drop-text">
+                            <div>Drag & drop your 3D model here</div>
+                            <div class="drop-subtext">or click to browse</div>
+                        </div>
+                        <div class="supported-formats">
+                            Supports: .obj, .stl, .gltf, .glb
+                        </div>
+                    </div>
+                    <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb" style="display: none;" />
+                </div>
+                <div id="uploadStatus" class="upload-status"></div>
+            </div>
+        </div>
         </div>
         
         <div class="controls-panel">
             <h3 class="panel-title">CONTROLS</h3>
-            <div class="control-section">
-                <h3>Capture</h3>
-                <div class="button-group">
-                    <button id="saveToClipboard" class="button secondary" disabled>CLIPBOARD</button>
-                    <button id="saveToFile" class="button secondary">FILE</button>
+            <div class="control-section" data-section="capture">
+                <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="capture-content">
+                    <h3>Capture</h3>
+                    <span class="collapse-icon" aria-hidden="true">−</span>
                 </div>
-            </div>
-            <div class="control-section">
-                <h3>Guide Line</h3>
-                <div class="control-group">
-                    <label>Colour</label>
-                    <input type="color" id="lineColour" class="color-input" value="#CCCCCC">
-                </div>
-                <div class="control-group">
-                    <label>Thickness</label>
-                    <div class="slider-container">
-                        <input type="range" id="lineThickness" class="slider-input" min="0" max="100" step="1" value="5">
-                        <input type="number" id="lineThicknessNum" class="number-input" min="0" max="100" step="1" value="5">
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label>Transparency</label>
-                    <div class="slider-container">
-                        <input type="range" id="lineTransparency" class="slider-input" min="0" max="1" step="0.01" value="0.5">
-                        <input type="number" id="lineTransparencyNum" class="number-input" min="0" max="1" step="0.01" value="0.5">
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label>Angle</label>
-                    <div class="slider-container">
-                        <input type="range" id="lineAngle" class="slider-input" min="-90" max="90" step="1" value="0">
-                        <input type="number" id="lineAngleNum" class="number-input" min="-90" max="90" step="1" value="0">
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label>Vertical Position</label>
-                    <div class="slider-container">
-                        <input type="range" id="linePosY" class="slider-input" min="-50" max="50" step="1" value="0">
-                        <input type="number" id="linePosYNum" class="number-input" min="-50" max="50" step="1" value="0">
+                <div class="section-content" id="capture-content">
+                    <div class="button-group">
+                        <button id="saveToClipboard" class="button secondary" disabled>CLIPBOARD</button>
+                        <button id="saveToFile" class="button secondary">FILE</button>
                     </div>
                 </div>
             </div>
-            <div class="control-section">
-                <h3>Camera</h3>
-                <div class="control-group">
-                    <label>Position X</label>
-                    <div class="slider-container">
-                        <input type="range" id="posX" class="slider-input" min="-10" max="10" step="0.1" value="0">
-                        <input type="number" id="posXNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+            <div class="control-section" data-section="guideline">
+                <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="guideline-content">
+                    <h3>Guide Line</h3>
+                    <span class="collapse-icon" aria-hidden="true">−</span>
+                </div>
+                <div class="section-content" id="guideline-content">
+                    <div class="control-group">
+                        <label>Colour</label>
+                        <input type="color" id="lineColour" class="color-input" value="#CCCCCC">
+                    </div>
+                    <div class="control-group">
+                        <label>Thickness</label>
+                        <div class="slider-container">
+                            <input type="range" id="lineThickness" class="slider-input" min="0" max="100" step="1" value="5">
+                            <input type="number" id="lineThicknessNum" class="number-input" min="0" max="100" step="1" value="5">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Transparency</label>
+                        <div class="slider-container">
+                            <input type="range" id="lineTransparency" class="slider-input" min="0" max="1" step="0.01" value="0.5">
+                            <input type="number" id="lineTransparencyNum" class="number-input" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Angle</label>
+                        <div class="slider-container">
+                            <input type="range" id="lineAngle" class="slider-input" min="-90" max="90" step="1" value="0">
+                            <input type="number" id="lineAngleNum" class="number-input" min="-90" max="90" step="1" value="0">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Vertical Position</label>
+                        <div class="slider-container">
+                            <input type="range" id="linePosY" class="slider-input" min="-50" max="50" step="1" value="0">
+                            <input type="number" id="linePosYNum" class="number-input" min="-50" max="50" step="1" value="0">
+                        </div>
                     </div>
                 </div>
-                <div class="control-group">
-                    <label>Position Y</label>
-                    <div class="slider-container">
-                        <input type="range" id="posY" class="slider-input" min="-10" max="10" step="0.1" value="0">
-                        <input type="number" id="posYNum" class="number-input" min="-10" max="10" step="0.1" value="0">
-                    </div>
+            </div>
+            <div class="control-section" data-section="camera">
+                <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="camera-content">
+                    <h3>Camera</h3>
+                    <span class="collapse-icon" aria-hidden="true">−</span>
                 </div>
-                <div class="control-group">
-                    <label>Position Z</label>
-                    <div class="slider-container">
-                        <input type="range" id="posZ" class="slider-input" min="1" max="20" step="0.1" value="5">
-                        <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
+                <div class="section-content" id="camera-content">
+                    <div class="control-group">
+                        <label>Position X</label>
+                        <div class="slider-container">
+                            <input type="range" id="posX" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                            <input type="number" id="posXNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                        </div>
                     </div>
-                </div>
-                <!-- SUNSET: Camera Rotation Controls - Removed from UI but functions preserved -->
-                <!-- 
-                <div class="control-group">
-                    <label>Rotation X</label>
-                    <div class="slider-container">
-                        <input type="range" id="rotX" class="slider-input" min="-180" max="180" step="1" value="0">
-                        <input type="number" id="rotXNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    <div class="control-group">
+                        <label>Position Y</label>
+                        <div class="slider-container">
+                            <input type="range" id="posY" class="slider-input" min="-10" max="10" step="0.1" value="0">
+                            <input type="number" id="posYNum" class="number-input" min="-10" max="10" step="0.1" value="0">
+                        </div>
                     </div>
-                </div>
-                <div class="control-group">
-                    <label>Rotation Y</label>
-                    <div class="slider-container">
-                        <input type="range" id="rotY" class="slider-input" min="-180" max="180" step="1" value="0">
-                        <input type="number" id="rotYNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    <div class="control-group">
+                        <label>Position Z</label>
+                        <div class="slider-container">
+                            <input type="range" id="posZ" class="slider-input" min="1" max="20" step="0.1" value="5">
+                            <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
+                        </div>
                     </div>
-                </div>
-                <div class="control-group">
-                    <label>Rotation Z</label>
-                    <div class="slider-container">
-                        <input type="range" id="rotZ" class="slider-input" min="-180" max="180" step="1" value="0">
-                        <input type="number" id="rotZNum" class="number-input" min="-180" max="180" step="1" value="0">
+                    <!-- SUNSET: Camera Rotation Controls - Removed from UI but functions preserved -->
+                    <!-- 
+                    <div class="control-group">
+                        <label>Rotation X</label>
+                        <div class="slider-container">
+                            <input type="range" id="rotX" class="slider-input" min="-180" max="180" step="1" value="0">
+                            <input type="number" id="rotXNum" class="number-input" min="-180" max="180" step="1" value="0">
+                        </div>
                     </div>
+                    <div class="control-group">
+                        <label>Rotation Y</label>
+                        <div class="slider-container">
+                            <input type="range" id="rotY" class="slider-input" min="-180" max="180" step="1" value="0">
+                            <input type="number" id="rotYNum" class="number-input" min="-180" max="180" step="1" value="0">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Rotation Z</label>
+                        <div class="slider-container">
+                            <input type="range" id="rotZ" class="slider-input" min="-180" max="180" step="1" value="0">
+                            <input type="number" id="rotZNum" class="number-input" min="-180" max="180" step="1" value="0">
+                        </div>
+                    </div>
+                    -->
+                    <button id="resetCamera" class="button">Reset Camera View</button>
                 </div>
-                -->
-                <button id="resetCamera" class="button">Reset Camera View</button>
             </div>
 
-            <div class="control-section">
-                <h3>Model</h3>
-                <div class="control-group">
+            <div class="control-section" data-section="model">
+                <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="model-content">
+                    <h3>Model</h3>
+                    <span class="collapse-icon" aria-hidden="true">−</span>
+                </div>
+                <div class="section-content" id="model-content">
+                    <div class="control-group">
                     <label>Rotation X</label>
                     <div class="slider-container">
                         <input type="range" id="modelRotX" class="slider-input" min="-180" max="180" step="1" value="0">
@@ -206,13 +249,18 @@
                     </div>
                 </div>
                 -->
-                <button id="resetModel" class="button">Reset Model</button>
+                    <button id="resetModel" class="button">Reset Model</button>
+                </div>
             </div>
 
-            <div class="control-section">
-                <h3>Material</h3>
-                <div class="control-group">
-                    <label>Colour</label>
+            <div class="control-section" data-section="material">
+                <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="material-content">
+                    <h3>Material</h3>
+                    <span class="collapse-icon" aria-hidden="true">−</span>
+                </div>
+                <div class="section-content" id="material-content">
+                    <div class="control-group">
+                        <label>Colour</label>
                     <input type="color" id="materialColor" class="color-input" value="#4CAF50">
                 </div>
                 <div class="control-group">
@@ -236,48 +284,17 @@
                         <input type="number" id="transparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
                     </div>
                 </div>
-            </div>
-
-            <div class="control-section">
-                <h3>Library</h3>
-                <div class="control-group">
-                    <label>Load Model</label>
-                    <select id="modelSelector" class="control-input">
-                        <option value="default">Default Torus Knot</option>
-                        <option value="cube">Cube</option>
-                        <option value="sphere">Sphere</option>
-                        <option value="pyramid">Pyramid</option>
-                    </select>
-                </div>
-                <div class="file-input">
-                    <label>Upload Custom Model</label>
-                    <div id="dropZone" class="drop-zone">
-                        <div class="drop-zone-content">
-                            <div class="drop-icon">📁</div>
-                            <div class="drop-text">
-                                <div>Drag & drop your 3D model here</div>
-                                <div class="drop-subtext">or click to browse</div>
-                            </div>
-                            <div class="supported-formats">
-                                Supports: .obj, .stl, .gltf, .glb
-                            </div>
-                        </div>
-                        <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb" style="display: none;" />
-                    </div>
-                    <div id="uploadStatus" class="upload-status"></div>
-                </div>
-                <div class="example-models">
-                    <label>Example Models</label>
-                    <div class="example-buttons">
-                        <button id="loadTeapot" class="button secondary small">Utah Teapot</button>
-                        <button id="loadSuzanne" class="button secondary small">Suzanne Monkey</button>
-                    </div>
                 </div>
             </div>
 
-            <div class="control-section">
-                <h3>Presets</h3>
-                <div class="control-group">
+
+            <div class="control-section" data-section="presets">
+                <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="presets-content">
+                    <h3>Presets</h3>
+                    <span class="collapse-icon" aria-hidden="true">−</span>
+                </div>
+                <div class="section-content" id="presets-content">
+                    <div class="control-group">
                     <label>Preset Name</label>
                     <input type="text" id="presetName" class="preset-name" placeholder="Enter preset name">
                 </div>
@@ -290,6 +307,7 @@
                     <select id="presetSelector" class="control-input">
                         <option value="">Select a preset...</option>
                     </select>
+                </div>
                 </div>
             </div>
 
