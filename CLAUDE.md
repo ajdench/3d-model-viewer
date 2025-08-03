@@ -117,7 +117,7 @@ python scripts/memory-assistant.py end
 
 ## Project Overview
 
-Professional 3D Model Viewer built with Three.js r178. Single-page web app with interactive controls for camera, models, materials, lighting, and guide lines. Uses ES6 modules + Vite, deploys to GitHub Pages.
+Professional 3D Model Viewer built with Three.js r179. Single-page web app with interactive controls for camera, models, materials, lighting, and guide lines. Uses ES6 modules + Vite, deploys to GitHub Pages.
 
 ## Commands
 ```bash
@@ -139,7 +139,7 @@ npm run deploy     # Deploy to GitHub Pages
 
 **Scene**: Transparent background, perspective camera (50° FOV), WebGL renderer with antialiasing
 **Lighting**: Ambient + dual directional lights, compact vertical sliders, Basic/Complex modes
-**Models**: Built-in (torus, cube, sphere, pyramid) + file upload (OBJ/STL/GLTF/GLB)
+**Models**: Built-in torus model + file upload (OBJ/STL/GLTF/GLB)
 **Controls**: Left-drag=rotate model, right-drag=pan camera, wheel=zoom
 **Materials**: PBR with color/metalness/roughness/transparency
 **Presets**: Save/load complete configurations to localStorage
@@ -215,6 +215,13 @@ npm run deploy     # Deploy to GitHub Pages
 **Spacing Optimization**: Standardized all control panel positioning to 10px from model pane edges, refined CONTROLS title spacing to 19px
 **Layout Precision**: LIGHTING panel positioned at 16px from right edge for optimal visual balance
 
+### Major UI Reorganization (v2.8-2.9+)
+**Collapsible Controls (v2.8)**: All 7 CONTROLS sections now collapsible with smooth CSS animations, persistent state, full accessibility
+**Upload Area Relocation (v2.9)**: Removed LIBRARY section, moved upload functionality to bottom-right of main pane with TORUS/LIBRARY buttons
+**Example Model Removal (v2.9.1)**: Eliminated Utah Teapot and Suzanne Monkey models and functions for streamlined interface
+**Precise Positioning (v2.9.1)**: Upload area aligned with INTERACTION box bottom and BASIC button right edge for pixel-perfect layout
+**Dependency Updates (v2.9.2)**: Three.js r178→r179, Vite 7.0.5→7.0.6, resolved punycode deprecation warnings
+
 ### Code Impact
 - Functions preserved but commented out with "SUNSET" markers
 - Presets automatically ignore sunset control data
@@ -238,26 +245,6 @@ npm run deploy     # Deploy to GitHub Pages
 **UI Alignment (v2.6)**: Pixel-perfect flexbox gaps, CSS table layout, mathematical precision
 **Boxless Interface (v2.7)**: Clean panel design with transparent backgrounds, consistent 12px typography, optimized spacing (10px standard, LIGHTING at 16px for balance)
 
-## Major Changes (v2.4+)
-
-### Lighting Controls Redesign (v2.4)
-- **Compact Layout**: Redesigned LIGHTING CONTROLS panel with compact, integrated layout.
-- **Vertical Sliders**: Left and Right directional light controls positioned as vertical sliders.
-- **Integrated Ambient Controls**: Ambient light slider and value input positioned below main controls.
-- **Dynamic Boundaries**: JavaScript recalculates positioning boundaries in real-time.
-
-### Advanced Lighting Modes System (v2.5+)
-- **Dual Modes**: Implemented dual-mode lighting system with "BASIC" and "COMPLEX" buttons.
-- **Basic Mode**: Simple light positioning.
-- **Complex Mode**: Advanced features including icon rotation and light targeting based on vertical position.
-- **Light Targets**: Each directional light has a dedicated Three.js Object3D target for precise aiming.
-
-### Guide Line Controls Configuration (v2.4+)
-- **Updated Value Ranges**: New value ranges and calculations for thickness, vertical position, transparency, and angle.
-- **Responsive Scaling**: Thickness uses viewport height units (vh) for responsive scaling.
-- **Position Mapping**: Position uses percentage-based positioning for consistent placement.
-- **Transform Origin**: Ensures rotation around the true center.
-
 ## Key Functions Reference
 
 ### Utilities (~37-130)
@@ -276,7 +263,7 @@ npm run deploy     # Deploy to GitHub Pages
 `updateCameraInfo()`, `centerAndScaleModel()`, `focusModelOnScreen()`, `captureFrame()`, `animate()`, `updateGuideLine()`
 
 ### Model Creation (~574-575)
-`createModel()`, `loadOBJModel()`, `loadSTLModel()`, `loadGLTFModel()`, `createExampleTeapot()`, `createExampleSuzanne()`
+`createModel()`, `loadOBJModel()`, `loadSTLModel()`, `loadGLTFModel()`
 
 ### UI Setup (~577-1270)
 `syncSliderNumber()`, `loadPresetsList()`, `updateControlInstructions()`, `setupMouseControls()`, `setupControls()`, `setupLightControls()`
@@ -311,6 +298,7 @@ npm run deploy     # Deploy to GitHub Pages
 - Don't bypass build system, ignore timeouts, forget cleanup
 - Don't use positioning hacks, reduce widths without checking labels
 - Don't assume zoom controls exist (sunset v2.6)
+- Don't assume example model functions exist (removed v2.9.1)
 - Don't leave malformed CSS (standalone declarations), always validate syntax
 - Don't inconsistent text sizing - maintain 12px standard across panels
 

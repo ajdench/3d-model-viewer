@@ -76,6 +76,11 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Spacing Optimization**: Standardized all control panel positioning to 10px from model pane edges, refined CONTROLS title spacing to 19px.
 - **Layout Precision**: LIGHTING panel positioned at 16px from right edge for optimal visual balance.
 
+### Dependency Updates (v2.9.2)
+- **Three.js**: Upgraded from r178 to r179.
+- **Vite**: Upgraded from 7.0.5 to 7.0.6.
+- **Resolved Deprecation**: Fixed `punycode` module deprecation warning.
+
 ### UI Alignment (v2.6)
 - **Pixel-perfect flexbox gaps**: Achieved precise spacing and alignment using flexbox.
 - **CSS table layout**: Utilized CSS table properties for structured content.

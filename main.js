@@ -772,97 +772,6 @@ function loadGLTFModel(url, filename, onSuccess, onError) {
     });
 }
 
-function createExampleTeapot() {
-    showUploadStatus('Loading Utah Teapot...', 'loading');
-    
-    // Create a simple teapot-like shape using sphere and cylinder
-    const group = new THREE.Group();
-    
-    // Body (sphere)
-    const bodyGeometry = new THREE.SphereGeometry(0.8, 16, 12);
-    bodyGeometry.scale(1, 0.7, 1);
-    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    group.add(body);
-    
-    // Spout (cylinder)
-    const spoutGeometry = new THREE.CylinderGeometry(0.1, 0.15, 0.6, 8);
-    spoutGeometry.rotateZ(Math.PI / 2);
-    const spout = new THREE.Mesh(spoutGeometry, bodyMaterial);
-    spout.position.set(0.7, 0, 0);
-    group.add(spout);
-    
-    // Handle (torus)
-    const handleGeometry = new THREE.TorusGeometry(0.3, 0.05, 8, 16);
-    handleGeometry.rotateY(Math.PI / 2);
-    const handle = new THREE.Mesh(handleGeometry, bodyMaterial);
-    handle.position.set(-0.6, 0, 0);
-    group.add(handle);
-    
-    // Lid (cylinder)
-    const lidGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.1, 16);
-    const lid = new THREE.Mesh(lidGeometry, bodyMaterial);
-    lid.position.set(0, 0.6, 0);
-    group.add(lid);
-    
-    if (state.model) state.scene.remove(state.model);
-    state.model = group;
-    state.scene.add(state.model);
-    state.currentModelType = 'Utah Teapot (Example)';
-    
-    resetModelControls();
-    showUploadStatus('✅ Utah Teapot loaded!', 'success');
-}
-
-function createExampleSuzanne() {
-    showUploadStatus('Loading Suzanne Monkey...', 'loading');
-    
-    // Create a monkey-like head using spheres
-    const group = new THREE.Group();
-    
-    // Head (sphere)
-    const headGeometry = new THREE.SphereGeometry(0.8, 16, 12);
-    const headMaterial = new THREE.MeshStandardMaterial({ color: 0xFFA500 });
-    const head = new THREE.Mesh(headGeometry, headMaterial);
-    group.add(head);
-    
-    // Eyes (spheres)
-    const eyeGeometry = new THREE.SphereGeometry(0.15, 8, 6);
-    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
-    
-    const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    leftEye.position.set(-0.3, 0.2, 0.6);
-    group.add(leftEye);
-    
-    const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    rightEye.position.set(0.3, 0.2, 0.6);
-    group.add(rightEye);
-    
-    // Nose (sphere)
-    const noseGeometry = new THREE.SphereGeometry(0.1, 8, 6);
-    const nose = new THREE.Mesh(noseGeometry, new THREE.MeshStandardMaterial({ color: 0xFF6347 }));
-    nose.position.set(0, 0, 0.8);
-    group.add(nose);
-    
-    // Ears (spheres)
-    const earGeometry = new THREE.SphereGeometry(0.2, 8, 6);
-    
-    const leftEar = new THREE.Mesh(earGeometry, headMaterial);
-    leftEar.position.set(-0.8, 0.4, 0);
-    group.add(leftEar);
-    
-    const rightEar = new THREE.Mesh(earGeometry, headMaterial);
-    rightEar.position.set(0.8, 0.4, 0);
-    group.add(rightEar);
-    
-    if (state.model) state.scene.remove(state.model);
-    state.model = group;
-    state.scene.add(state.model);
-    state.currentModelType = 'Suzanne Monkey (Example)';
-    
-    resetModelControls();
-    showUploadStatus('✅ Suzanne loaded!', 'success');
-}
 
 // ----------------------------------------------------------------
 // 7. UI Setup & Control Functions
@@ -1091,9 +1000,6 @@ function setupControls() {
     });
 
     // Model selector
-    safeAddEventListener('modelSelector', 'change', (e) => {
-        createModel(e.target.value);
-    });
 
     // File upload with drag and drop
     const dropZone = document.getElementById('dropZone');
@@ -1155,8 +1061,6 @@ function setupControls() {
     }
 
     // Example model buttons
-    safeAddEventListener('loadTeapot', 'click', createExampleTeapot);
-    safeAddEventListener('loadSuzanne', 'click', createExampleSuzanne);
 
     // Preset controls
     safeAddEventListener('saveToFile', 'click', () => {
@@ -1406,6 +1310,116 @@ function setupControls() {
         document.getElementById('angleFromRight').classList.add('active');
         document.getElementById('angleFromLeft').classList.remove('active');
     });
+
+    // Setup collapsible sections
+    setupCollapsibleSections();
+
+    // Setup model buttons
+    safeAddEventListener('torusButton', 'click', () => {
+        createModel('default');
+    });
+
+    safeAddEventListener('libraryButton', 'click', () => {
+        // Future: implement model library browsing
+        alert('Library functionality will be implemented for compiled package');
+    });
+}
+
+// Collapsible sections functionality
+function setupCollapsibleSections() {
+    const sections = document.querySelectorAll('.control-section[data-section]');
+    
+    sections.forEach(section => {
+        const header = section.querySelector('.section-header');
+        const sectionId = section.dataset.section;
+        
+        if (header && sectionId) {
+            // Click event
+            header.addEventListener('click', () => {
+                toggleSection(section, sectionId);
+            });
+            
+            // Keyboard event (Enter/Space)
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleSection(section, sectionId);
+                }
+            });
+        }
+    });
+    
+    // Load saved states
+    loadCollapsedStates();
+}
+
+function toggleSection(sectionElement, sectionId) {
+    const isCollapsed = sectionElement.classList.contains('collapsed');
+    const header = sectionElement.querySelector('.section-header');
+    
+    if (isCollapsed) {
+        expandSection(sectionElement, header);
+    } else {
+        collapseSection(sectionElement, header);
+    }
+    
+    saveCollapsedState(sectionId, !isCollapsed);
+}
+
+function collapseSection(sectionElement, header) {
+    sectionElement.classList.add('collapsed');
+    header.setAttribute('aria-expanded', 'false');
+    
+    // Change icon to downward triangle when collapsed
+    const icon = header.querySelector('.collapse-icon');
+    if (icon) {
+        icon.textContent = '▼';
+    }
+}
+
+function expandSection(sectionElement, header) {
+    sectionElement.classList.remove('collapsed');
+    header.setAttribute('aria-expanded', 'true');
+    
+    // Change icon to minus when expanded
+    const icon = header.querySelector('.collapse-icon');
+    if (icon) {
+        icon.textContent = '−';
+    }
+}
+
+function saveCollapsedState(sectionId, isCollapsed) {
+    try {
+        const states = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
+        states[sectionId] = isCollapsed;
+        localStorage.setItem('collapsedSections', JSON.stringify(states));
+    } catch (error) {
+        console.warn('Failed to save collapsed state:', error);
+    }
+}
+
+function loadCollapsedStates() {
+    try {
+        const states = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
+        Object.entries(states).forEach(([sectionId, isCollapsed]) => {
+            const section = document.querySelector(`[data-section="${sectionId}"]`);
+            const header = section?.querySelector('.section-header');
+            
+            if (section && header) {
+                if (isCollapsed) {
+                    collapseSection(section, header);
+                } else {
+                    // Ensure expanded sections have minus icon
+                    const icon = header.querySelector('.collapse-icon');
+                    if (icon) {
+                        icon.textContent = '−';
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.warn('Failed to load collapsed states:', error);
+    }
 }
 
 function setupLightControls() {

@@ -59,6 +59,11 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 
 ## 🔄 Recent Updates
 
+### Version 2.9.2: Dependency Updates
+- **Three.js**: Upgraded from r178 to r179.
+- **Vite**: Upgraded from 7.0.5 to 7.0.6.
+- **Resolved Deprecation**: Fixed `punycode` module deprecation warning.
+
 ### Version 2.7: UI Refinements
 - **Boxless Design**: Removed backgrounds, borders, and shadows from VIEW, LIGHTING, and INTERACTION panels for a cleaner appearance.
 - **Text Standardization**: Unified all panel text to 12px for consistent typography.

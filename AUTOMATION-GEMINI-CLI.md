@@ -6,7 +6,7 @@ This document outlines the standardized process for updating the Git repository 
 
 1.  **Full Code Review:** Before any changes are committed, a thorough code review will be conducted. This includes checking for code quality, adherence to project conventions, and ensuring that the changes meet the requirements of the task.
 
-2.  **Update CLAUDE.md:** The `CLAUDE.md` file will be reviewed and updated to reflect any new information or changes in the project that are relevant to the Claude assistant.
+2.  **Read CLAUDE.md:** The `CLAUDE.md` file will be read for understanding, but not modified. Any valuable information from it will be incorporated into `GEMINI.md`.
 
 3.  **Update GEMINI.md:** The `GEMINI.md` file will be updated to incorporate any valuable information from `CLAUDE.md` and to reflect any new development guidelines, architectural changes, or other relevant information for the Gemini assistant.
 
