@@ -69,11 +69,6 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 
 ## 🔄 Recent Updates
 
-### Version v2.10.0: External Surface Extraction Complete - Hybrid Three.js ConvexGeometry with WASM/MeshLabJS preparation
-- **Feature Description**: [Customize based on actual changes]
-- **Technical Details**: [Add specific implementation details]
-- **User Impact**: [Describe user-facing improvements]
-
 ### Version v2.10.0: External Surface Extraction
 - **Hybrid Architecture**: Three.js ConvexGeometry for immediate external surface extraction
 - **Advanced Transparency Mode**: New "External Surface Only" mode for high-poly models  
