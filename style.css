@@ -988,3 +988,41 @@
         [data-section*="guideline"] .remove-line {
             margin-top: 10px;
         }
+
+        /* Material control alignment */
+        [data-section="material"] .control-group-row .control-group:has(.color-input) {
+            flex: 0 0 80px; /* Fixed width for color input container */
+        }
+
+        [data-section="material"] .control-group-row .control-group:has(.button) {
+            flex: 1; /* Take remaining space for button container */
+        }
+
+        [data-section="material"] .control-group-row {
+            align-items: flex-start; /* Align from top to ensure labels are level */
+        }
+
+        [data-section="material"] .control-group-row .control-group label {
+            margin-bottom: 5px !important;
+            line-height: 1.2; /* Consistent line height for labels */
+        }
+
+        [data-section="material"] .color-input {
+            height: 37px; /* Match button height: 20px padding (10px*2) + 12px font + 5px for border/spacing */
+            border: 1px solid #ddd;
+            padding: 0;
+            box-sizing: border-box;
+            margin-bottom: 5px; /* Match button's margin-bottom */
+            position: relative;
+            top: -1px; /* Move up 1 pixel for visual alignment */
+        }
+
+        [data-section="material"] .control-group:has(#metalness, .metalness),
+        [data-section="material"] .control-group:has(#metalness, .metalness) ~ .control-group {
+            margin-top: 10px;
+        }
+
+        /* Ensure button in material sections has consistent margin */
+        [data-section="material"] .control-group-row .button {
+            margin-bottom: 5px; /* Explicit margin to match color input */
+        }

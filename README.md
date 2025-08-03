@@ -95,6 +95,7 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 - **Boxless Design**: Removed backgrounds, borders, and shadows from VIEW, LIGHTING, and INTERACTION panels for a cleaner appearance.
 - **Text Standardization**: Unified all panel text to 12px for consistent typography.
 - **Spacing Optimization**: Standardized control panel positioning to 10px from model pane edges, and adjusted bottom padding of control sections to ensure consistent 15px spacing from the last element to the pane border.
+- **Material Panel Alignment**: Aligned the 'Complex' button and color picker in the Material panel to match the precise styling and spacing of the Guide Line panel.
 
 ### Version 2.6: UI Alignment
 - **Pixel-perfect Flexbox Gaps**: Achieved precise spacing and alignment using flexbox.

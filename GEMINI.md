@@ -77,6 +77,7 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Spacing Optimization**: Standardized all control panel positioning to 10px from model pane edges, refined CONTROLS title spacing to 19px.
 - **Layout Precision**: LIGHTING panel positioned at 16px from right edge for optimal visual balance.
 - **Control Panel Padding**: Adjusted bottom padding of control sections to ensure consistent 15px spacing from the last element to the pane border.
+- **Material Panel Alignment**: Aligned the 'Complex' button and color picker in the Material panel to match the precise styling and spacing of the Guide Line panel.
 
 ### Unified Surface Transparency (v2.9.5)
 - **Five Transparency Modes**: Implemented a comprehensive transparency system with five distinct modes to handle various rendering requirements, especially for high-poly models.
