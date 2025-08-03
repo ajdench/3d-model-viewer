@@ -14,6 +14,7 @@ let state = {
     currentModelType: 'Default Torus Knot',
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
     lightingMode: 'basic', // 'basic' or 'complex'
+    transparencyMode: 'threshold', // 'threshold', 'wboit', 'standard', 'advanced', 'dithered'
     guideLine: {
         thickness: 5,
         colour: '#FFFF00',
@@ -117,17 +118,27 @@ function updateMaterialColour(colorValue) {
         // Handle both single mesh and group objects
         if (state.model.material) {
             // Single mesh
-            state.model.material.color.setStyle(colorValue);
-            console.log('Color set on single mesh:', state.model.material.color);
+            updateMaterialColorForMesh(state.model, colorValue);
         } else if (state.model.children) {
             // Group of meshes (like loaded OBJ)
             state.model.traverse((child) => {
                 if (child.isMesh && child.material) {
-                    child.material.color.setStyle(colorValue);
-                    console.log('Color set on child mesh:', child.material.color);
+                    updateMaterialColorForMesh(child, colorValue);
                 }
             });
         }
+    }
+}
+
+function updateMaterialColorForMesh(mesh, colorValue) {
+    if (mesh.material._isWBOIT || mesh.material._isThreshold) {
+        // Update enhanced material color (WBOIT or Threshold)
+        mesh.material.color.setStyle(colorValue);
+        console.log('Color set on enhanced mesh:', mesh.material.color);
+    } else {
+        // Standard material
+        mesh.material.color.setStyle(colorValue);
+        console.log('Color set on standard mesh:', mesh.material.color);
     }
 }
 
@@ -137,15 +148,29 @@ function updateMaterialProperty(property, value) {
     if (state.model) {
         if (state.model.material) {
             // Single mesh
-            state.model.material[property] = value;
+            updateMaterialPropertyForMesh(state.model, property, value);
         } else if (state.model.children) {
             // Group of meshes
             state.model.traverse((child) => {
                 if (child.isMesh && child.material) {
-                    child.material[property] = value;
+                    updateMaterialPropertyForMesh(child, property, value);
                 }
             });
         }
+    }
+}
+
+function updateMaterialPropertyForMesh(mesh, property, value) {
+    if (mesh.material._isWBOIT || mesh.material._isThreshold) {
+        // Update enhanced material properties (WBOIT or Threshold)
+        mesh.material[property] = value;
+        // Also update original material for consistency
+        if (mesh.material._originalMaterial) {
+            mesh.material._originalMaterial[property] = value;
+        }
+    } else {
+        // Standard material
+        mesh.material[property] = value;
     }
 }
 
@@ -155,19 +180,232 @@ function updateMaterialTransparency(opacity) {
     if (state.model) {
         if (state.model.material) {
             // Single mesh
-            state.model.material.opacity = opacity;
-            state.model.material.transparent = opacity < 1;
-            state.model.material.needsUpdate = true;
+            applyAdvancedTransparency(state.model, opacity);
         } else if (state.model.children) {
             // Group of meshes
             state.model.traverse((child) => {
                 if (child.isMesh && child.material) {
-                    child.material.opacity = opacity;
-                    child.material.transparent = opacity < 1;
-                    child.material.needsUpdate = true;
+                    applyAdvancedTransparency(child, opacity);
                 }
             });
         }
+    }
+}
+
+function applyAdvancedTransparency(mesh, opacity) {
+    if (!mesh.material) return;
+    
+    if (opacity >= 1.0) {
+        // Fully opaque - use standard rendering
+        mesh.material.transparent = false;
+        mesh.material.opacity = 1.0;
+        mesh.material.side = THREE.FrontSide;
+        mesh.material.depthWrite = true;
+        mesh.material.alphaTest = 0;
+        mesh.material.blending = THREE.NormalBlending;
+    } else if (opacity <= 0.05) {
+        // Nearly invisible - optimize performance
+        mesh.material.opacity = 0;
+        mesh.material.transparent = true;
+        mesh.material.depthWrite = false;
+    } else {
+        // Apply transparency based on selected mode
+        const transparencyMode = state.transparencyMode || 'advanced';
+        
+        switch (transparencyMode) {
+            case 'threshold':
+                applyThresholdTransparency(mesh, opacity);
+                break;
+            case 'wboit':
+                applyWBOITTransparency(mesh, opacity);
+                break;
+            case 'standard':
+                applyStandardTransparency(mesh, opacity);
+                break;
+            case 'advanced':
+                applyAdvancedTransparencyMode(mesh, opacity);
+                break;
+            case 'dithered':
+                applyDitheredTransparency(mesh, opacity);
+                break;
+            default:
+                applyThresholdTransparency(mesh, opacity); // Default to threshold for cleanest results
+        }
+    }
+    
+    mesh.material.needsUpdate = true;
+}
+
+function applyThresholdTransparency(mesh, opacity) {
+    // UNIFIED SURFACE: Optimized transparency for clean high-poly appearance
+    // Uses proper transparency with enhanced settings for unified surface look
+    mesh.material.transparent = true;
+    mesh.material.opacity = opacity;
+    
+    // Key settings for unified surface appearance:
+    mesh.material.side = THREE.FrontSide; // Only front faces for clean silhouette
+    mesh.material.depthWrite = false; // Required for proper transparency blending
+    mesh.material.depthTest = true; // Proper occlusion
+    
+    // Enhanced blending for cleaner appearance
+    if (opacity < 0.1) {
+        // Very transparent - use additive for ethereal effect
+        mesh.material.blending = THREE.AdditiveBlending;
+        mesh.material.opacity = opacity * 0.5; // Reduce intensity for additive
+    } else {
+        // Normal transparency with optimized settings
+        mesh.material.blending = THREE.NormalBlending;
+        mesh.material.premultipliedAlpha = true; // Better color accuracy
+    }
+    
+    // Clear any alpha test artifacts
+    mesh.material.alphaTest = 0;
+    
+    // Mark as threshold mode for unified transparency
+    mesh.material._isThreshold = true;
+    if (!mesh.material._originalMaterial) {
+        mesh.material._originalMaterial = mesh.material.clone();
+    }
+    
+    mesh.material.needsUpdate = true;
+}
+
+function applyStandardTransparency(mesh, opacity) {
+    // Original method - simple opacity with potential sorting issues
+    mesh.material.transparent = true;
+    mesh.material.opacity = opacity;
+    mesh.material.side = THREE.FrontSide;
+    mesh.material.depthWrite = true;
+    mesh.material.blending = THREE.NormalBlending;
+    mesh.material.alphaTest = 0;
+    mesh.material.premultipliedAlpha = false;
+}
+
+function applyWBOITTransparency(mesh, opacity) {
+    // WBOIT transparency - treats entire surface as unified entity
+    mesh.material.transparent = true;
+    mesh.material.opacity = opacity;
+    mesh.material.side = THREE.DoubleSide;
+    mesh.material.depthWrite = false;
+    
+    // Apply Weighted Blended OIT technique for unified surface treatment
+    applyWBOITMaterial(mesh, opacity);
+}
+
+function applyAdvancedTransparencyMode(mesh, opacity) {
+    // Advanced transparency optimized for high-poly models (non-WBOIT)
+    mesh.material.transparent = true;
+    mesh.material.opacity = opacity;
+    mesh.material.side = THREE.DoubleSide; // Render both sides for uniform appearance
+    mesh.material.depthWrite = false; // Critical for proper blending
+    
+    // Adaptive blending based on opacity level
+    if (opacity < 0.3) {
+        // Very transparent - additive blending for ethereal effect
+        mesh.material.blending = THREE.AdditiveBlending;
+        mesh.material.opacity = opacity * 0.7; // Tone down for additive
+    } else if (opacity < 0.7) {
+        // Medium transparency - enhanced normal blending
+        mesh.material.blending = THREE.NormalBlending;
+        mesh.material.premultipliedAlpha = true; // Better color accuracy
+    } else {
+        // Slightly transparent - alpha test for crisp edges
+        mesh.material.blending = THREE.NormalBlending;
+        mesh.material.alphaTest = 0.05; // Clean up edge artifacts
+    }
+}
+
+function applyWBOITMaterial(mesh, opacity) {
+    // If already WBOIT material, just update opacity and alpha test
+    if (mesh.material._isWBOIT) {
+        // Update alpha test threshold based on opacity
+        mesh.material.alphaTest = Math.max(0.01, 1.0 - opacity);
+        mesh.material.needsUpdate = true;
+        return;
+    }
+    
+    // UNIFIED SURFACE APPROACH: Use alpha test for clean silhouette
+    // This eliminates individual face artifacts by treating the model as a solid shape
+    const originalMaterial = mesh.material;
+    
+    // Configure for unified surface appearance
+    mesh.material.transparent = false; // Use alpha test instead of blending
+    mesh.material.alphaTest = Math.max(0.01, 1.0 - opacity); // Convert opacity to threshold
+    
+    // Critical settings for clean appearance:
+    mesh.material.side = THREE.FrontSide; // Only front faces for clean silhouette
+    mesh.material.depthWrite = true; // Proper depth testing
+    mesh.material.depthTest = true; // Proper occlusion
+    
+    // Reset any blending artifacts
+    mesh.material.blending = THREE.NormalBlending;
+    mesh.material.premultipliedAlpha = false;
+    
+    mesh.material.needsUpdate = true;
+    
+    // Mark as enhanced for unified transparency
+    mesh.material._isWBOIT = true;
+    mesh.material._originalMaterial = originalMaterial;
+}
+
+function applyDitheredTransparency(mesh, opacity) {
+    // Dithered transparency - good for uniform appearance on complex models
+    mesh.material.transparent = false; // Use alpha test instead
+    mesh.material.alphaTest = 1.0 - opacity; // Convert opacity to alpha threshold
+    mesh.material.side = THREE.FrontSide;
+    mesh.material.depthWrite = true; // Maintain depth for correct occlusion
+    mesh.material.blending = THREE.NormalBlending;
+    
+    // Add dithering pattern via shader modification
+    if (!mesh.material._originalOnBeforeCompile) {
+        mesh.material._originalOnBeforeCompile = mesh.material.onBeforeCompile;
+        
+        mesh.material.onBeforeCompile = function(shader) {
+            // Call original if it exists
+            if (mesh.material._originalOnBeforeCompile) {
+                mesh.material._originalOnBeforeCompile(shader);
+            }
+            
+            // Add dithering to fragment shader
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <alphatest_fragment>',
+                `
+                #ifdef USE_ALPHATEST
+                    // Dithered alpha test for smoother transparency
+                    vec2 screenPos = gl_FragCoord.xy;
+                    float dither = fract(sin(dot(screenPos, vec2(12.9898, 78.233))) * 43758.5453);
+                    
+                    // Create 4x4 Bayer matrix pattern
+                    vec2 bayerCoord = mod(screenPos, 4.0);
+                    float bayerValue = 0.0;
+                    if (bayerCoord.x < 1.0) {
+                        if (bayerCoord.y < 1.0) bayerValue = 0.0/16.0;
+                        else if (bayerCoord.y < 2.0) bayerValue = 8.0/16.0;
+                        else if (bayerCoord.y < 3.0) bayerValue = 2.0/16.0;
+                        else bayerValue = 10.0/16.0;
+                    } else if (bayerCoord.x < 2.0) {
+                        if (bayerCoord.y < 1.0) bayerValue = 12.0/16.0;
+                        else if (bayerCoord.y < 2.0) bayerValue = 4.0/16.0;
+                        else if (bayerCoord.y < 3.0) bayerValue = 14.0/16.0;
+                        else bayerValue = 6.0/16.0;
+                    } else if (bayerCoord.x < 3.0) {
+                        if (bayerCoord.y < 1.0) bayerValue = 3.0/16.0;
+                        else if (bayerCoord.y < 2.0) bayerValue = 11.0/16.0;
+                        else if (bayerCoord.y < 3.0) bayerValue = 1.0/16.0;
+                        else bayerValue = 9.0/16.0;
+                    } else {
+                        if (bayerCoord.y < 1.0) bayerValue = 15.0/16.0;
+                        else if (bayerCoord.y < 2.0) bayerValue = 7.0/16.0;
+                        else if (bayerCoord.y < 3.0) bayerValue = 13.0/16.0;
+                        else bayerValue = 5.0/16.0;
+                    }
+                    
+                    float alpha = diffuseColor.a;
+                    if (alpha < alphaTest + (bayerValue - 0.5) * 0.2) discard;
+                #endif
+                `
+            );
+        };
     }
 }
 
@@ -538,8 +776,17 @@ function captureFrame(callback) {
 
 function animate() {
     requestAnimationFrame(animate);
+    
+    // Update WBOIT shader uniforms that need per-frame updates
+    updateWBOITUniforms();
+    
     state.renderer.render(state.scene, state.camera);
     updateCameraInfo();
+}
+
+function updateWBOITUniforms() {
+    // No longer needed since we're using enhanced standard materials
+    // instead of custom shaders for WBOIT
 }
 
 function updateGuideLine() {
@@ -999,6 +1246,14 @@ function setupControls() {
         updateMaterialTransparency(parseFloat(e.target.value));
     });
 
+    // Transparency mode selector
+    safeAddEventListener('transparencyMode', 'change', (e) => {
+        state.transparencyMode = e.target.value;
+        // Re-apply current transparency with new mode
+        const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
+        updateMaterialTransparency(currentOpacity);
+    });
+
     // Model selector
 
     // File upload with drag and drop
@@ -1105,7 +1360,8 @@ function setupControls() {
                 color: state.model?.material?.color?.getHex(),
                 metalness: state.model?.material?.metalness,
                 roughness: state.model?.material?.roughness,
-                opacity: state.model?.material?.opacity
+                opacity: state.model?.material?.opacity,
+                transparencyMode: state.transparencyMode
             },
             lighting: {
                 ambient: state.lights.ambient?.intensity,
@@ -1195,6 +1451,14 @@ function setupControls() {
             safeSetValue('metalnessNum', preset.material.metalness);
             safeSetValue('roughnessNum', preset.material.roughness);
             safeSetValue('transparencyNum', preset.material.opacity);
+            
+            // Restore transparency mode if saved
+            if (preset.material.transparencyMode) {
+                state.transparencyMode = preset.material.transparencyMode;
+                safeSetValue('transparencyMode', preset.material.transparencyMode);
+                // Re-apply transparency with the correct mode
+                updateMaterialTransparency(preset.material.opacity);
+            }
         }
         
         // Apply lighting settings

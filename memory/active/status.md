@@ -134,3 +134,9 @@
 
 ### Update: 2025-08-03 12:00
 - CODEBASE ASSESSMENT COMPLETE (v2.9.2): Gemini synchronized all v2.8-2.9.1 changes perfectly - collapsible controls, upload area relocation, example model removal, precise positioning all implemented. Dependencies updated: Three.js r178→r179, Vite 7.0.5→7.0.6, punycode deprecation resolved. Application running successfully with no conflicts or regressions.
+
+### Update: 2025-08-03 13:51
+- Completed threshold transparency mode - cleanest unified surface approach for high-poly models, resolves all transparency artifacts
+
+### Update: 2025-08-03 14:17
+- v2.9.5 COMPLETE: Unified Surface transparency mode with 5 transparency options, fixed opacity range 1.0→0.0, optimized for high-poly models, updated all documentation

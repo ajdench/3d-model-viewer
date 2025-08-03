@@ -76,6 +76,11 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Spacing Optimization**: Standardized all control panel positioning to 10px from model pane edges, refined CONTROLS title spacing to 19px.
 - **Layout Precision**: LIGHTING panel positioned at 16px from right edge for optimal visual balance.
 
+### Unified Surface Transparency (v2.9.5)
+- **Five Transparency Modes**: Implemented a comprehensive transparency system with five distinct modes to handle various rendering requirements, especially for high-poly models.
+- **Modes**: Unified Surface (default, optimized for clean blending), WBOIT (alpha testing), Advanced (double-sided with adaptive blending), Standard, and Dithered.
+- **Opacity Control**: Corrected the transparency slider to provide a smooth and accurate 1.0 to 0.0 opacity range.
+
 ### Dependency Updates (v2.9.2)
 - **Three.js**: Upgraded from r178 to r179.
 - **Vite**: Upgraded from 7.0.5 to 7.0.6.

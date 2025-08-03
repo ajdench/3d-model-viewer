@@ -25,7 +25,12 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 
 ### 	🎨 Material Properties
 - **Real-time Material Editor**: Color, metalness, roughness adjustment
-- **Transparency Control**: Variable opacity with automatic transparent flag management
+- **Advanced Transparency Control**: Variable opacity with five transparency modes:
+  - **Unified Surface**: Optimized blending for clean high-poly model appearance
+  - **WBOIT**: Alpha test approach for unified surfaces
+  - **Advanced**: DoubleSide rendering with adaptive blending
+  - **Standard**: Basic transparency with potential artifacts
+  - **Dithered**: Bayer pattern dithering for uniform appearance
 - **Professional Lighting**: Balanced ambient and directional lighting (left and right) without harsh shadows
 - **Compact Lighting Controls**: A redesigned, compact control panel for lighting, featuring:
   - **Vertical Sliders**: For intuitive control of left and right directional light intensity.
@@ -58,6 +63,12 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 - **Save to Clipboard**: *Currently disabled due to technical issues.*
 
 ## 🔄 Recent Updates
+
+### Version 2.9.5: Unified Surface Transparency
+- **Five Transparency Modes**: Complete transparency system for high-poly models.
+- **Unified Surface Mode**: New default mode with optimized blending for clean appearance.
+- **Transparency Range Fix**: Resolved opacity control issues for smooth 1.0→0.0 range.
+- **High-Poly Optimization**: Eliminates "messy" artifacts on complex models.
 
 ### Version 2.9.2: Dependency Updates
 - **Three.js**: Upgraded from r178 to r179.

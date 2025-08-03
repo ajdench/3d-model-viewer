@@ -141,7 +141,7 @@ npm run deploy     # Deploy to GitHub Pages
 **Lighting**: Ambient + dual directional lights, compact vertical sliders, Basic/Complex modes
 **Models**: Built-in torus model + file upload (OBJ/STL/GLTF/GLB)
 **Controls**: Left-drag=rotate model, right-drag=pan camera, wheel=zoom
-**Materials**: PBR with color/metalness/roughness/transparency
+**Materials**: PBR with color/metalness/roughness/transparency (5 transparency modes including Unified Surface for high-poly models)
 **Presets**: Save/load complete configurations to localStorage
 **Capture**: PNG download with transparent backgrounds
 **Guide Lines**: Overlay with customizable appearance and position
@@ -221,6 +221,7 @@ npm run deploy     # Deploy to GitHub Pages
 **Example Model Removal (v2.9.1)**: Eliminated Utah Teapot and Suzanne Monkey models and functions for streamlined interface
 **Precise Positioning (v2.9.1)**: Upload area aligned with INTERACTION box bottom and BASIC button right edge for pixel-perfect layout
 **Dependency Updates (v2.9.2)**: Three.js r178→r179, Vite 7.0.5→7.0.6, resolved punycode deprecation warnings
+**Unified Surface Transparency (v2.9.5)**: Five transparency modes for high-poly models - Unified Surface (optimized blending for clean high-poly appearance), WBOIT (Alpha Test approach), Advanced (DoubleSide+adaptive blending), Standard, Dithered (Bayer pattern). Resolved transparency range issues for smooth 1.0→0.0 opacity control.
 
 ### Code Impact
 - Functions preserved but commented out with "SUNSET" markers
