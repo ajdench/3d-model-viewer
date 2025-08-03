@@ -221,6 +221,8 @@ npm run deploy     # Deploy to GitHub Pages
 **Example Model Removal (v2.9.1)**: Eliminated Utah Teapot and Suzanne Monkey models and functions for streamlined interface
 **Precise Positioning (v2.9.1)**: Upload area aligned with INTERACTION box bottom and BASIC button right edge for pixel-perfect layout
 **Dependency Updates (v2.9.2)**: Three.js r178→r179, Vite 7.0.5→7.0.6, resolved punycode deprecation warnings
+**External Surface Extraction Complete - Hybrid Three.js ConvexGeometry with WASM/MeshLabJS preparation (v2.10.0)**: [Description to be customized based on specific changes]
+**External Surface Extraction (v2.10.0)**: Hybrid architecture for extracting only external surfaces from high-poly models - Phase 1: Three.js ConvexGeometry for immediate convex hull extraction, Phase 2/3: Prepared integration for WASM alpha shapes and MeshLabJS advanced algorithms. Includes new transparency mode "External Surface Only" and comprehensive UI controls.
 **Unified Surface Transparency (v2.9.5)**: Five transparency modes for high-poly models - Unified Surface (optimized blending for clean high-poly appearance), WBOIT (Alpha Test approach), Advanced (DoubleSide+adaptive blending), Standard, Dithered (Bayer pattern). Resolved transparency range issues for smooth 1.0→0.0 opacity control.
 
 ### Code Impact

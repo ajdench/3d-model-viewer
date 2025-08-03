@@ -140,3 +140,9 @@
 
 ### Update: 2025-08-03 14:17
 - v2.9.5 COMPLETE: Unified Surface transparency mode with 5 transparency options, fixed opacity range 1.0→0.0, optimized for high-poly models, updated all documentation
+
+### Update: 2025-08-03 17:07
+- v2.10.0 COMPLETE: External Surface Extraction - Hybrid approach with Three.js ConvexGeometry and future WASM/MeshLabJS integration - updated all documentation and automation
+
+### Update: 2025-08-03 17:15
+- v2.10.0 COMPLETE: External Surface Extraction Complete - Hybrid Three.js ConvexGeometry with WASM/MeshLabJS preparation - updated all documentation and automation

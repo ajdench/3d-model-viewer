@@ -25,12 +25,17 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 
 ### 	🎨 Material Properties
 - **Real-time Material Editor**: Color, metalness, roughness adjustment
-- **Advanced Transparency Control**: Variable opacity with five transparency modes:
+- **Advanced Transparency Control**: Variable opacity with six transparency modes:
+  - **External Surface Only**: Extracts and renders only the external surface (convex hull)
   - **Unified Surface**: Optimized blending for clean high-poly model appearance
   - **WBOIT**: Alpha test approach for unified surfaces
   - **Advanced**: DoubleSide rendering with adaptive blending
   - **Standard**: Basic transparency with potential artifacts
   - **Dithered**: Bayer pattern dithering for uniform appearance
+- **External Surface Extraction**: Configurable system for extracting only outer surface geometry:
+  - **Convex Hull**: Immediate extraction using Three.js ConvexGeometry
+  - **Alpha Shapes**: Future WASM implementation for advanced surface reconstruction
+  - **MeshLabJS**: Future integration for industry-standard mesh processing
 - **Professional Lighting**: Balanced ambient and directional lighting (left and right) without harsh shadows
 - **Compact Lighting Controls**: A redesigned, compact control panel for lighting, featuring:
   - **Vertical Sliders**: For intuitive control of left and right directional light intensity.
@@ -63,6 +68,17 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 - **Save to Clipboard**: *Currently disabled due to technical issues.*
 
 ## 🔄 Recent Updates
+
+### Version v2.10.0: External Surface Extraction Complete - Hybrid Three.js ConvexGeometry with WASM/MeshLabJS preparation
+- **Feature Description**: [Customize based on actual changes]
+- **Technical Details**: [Add specific implementation details]
+- **User Impact**: [Describe user-facing improvements]
+
+### Version v2.10.0: External Surface Extraction
+- **Hybrid Architecture**: Three.js ConvexGeometry for immediate external surface extraction
+- **Advanced Transparency Mode**: New "External Surface Only" mode for high-poly models  
+- **Future-Ready Integration**: Prepared architecture for WASM alpha shapes and MeshLabJS
+- **Enhanced UI Controls**: Surface extraction toggle, mode selection, and alpha parameter controls
 
 ### Version 2.9.5: Unified Surface Transparency
 - **Five Transparency Modes**: Complete transparency system for high-poly models.
