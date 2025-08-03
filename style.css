@@ -67,6 +67,21 @@
             margin-bottom: 15px;
         }
 
+        .control-group-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .control-group-row .control-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .delete-line {
+            margin-left: auto;
+        }
+
         /* Collapsible section styling */
         .section-header {
             display: flex;
@@ -224,6 +239,14 @@
 
         .button.secondary:hover {
             box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .button.button-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+
+        .button.button-danger:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
         }
 
         .button[disabled] {
@@ -903,4 +926,17 @@
             flex: 1; /* Take remaining space */
             margin-left: 0; /* No extra margin since flex gap handles spacing */
             font-size: 12px; /* Ensure consistent text size */
+        }
+
+        /* Checkbox styles for surface extraction controls */
+        .checkbox-input {
+            margin-right: 8px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .checkbox-input + label {
+            cursor: pointer;
+            font-size: 12px;
+            user-select: none;
         }

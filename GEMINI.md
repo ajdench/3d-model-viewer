@@ -91,3 +91,8 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **CSS table layout**: Utilized CSS table properties for structured content.
 - **Mathematical precision**: Ensured pixel-perfect alignment through precise calculations.
 
+### Multiple Guide Lines (v2.10.1)
+- **Dynamic Guide Lines**: Users can now add and remove multiple, independent guide lines.
+- **Independent Controls**: Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
+- **Dynamic UI**: The UI dynamically adds and removes control panes as lines are created or deleted, with titles that update automatically.
+

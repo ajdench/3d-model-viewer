@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 
 // Global state
 let state = {
@@ -15,13 +16,17 @@ let state = {
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
     lightingMode: 'basic', // 'basic' or 'complex'
     transparencyMode: 'threshold', // 'threshold', 'wboit', 'standard', 'advanced', 'dithered'
-    guideLine: {
+    surfaceExtractionMode: 'none', // 'none', 'convex', 'alpha' (future WASM), 'meshlab' (future)
+    surfaceExtractionEnabled: false, // Enable/disable surface extraction
+    alphaValue: 0.1, // Alpha parameter for future alpha shape extraction
+    guideLines: [{
+        id: 0,
         thickness: 5,
         colour: '#FFFF00',
         transparency: 0.5,
         angle: 0,
-        posY: 0 // New: Vertical position (0-100%)
-    }
+        posY: 0
+    }]
 };
 
 let mouseControls = {
@@ -82,6 +87,173 @@ function safeAddEventListener(id, event, handler) {
         el.addEventListener(event, handler);
     } else {
         console.warn(`Element with ID '${id}' not found for safeAddEventListener.`);
+    }
+}
+
+// ----------------------------------------------------------------
+// External Surface Extraction Functions (Hybrid Architecture)
+// ----------------------------------------------------------------
+
+/**
+ * PHASE 1: Extract external surface using Three.js ConvexGeometry
+ * This provides immediate convex hull extraction with zero dependencies
+ * @param {THREE.BufferGeometry} geometry - Input geometry
+ * @returns {THREE.BufferGeometry} - Convex hull geometry
+ */
+function extractConvexHull(geometry) {
+    try {
+        const points = [];
+        const position = geometry.attributes.position;
+        
+        if (!position) {
+            console.warn('Geometry has no position attribute for convex hull extraction');
+            return geometry; // Return original if no position data
+        }
+        
+        // Extract all vertices as Vector3 points
+        for (let i = 0; i < position.count; i++) {
+            points.push(new THREE.Vector3(
+                position.getX(i),
+                position.getY(i), 
+                position.getZ(i)
+            ));
+        }
+        
+        // Generate convex hull
+        const convexGeometry = new ConvexGeometry(points);
+        console.log(`✅ Convex hull extracted: ${position.count} → ${convexGeometry.attributes.position.count} vertices`);
+        
+        return convexGeometry;
+    } catch (error) {
+        console.error('❌ Error extracting convex hull:', error);
+        return geometry; // Return original geometry on error
+    }
+}
+
+/**
+ * PHASE 2: Extract external surface using alpha shapes (Future WASM Implementation)
+ * Placeholder for advanced surface extraction via WebAssembly
+ * @param {THREE.BufferGeometry} geometry - Input geometry  
+ * @param {number} alpha - Alpha parameter for shape complexity
+ * @returns {Promise<THREE.BufferGeometry>} - Alpha shape geometry
+ */
+async function extractAlphaShape(geometry, alpha = 0.1) {
+    // FUTURE IMPLEMENTATION: WASM-based alpha shape extraction
+    // This will provide more sophisticated external surface extraction
+    // than simple convex hulls, preserving concavities while removing interior
+    
+    try {
+        // TODO: Load and initialize WASM module
+        // const wasmModule = await loadAlphaShapeWASM();
+        // const result = wasmModule.extractAlphaShape(geometry, alpha);
+        // return result;
+        
+        console.warn('⚠️ Alpha shape extraction not yet implemented - falling back to convex hull');
+        return extractConvexHull(geometry);
+    } catch (error) {
+        console.error('❌ Error in alpha shape extraction:', error);
+        return extractConvexHull(geometry); // Fallback to convex hull
+    }
+}
+
+/**
+ * PHASE 3: Extract external surface using MeshLabJS (Future Integration)
+ * Placeholder for MeshLab-based surface reconstruction and simplification
+ * @param {THREE.BufferGeometry} geometry - Input geometry
+ * @param {Object} options - MeshLab processing options
+ * @returns {Promise<THREE.BufferGeometry>} - Processed geometry
+ */
+async function extractMeshLabSurface(geometry, options = {}) {
+    // FUTURE IMPLEMENTATION: MeshLabJS integration
+    // This will provide access to industry-standard mesh processing algorithms:
+    // - Quadric mesh simplification
+    // - Poisson surface reconstruction  
+    // - Ball-pivoting algorithm
+    // - Advanced remeshing techniques
+    
+    try {
+        // TODO: Initialize MeshLabJS WASM module
+        // const meshlab = await initMeshLabJS();
+        // const mesh = convertThreeGeometryToMeshLab(geometry);
+        // const processed = meshlab.processExternalSurface(mesh, options);
+        // return convertMeshLabToThreeGeometry(processed);
+        
+        console.warn('⚠️ MeshLabJS integration not yet implemented - falling back to convex hull');
+        return extractConvexHull(geometry);
+    } catch (error) {
+        console.error('❌ Error in MeshLab surface extraction:', error);
+        return extractConvexHull(geometry);
+    }
+}
+
+/**
+ * Main external surface extraction dispatcher
+ * Routes to appropriate extraction method based on current mode
+ * @param {THREE.BufferGeometry} geometry - Input geometry
+ * @returns {Promise<THREE.BufferGeometry>} - External surface geometry
+ */
+async function extractExternalSurface(geometry) {
+    if (!state.surfaceExtractionEnabled) {
+        return geometry; // Return original if extraction disabled
+    }
+    
+    console.log(`🔍 Extracting external surface using mode: ${state.surfaceExtractionMode}`);
+    
+    switch (state.surfaceExtractionMode) {
+        case 'convex':
+            return extractConvexHull(geometry);
+            
+        case 'alpha':
+            return await extractAlphaShape(geometry, state.alphaValue);
+            
+        case 'meshlab':
+            return await extractMeshLabSurface(geometry);
+            
+        case 'none':
+        default:
+            return geometry; // No extraction
+    }
+}
+
+/**
+ * Apply external surface extraction to transparency workflow
+ * Integrates surface extraction with existing transparency modes
+ * @param {THREE.Mesh} mesh - Target mesh
+ * @param {number} opacity - Transparency value
+ */
+async function applyExternalSurfaceTransparency(mesh, opacity) {
+    try {
+        // Step 1: Extract external surface if enabled
+        if (state.surfaceExtractionEnabled && state.surfaceExtractionMode !== 'none') {
+            console.log('🔄 Processing external surface extraction...');
+            
+            // Extract external surface geometry
+            const externalSurface = await extractExternalSurface(mesh.geometry);
+            
+            // Replace geometry with external surface
+            if (externalSurface !== mesh.geometry) {
+                mesh.geometry.dispose(); // Clean up original geometry
+                mesh.geometry = externalSurface;
+                console.log('✅ Geometry replaced with external surface');
+            }
+        }
+        
+        // Step 2: Apply transparency using existing system
+        applyThresholdTransparency(mesh, opacity);
+        
+    } catch (error) {
+        console.error('❌ Error in external surface transparency:', error);
+        // Fallback to standard transparency on error
+        applyThresholdTransparency(mesh, opacity);
+    }
+}
+
+// Helper function to show/hide alpha parameter controls
+function updateAlphaParameterVisibility() {
+    const alphaGroup = document.getElementById('alphaValueGroup');
+    if (alphaGroup) {
+        const showAlpha = state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'alpha';
+        alphaGroup.style.display = showAlpha ? 'block' : 'none';
     }
 }
 
@@ -174,25 +346,27 @@ function updateMaterialPropertyForMesh(mesh, property, value) {
     }
 }
 
-function updateMaterialTransparency(opacity) {
+async function updateMaterialTransparency(opacity) {
     console.log('Updating material transparency to:', opacity);
     
     if (state.model) {
         if (state.model.material) {
             // Single mesh
-            applyAdvancedTransparency(state.model, opacity);
+            await applyAdvancedTransparency(state.model, opacity);
         } else if (state.model.children) {
             // Group of meshes
+            const promises = [];
             state.model.traverse((child) => {
                 if (child.isMesh && child.material) {
-                    applyAdvancedTransparency(child, opacity);
+                    promises.push(applyAdvancedTransparency(child, opacity));
                 }
             });
+            await Promise.all(promises);
         }
     }
 }
 
-function applyAdvancedTransparency(mesh, opacity) {
+async function applyAdvancedTransparency(mesh, opacity) {
     if (!mesh.material) return;
     
     if (opacity >= 1.0) {
@@ -213,6 +387,9 @@ function applyAdvancedTransparency(mesh, opacity) {
         const transparencyMode = state.transparencyMode || 'advanced';
         
         switch (transparencyMode) {
+            case 'external-surface':
+                await applyExternalSurfaceTransparency(mesh, opacity);
+                break;
             case 'threshold':
                 applyThresholdTransparency(mesh, opacity);
                 break;
@@ -790,30 +967,28 @@ function updateWBOITUniforms() {
 }
 
 function updateGuideLine() {
-    const guideLine = document.getElementById('guideLine');
-    if (!guideLine) return;
+    const overlay = document.getElementById('guideLineOverlay');
+    if (!overlay) return;
 
-    // Set static properties that define its full width and initial vertical centering
-    guideLine.style.width = '100%';
-    guideLine.style.left = '0';
+    // Remove all existing guide lines
+    while (overlay.firstChild) {
+        overlay.removeChild(overlay.firstChild);
+    }
 
-    // Apply thickness (convert percentage to viewport height)
-    guideLine.style.height = `${state.guideLine.thickness / 1000 * 100}vh`;
+    // Re-create all guide lines from state
+    state.guideLines.forEach(lineState => {
+        const guideLine = document.createElement('div');
+        guideLine.className = 'guide-line';
+        guideLine.dataset.id = lineState.id;
 
-    // Apply color
-    guideLine.style.backgroundColor = state.guideLine.colour;
+        guideLine.style.height = `${lineState.thickness / 1000 * 100}vh`;
+        guideLine.style.backgroundColor = lineState.colour;
+        guideLine.style.opacity = lineState.transparency;
+        guideLine.style.top = `${50 - lineState.posY}%`;
+        guideLine.style.transform = `translateY(-50%) rotate(${lineState.angle}deg)`;
 
-    // Apply transparency
-    guideLine.style.opacity = state.guideLine.transparency;
-
-    // Apply angle
-    let angle = state.guideLine.angle;
-
-    // Apply vertical position (map -50 to 50 range to 100% to 0% top)
-    guideLine.style.top = `${50 - state.guideLine.posY}%`;
-
-    // Apply rotation and vertical centering
-    guideLine.style.transform = `translateY(-50%) rotate(${angle}deg)`;
+        overlay.appendChild(guideLine);
+    });
 }
 
 // ----------------------------------------------------------------
@@ -1023,22 +1198,28 @@ function loadGLTFModel(url, filename, onSuccess, onError) {
 // ----------------------------------------------------------------
 // 7. UI Setup & Control Functions
 // ----------------------------------------------------------------
-function syncSliderNumber(sliderId, numberId) {
-    const slider = document.getElementById(sliderId);
-    const number = document.getElementById(numberId);
+function syncSliderNumber(slider, number) {
     if (!slider || !number) return;
-    
-    slider.addEventListener('input', () => {
+
+    const updateNumber = () => {
         number.value = slider.value;
-    });
-    
-    number.addEventListener('input', () => {
+    };
+
+    const updateSlider = () => {
         const value = parseFloat(number.value);
-        if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
+        if (!isNaN(value) && value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
             slider.value = value;
-            slider.dispatchEvent(new Event('input'));
         }
-    });
+    };
+
+    slider.addEventListener('input', updateNumber);
+    number.addEventListener('input', updateSlider);
+
+    // Return a cleanup function to remove listeners
+    return () => {
+        slider.removeEventListener('input', updateNumber);
+        number.removeEventListener('input', updateSlider);
+    };
 }
 
 function loadPresetsList() {
@@ -1113,24 +1294,18 @@ function setupControls() {
     }
 
     // Setup all slider-number pairs
-    syncSliderNumber('posX', 'posXNum');
-    syncSliderNumber('posY', 'posYNum');
-    syncSliderNumber('posZ', 'posZNum');
-    // SUNSET: Camera rotation controls - commented out but functions preserved
-    // syncSliderNumber('rotX', 'rotXNum');
-    // syncSliderNumber('rotY', 'rotYNum');
-    // syncSliderNumber('rotZ', 'rotZNum');
-    syncSliderNumber('modelRotX', 'modelRotXNum');
-    syncSliderNumber('modelRotY', 'modelRotYNum');
-    syncSliderNumber('modelRotZ', 'modelRotZNum');
-    // SUNSET: Zoom control sync removed
-    // syncSliderNumber('modelZoom', 'modelZoomNum');
-    syncSliderNumber('metalness', 'metalnessNum');
-    syncSliderNumber('roughness', 'roughnessNum');
-    syncSliderNumber('transparency', 'transparencyNum');
-    syncSliderNumber('ambientLight', 'ambientLightNum');
-    syncSliderNumber('directionalLight', 'directionalLightNum');
-    syncSliderNumber('directionalLightRight', 'directionalLightRightNum');
+    syncSliderNumber(document.getElementById('posX'), document.getElementById('posXNum'));
+    syncSliderNumber(document.getElementById('posY'), document.getElementById('posYNum'));
+    syncSliderNumber(document.getElementById('posZ'), document.getElementById('posZNum'));
+    syncSliderNumber(document.getElementById('modelRotX'), document.getElementById('modelRotXNum'));
+    syncSliderNumber(document.getElementById('modelRotY'), document.getElementById('modelRotYNum'));
+    syncSliderNumber(document.getElementById('modelRotZ'), document.getElementById('modelRotZNum'));
+    syncSliderNumber(document.getElementById('metalness'), document.getElementById('metalnessNum'));
+    syncSliderNumber(document.getElementById('roughness'), document.getElementById('roughnessNum'));
+    syncSliderNumber(document.getElementById('transparency'), document.getElementById('transparencyNum'));
+    syncSliderNumber(document.getElementById('ambientLight'), document.getElementById('ambientLightNum'));
+    syncSliderNumber(document.getElementById('directionalLight'), document.getElementById('directionalLightNum'));
+    syncSliderNumber(document.getElementById('directionalLightRight'), document.getElementById('directionalLightRightNum'));
 
     // Camera controls
     safeAddEventListener('posX', 'input', (e) => {
@@ -1242,17 +1417,63 @@ function setupControls() {
         updateMaterialProperty('roughness', parseFloat(e.target.value));
     });
     
-    safeAddEventListener('transparency', 'input', (e) => {
-        updateMaterialTransparency(parseFloat(e.target.value));
+    safeAddEventListener('transparency', 'input', async (e) => {
+        await updateMaterialTransparency(parseFloat(e.target.value));
     });
 
     // Transparency mode selector
-    safeAddEventListener('transparencyMode', 'change', (e) => {
+    safeAddEventListener('transparencyMode', 'change', async (e) => {
         state.transparencyMode = e.target.value;
         // Re-apply current transparency with new mode
         const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
-        updateMaterialTransparency(currentOpacity);
+        await updateMaterialTransparency(currentOpacity);
     });
+
+    // Surface extraction controls
+    safeAddEventListener('surfaceExtractionEnabled', 'change', async (e) => {
+        state.surfaceExtractionEnabled = e.target.checked;
+        const modeSelect = document.getElementById('surfaceExtractionMode');
+        if (modeSelect) {
+            modeSelect.disabled = !e.target.checked;
+            if (e.target.checked && state.surfaceExtractionMode === 'none') {
+                state.surfaceExtractionMode = 'convex';
+                modeSelect.value = 'convex';
+            } else if (!e.target.checked) {
+                state.surfaceExtractionMode = 'none';
+            }
+        }
+        
+        // Update alpha parameter visibility
+        updateAlphaParameterVisibility();
+        
+        // Re-apply current transparency to trigger surface extraction
+        const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
+        await updateMaterialTransparency(currentOpacity);
+    });
+
+    safeAddEventListener('surfaceExtractionMode', 'change', async (e) => {
+        state.surfaceExtractionMode = e.target.value;
+        
+        // Update alpha parameter visibility
+        updateAlphaParameterVisibility();
+        
+        // Re-apply current transparency to trigger surface extraction with new mode
+        const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
+        await updateMaterialTransparency(currentOpacity);
+    });
+
+    // Alpha parameter for future alpha shapes
+    syncSliderNumber(document.getElementById('alphaValue'), document.getElementById('alphaValueNum'));
+    safeAddEventListener('alphaValue', 'input', async (e) => {
+        state.alphaValue = parseFloat(e.target.value);
+        
+        // Only re-apply if alpha mode is selected
+        if (state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'alpha') {
+            const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
+            await updateMaterialTransparency(currentOpacity);
+        }
+    });
+
 
     // Model selector
 
@@ -1363,6 +1584,11 @@ function setupControls() {
                 opacity: state.model?.material?.opacity,
                 transparencyMode: state.transparencyMode
             },
+            surfaceExtraction: {
+                enabled: state.surfaceExtractionEnabled,
+                mode: state.surfaceExtractionMode,
+                alphaValue: state.alphaValue
+            },
             lighting: {
                 ambient: state.lights.ambient?.intensity,
                 directional: state.lights.directional?.intensity,
@@ -1376,7 +1602,7 @@ function setupControls() {
         alert(`Preset "${name}" saved!`);
     });
     
-    safeAddEventListener('loadPreset', 'click', () => {
+    safeAddEventListener('loadPreset', 'click', async () => {
         const nameEl = document.getElementById('presetName');
         if (!nameEl) return;
         
@@ -1457,8 +1683,27 @@ function setupControls() {
                 state.transparencyMode = preset.material.transparencyMode;
                 safeSetValue('transparencyMode', preset.material.transparencyMode);
                 // Re-apply transparency with the correct mode
-                updateMaterialTransparency(preset.material.opacity);
+                await updateMaterialTransparency(preset.material.opacity);
             }
+        }
+        
+        // Apply surface extraction settings
+        if (preset.surfaceExtraction) {
+            state.surfaceExtractionEnabled = preset.surfaceExtraction.enabled || false;
+            state.surfaceExtractionMode = preset.surfaceExtraction.mode || 'none';
+            state.alphaValue = preset.surfaceExtraction.alphaValue || 0.1;
+            
+            safeSetValue('surfaceExtractionEnabled', state.surfaceExtractionEnabled);
+            safeSetValue('surfaceExtractionMode', state.surfaceExtractionMode);
+            safeSetValue('alphaValue', state.alphaValue);
+            safeSetValue('alphaValueNum', state.alphaValue);
+            
+            // Update UI state
+            const modeSelect = document.getElementById('surfaceExtractionMode');
+            if (modeSelect) {
+                modeSelect.disabled = !state.surfaceExtractionEnabled;
+            }
+            updateAlphaParameterVisibility();
         }
         
         // Apply lighting settings
@@ -1537,29 +1782,138 @@ function setupControls() {
     syncSliderNumber('linePosY', 'linePosYNum');
 
     safeAddEventListener('lineThickness', 'input', (e) => {
-        state.guideLine.thickness = parseFloat(e.target.value);
+        state.guideLines[0].thickness = parseFloat(e.target.value);
         updateGuideLine();
     });
 
     safeAddEventListener('lineColour', 'input', (e) => {
-        state.guideLine.colour = e.target.value;
+        state.guideLines[0].colour = e.target.value;
         updateGuideLine();
     });
 
     safeAddEventListener('lineTransparency', 'input', (e) => {
-        state.guideLine.transparency = parseFloat(e.target.value);
+        state.guideLines[0].transparency = parseFloat(e.target.value);
         updateGuideLine();
     });
 
     safeAddEventListener('lineAngle', 'input', (e) => {
-        state.guideLine.angle = parseFloat(e.target.value);
+        state.guideLines[0].angle = parseFloat(e.target.value);
         updateGuideLine();
     });
 
     safeAddEventListener('linePosY', 'input', (e) => {
-        state.guideLine.posY = parseFloat(e.target.value);
+        state.guideLines[0].posY = parseFloat(e.target.value);
         updateGuideLine();
     });
+
+    safeAddEventListener('addLine', 'click', addGuideLine);
+
+    function addGuideLine() {
+        const newId = state.guideLines.length > 0 ? Math.max(...state.guideLines.map(l => l.id)) + 1 : 0;
+
+        const newLine = {
+            id: newId,
+            thickness: 5,
+            colour: '#FFFF00',
+            transparency: 0.5,
+            angle: 0,
+            posY: 0
+        };
+
+        state.guideLines.push(newLine);
+        addGuideLineControl(newLine);
+        updateGuideLine();
+        updateGuideLineTitles();
+    }
+
+    function deleteGuideLine(id) {
+        state.guideLines = state.guideLines.filter(line => line.id !== id);
+        const controlToRemove = document.querySelector(`.control-section[data-guideline-id='${id}']`);
+        if (controlToRemove) {
+            controlToRemove.remove();
+        }
+        updateGuideLine();
+        updateGuideLineTitles();
+    }
+
+    function addGuideLineControl(lineState) {
+        const template = document.getElementById('guideline-template');
+        const clone = template.content.cloneNode(true);
+        const section = clone.querySelector('.control-section');
+        section.dataset.guidelineId = lineState.id;
+
+        const header = section.querySelector('h3');
+        header.textContent = `Guide Line ${state.guideLines.length}`;
+
+        const removeButton = section.querySelector('.remove-line');
+        removeButton.addEventListener('click', () => deleteGuideLine(lineState.id));
+
+        const addLineBelowButton = section.querySelector('.add-line-below');
+        addLineBelowButton.addEventListener('click', addGuideLine);
+
+        const colourInput = section.querySelector('.line-colour');
+        colourInput.value = lineState.colour;
+        colourInput.addEventListener('input', (e) => {
+            lineState.colour = e.target.value;
+            updateGuideLine();
+        });
+
+        const thicknessSlider = section.querySelector('.line-thickness');
+        const thicknessNum = section.querySelector('.line-thickness-num');
+        thicknessSlider.value = lineState.thickness;
+        thicknessNum.value = lineState.thickness;
+        syncSliderNumber(thicknessSlider, thicknessNum);
+        thicknessSlider.addEventListener('input', (e) => {
+            lineState.thickness = parseFloat(e.target.value);
+            updateGuideLine();
+        });
+
+        const transparencySlider = section.querySelector('.line-transparency');
+        const transparencyNum = section.querySelector('.line-transparency-num');
+        transparencySlider.value = lineState.transparency;
+        transparencyNum.value = lineState.transparency;
+        syncSliderNumber(transparencySlider, transparencyNum);
+        transparencySlider.addEventListener('input', (e) => {
+            lineState.transparency = parseFloat(e.target.value);
+            updateGuideLine();
+        });
+
+        const angleSlider = section.querySelector('.line-angle');
+        const angleNum = section.querySelector('.line-angle-num');
+        angleSlider.value = lineState.angle;
+        angleNum.value = lineState.angle;
+        syncSliderNumber(angleSlider, angleNum);
+        angleSlider.addEventListener('input', (e) => {
+            lineState.angle = parseFloat(e.target.value);
+            updateGuideLine();
+        });
+
+        const posYSlider = section.querySelector('.line-pos-y');
+        const posYNum = section.querySelector('.line-pos-y-num');
+        posYSlider.value = lineState.posY;
+        posYNum.value = lineState.posY;
+        syncSliderNumber(posYSlider, posYNum);
+        posYSlider.addEventListener('input', (e) => {
+            lineState.posY = parseFloat(e.target.value);
+            updateGuideLine();
+        });
+
+        const cameraSection = document.querySelector('[data-section="camera"]');
+        cameraSection.parentNode.insertBefore(section, cameraSection);
+        setupCollapsibleSections(); // Re-initialize collapsible sections
+    }
+
+    function updateGuideLineTitles() {
+        const allGuidelineSections = document.querySelectorAll('[data-section="guideline"], [data-section="guideline-added"]');
+        allGuidelineSections.forEach((section, index) => {
+            const header = section.querySelector('h3');
+            if (state.guideLines.length > 1) {
+                header.textContent = `Guide Line ${index + 1}`;
+            } else {
+                header.textContent = 'Guide Line';
+            }
+        });
+    }
 
     safeAddEventListener('angleFromLeft', 'click', () => {
         state.guideLine.angleFrom = 'left';
@@ -1875,15 +2229,15 @@ async function initializeViewer() {
         setupMouseControls(); // Call here after DOM is ready
         
         // Initialize guide line controls to match state
-        safeSetValue('lineThickness', state.guideLine.thickness);
-        safeSetValue('lineThicknessNum', state.guideLine.thickness);
-        safeSetValue('lineColour', state.guideLine.colour);
-        safeSetValue('lineTransparency', state.guideLine.transparency);
-        safeSetValue('lineTransparencyNum', state.guideLine.transparency);
-        safeSetValue('lineAngle', state.guideLine.angle);
-        safeSetValue('lineAngleNum', state.guideLine.angle);
-        safeSetValue('linePosY', state.guideLine.posY);
-        safeSetValue('linePosYNum', state.guideLine.posY);
+        safeSetValue('lineThickness', state.guideLines[0].thickness);
+        safeSetValue('lineThicknessNum', state.guideLines[0].thickness);
+        safeSetValue('lineColour', state.guideLines[0].colour);
+        safeSetValue('lineTransparency', state.guideLines[0].transparency);
+        safeSetValue('lineTransparencyNum', state.guideLines[0].transparency);
+        safeSetValue('lineAngle', state.guideLines[0].angle);
+        safeSetValue('lineAngleNum', state.guideLines[0].angle);
+        safeSetValue('linePosY', state.guideLines[0].posY);
+        safeSetValue('linePosYNum', state.guideLines[0].posY);
         
         updateGuideLine(); // Initialize guide line
         console.log('✅ 3D Model Viewer initialized successfully');

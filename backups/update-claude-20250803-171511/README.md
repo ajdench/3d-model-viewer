@@ -69,11 +69,6 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 
 ## 🔄 Recent Updates
 
-### Version 2.10.1: Multiple Guide Lines
-- **Dynamic Guide Lines**: Add and remove multiple, independent guide lines.
-- **Independent Controls**: Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
-- **Dynamic UI**: The UI dynamically adds and removes control panes as lines are created or deleted, with titles that update automatically.
-
 ### Version v2.10.0: External Surface Extraction
 - **Hybrid Architecture**: Three.js ConvexGeometry for immediate external surface extraction
 - **Advanced Transparency Mode**: New "External Surface Only" mode for high-poly models  
