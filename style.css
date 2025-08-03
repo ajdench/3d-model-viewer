@@ -49,6 +49,7 @@
         .control-section {
             margin-bottom: 25px;
             padding: 15px;
+            padding-bottom: 10px;
             background: rgba(0, 0, 0, 0.03);
             border-radius: 10px;
             border: 1px solid rgba(0, 0, 0, 0.05);
@@ -69,7 +70,7 @@
 
         .control-group-row {
             display: flex;
-            gap: 10px;
+            gap: 8px; /* Standardize gap for precise alignment */
             align-items: flex-end;
         }
 
@@ -939,4 +940,51 @@
             cursor: pointer;
             font-size: 12px;
             user-select: none;
+        }
+
+        /* Guide line control alignment */
+        [data-section*="guideline"] .control-group-row .control-group:has(.color-input) {
+            flex: 0 0 80px; /* Fixed width for color input container */
+        }
+
+        [data-section*="guideline"] .control-group-row .control-group:has(.add-line-below, #addLine) {
+            flex: 1; /* Take remaining space for add line button container */
+        }
+
+        /* Move Thickness and all controls below down by 10px in guide line panes */
+        [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness),
+        [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness) ~ .control-group {
+            margin-top: 10px;
+        }
+
+        /* Perfect alignment for guide line controls */
+        [data-section*="guideline"] .control-group-row {
+            align-items: flex-start; /* Align from top to ensure labels are level */
+        }
+
+        /* Ensure both labels have consistent spacing */
+        [data-section*="guideline"] .control-group-row .control-group label {
+            margin-bottom: 5px !important;
+            line-height: 1.2; /* Consistent line height for labels */
+        }
+
+        /* Make color input match button total height including margins */
+        [data-section*="guideline"] .color-input {
+            height: 37px; /* Match button height: 20px padding (10px*2) + 12px font + 5px for border/spacing */
+            border: 1px solid #ddd;
+            padding: 0;
+            box-sizing: border-box;
+            margin-bottom: 5px; /* Match button's margin-bottom */
+            position: relative;
+            top: -1px; /* Move up 1 pixel for visual alignment */
+        }
+
+        /* Ensure button in guideline sections has consistent margin */
+        [data-section*="guideline"] .control-group-row .button {
+            margin-bottom: 5px; /* Explicit margin to match color input */
+        }
+
+        /* Move REMOVE LINE button down by 10px in guide line panes */
+        [data-section*="guideline"] .remove-line {
+            margin-top: 10px;
         }

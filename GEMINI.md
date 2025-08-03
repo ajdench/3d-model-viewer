@@ -49,6 +49,7 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - The "Viewer Stats" and "Interaction Controls" dialogs were restyled for consistency.
 - The mouse controls were updated to remove middle-click functionality and reassign right-click to panning.
 - A right directional light was added to provide more control over model lighting.
+- **CSS Corruption Issue**: Recent attempts to modify `style.css` have resulted in file corruption and incorrect layouts. This issue appears to be specifically linked to interactions with the `gemini-2.5-flash` model. A recovery file (`css-recovery-file.md`) has been created to log the state and attempted changes.
 
 ## Major Changes (v2.4+)
 
@@ -75,6 +76,7 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Text Standardization**: Unified all panel text to 12px for consistent typography across interface.
 - **Spacing Optimization**: Standardized all control panel positioning to 10px from model pane edges, refined CONTROLS title spacing to 19px.
 - **Layout Precision**: LIGHTING panel positioned at 16px from right edge for optimal visual balance.
+- **Control Panel Padding**: Adjusted bottom padding of control sections to ensure consistent 15px spacing from the last element to the pane border.
 
 ### Unified Surface Transparency (v2.9.5)
 - **Five Transparency Modes**: Implemented a comprehensive transparency system with five distinct modes to handle various rendering requirements, especially for high-poly models.

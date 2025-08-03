@@ -359,7 +359,8 @@
                         <div class="control-group">
                             <select id="surfaceExtractionMode" class="control-input" disabled>
                                 <option value="none">None</option>
-                                <option value="convex" selected>Convex Hull</option>
+                                <option value="convex" selected>Convex Hull (Fast)</option>
+                                <option value="raycast">Ray Casting (Preserves Shape)</option>
                                 <option value="alpha">Alpha Shapes (Future)</option>
                                 <option value="meshlab">MeshLabJS (Future)</option>
                             </select>
@@ -371,6 +372,20 @@
                     <div class="slider-container">
                         <input type="range" id="alphaValue" class="slider-input" min="0.01" max="1" step="0.01" value="0.1">
                         <input type="number" id="alphaValueNum" class="number-input" min="0.01" max="1" step="0.01" value="0.1">
+                    </div>
+                </div>
+                <div class="control-group" id="raycastParametersGroup" style="display: none;">
+                    <label>Ray Samples per Face</label>
+                    <div class="slider-container">
+                        <input type="range" id="raycastSamples" class="slider-input" min="4" max="64" step="4" value="16">
+                        <input type="number" id="raycastSamplesNum" class="number-input" min="4" max="64" step="4" value="16">
+                    </div>
+                </div>
+                <div class="control-group" id="visibilityThresholdGroup" style="display: none;">
+                    <label>Visibility Threshold</label>
+                    <div class="slider-container">
+                        <input type="range" id="visibilityThreshold" class="slider-input" min="0.1" max="1" step="0.05" value="0.6">
+                        <input type="number" id="visibilityThresholdNum" class="number-input" min="0.1" max="1" step="0.05" value="0.6">
                     </div>
                 </div>
                 </div>

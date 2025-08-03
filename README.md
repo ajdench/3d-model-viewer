@@ -94,7 +94,7 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 ### Version 2.7: UI Refinements
 - **Boxless Design**: Removed backgrounds, borders, and shadows from VIEW, LIGHTING, and INTERACTION panels for a cleaner appearance.
 - **Text Standardization**: Unified all panel text to 12px for consistent typography.
-- **Spacing Optimization**: Standardized control panel positioning to 10px from model pane edges.
+- **Spacing Optimization**: Standardized control panel positioning to 10px from model pane edges, and adjusted bottom padding of control sections to ensure consistent 15px spacing from the last element to the pane border.
 
 ### Version 2.6: UI Alignment
 - **Pixel-perfect Flexbox Gaps**: Achieved precise spacing and alignment using flexbox.
@@ -191,6 +191,9 @@ Copy the contents of the `dist` directory to your private web server. The applic
 ## 	🐛 Troubleshooting
 
 ### Common Issues
+
+**Q: CSS Corruption / Layout Issues**
+A: Recent attempts to modify `style.css` have resulted in file corruption and incorrect layouts. This issue appears to be specifically linked to interactions with the `gemini-2.5-flash` model. A recovery file (`css-recovery-file.md`) has been created to log the state and attempted changes.
 
 **Q: Models appear too small or large**
 A: The auto-scaling system should handle this, but you can adjust `targetSize` in `centerAndScaleModel()` in `main.js`.

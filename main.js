@@ -16,9 +16,12 @@ let state = {
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
     lightingMode: 'basic', // 'basic' or 'complex'
     transparencyMode: 'threshold', // 'threshold', 'wboit', 'standard', 'advanced', 'dithered'
-    surfaceExtractionMode: 'none', // 'none', 'convex', 'alpha' (future WASM), 'meshlab' (future)
+    surfaceExtractionMode: 'none', // 'none', 'convex', 'raycast', 'alpha' (future WASM), 'meshlab' (future)
     surfaceExtractionEnabled: false, // Enable/disable surface extraction
     alphaValue: 0.1, // Alpha parameter for future alpha shape extraction
+    raycastSamples: 16, // Ray samples per face for ray casting
+    visibilityThreshold: 0.6, // Visibility threshold for external surface detection
+    maxRayDistance: 10, // Maximum ray distance for visibility testing
     guideLines: [{
         id: 0,
         thickness: 5,
@@ -42,6 +45,31 @@ let mouseControls = {
 // ----------------------------------------------------------------
 function formatNumber(num) {
     return parseFloat(num).toFixed(2);
+}
+
+function syncSliderNumber(slider, numberInput) {
+    if (typeof slider === 'string') {
+        slider = document.getElementById(slider);
+    }
+    if (typeof numberInput === 'string') {
+        numberInput = document.getElementById(numberInput);
+    }
+    
+    if (!slider || !numberInput) return;
+    
+    slider.addEventListener('input', (e) => {
+        numberInput.value = e.target.value;
+    });
+    
+    numberInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        
+        if (!isNaN(value) && value >= min && value <= max) {
+            slider.value = value;
+        }
+    });
 }
 
 function radToDeg(rad) {
@@ -89,6 +117,7 @@ function safeAddEventListener(id, event, handler) {
         console.warn(`Element with ID '${id}' not found for safeAddEventListener.`);
     }
 }
+
 
 // ----------------------------------------------------------------
 // External Surface Extraction Functions (Hybrid Architecture)
@@ -187,6 +216,234 @@ async function extractMeshLabSurface(geometry, options = {}) {
 }
 
 /**
+ * PHASE 1.5: Extract external surface using ray casting visibility analysis
+ * JavaScript-only implementation using Three.js Raycaster
+ * Preserves model shape while removing interior geometry
+ * @param {THREE.BufferGeometry} geometry - Input geometry
+ * @param {Object} options - Ray casting options
+ * @returns {Promise<THREE.BufferGeometry>} - External surface geometry
+ */
+async function extractExternalSurfaceRaycast(geometry, options = {}) {
+    console.log('🔧 Extracting external surface using ray casting...');
+    
+    const {
+        samplesPerFace = 16,
+        visibilityThreshold = 0.6,
+        maxRayDistance = 10,
+        chunkSize = 1000
+    } = options;
+    
+    try {
+        if (!geometry.attributes.position || !geometry.index) {
+            console.warn('Geometry missing position or index data for ray casting');
+            return geometry;
+        }
+        
+        const position = geometry.attributes.position;
+        const normal = geometry.attributes.normal || computeVertexNormals(geometry);
+        const index = geometry.index;
+        const faceCount = index.count / 3;
+        
+        console.log(`🔍 Analyzing ${faceCount} faces for external visibility...`);
+        
+        // Create temporary mesh for ray intersection testing
+        const tempMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+        const tempMesh = new THREE.Mesh(geometry, tempMaterial);
+        
+        const externalFaces = [];
+        const raycaster = new THREE.Raycaster();
+        raycaster.far = maxRayDistance;
+        
+        // Process faces in chunks to maintain responsiveness
+        for (let chunkStart = 0; chunkStart < faceCount; chunkStart += chunkSize) {
+            const chunkEnd = Math.min(chunkStart + chunkSize, faceCount);
+            
+            for (let faceIndex = chunkStart; faceIndex < chunkEnd; faceIndex++) {
+                const i = faceIndex * 3;
+                
+                // Get face vertices
+                const a = index.getX(i);
+                const b = index.getX(i + 1);
+                const c = index.getX(i + 2);
+                
+                // Calculate face centroid and normal
+                const centroid = new THREE.Vector3();
+                const faceNormal = new THREE.Vector3();
+                
+                const va = new THREE.Vector3().fromBufferAttribute(position, a);
+                const vb = new THREE.Vector3().fromBufferAttribute(position, b);
+                const vc = new THREE.Vector3().fromBufferAttribute(position, c);
+                
+                centroid.add(va).add(vb).add(vc).divideScalar(3);
+                
+                // Calculate face normal
+                const ab = new THREE.Vector3().subVectors(vb, va);
+                const ac = new THREE.Vector3().subVectors(vc, va);
+                faceNormal.crossVectors(ab, ac).normalize();
+                
+                // Test visibility by casting rays in hemisphere around face normal
+                let visibleSamples = 0;
+                
+                for (let sample = 0; sample < samplesPerFace; sample++) {
+                    // Generate random direction in hemisphere around face normal
+                    const rayDirection = generateHemisphereDirection(faceNormal);
+                    
+                    // Offset ray origin slightly along normal to avoid self-intersection
+                    const rayOrigin = centroid.clone().add(faceNormal.clone().multiplyScalar(0.001));
+                    
+                    raycaster.set(rayOrigin, rayDirection);
+                    const intersections = raycaster.intersectObject(tempMesh);
+                    
+                    // If no intersection or distant intersection, face is exposed
+                    if (intersections.length === 0 || intersections[0].distance > maxRayDistance * 0.8) {
+                        visibleSamples++;
+                    }
+                }
+                
+                // Face is external if visibility score exceeds threshold
+                const visibilityScore = visibleSamples / samplesPerFace;
+                if (visibilityScore >= visibilityThreshold) {
+                    externalFaces.push(faceIndex);
+                }
+            }
+            
+            // Yield control to prevent UI blocking
+            if (chunkStart + chunkSize < faceCount) {
+                await new Promise(resolve => setTimeout(resolve, 1));
+            }
+        }
+        
+        console.log(`✅ External surface analysis complete: ${externalFaces.length}/${faceCount} faces retained`);
+        
+        // Create new geometry with only external faces
+        const result = createGeometryFromFaces(geometry, externalFaces);
+        
+        // Cleanup
+        tempMesh.geometry.dispose();
+        tempMaterial.dispose();
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Error in ray casting surface extraction:', error);
+        return extractConvexHull(geometry); // Fallback to convex hull
+    }
+}
+
+/**
+ * Generate random direction in hemisphere around a normal vector
+ * @param {THREE.Vector3} normal - Surface normal
+ * @returns {THREE.Vector3} - Random hemisphere direction
+ */
+function generateHemisphereDirection(normal) {
+    // Generate random point on unit sphere
+    const u = Math.random();
+    const v = Math.random();
+    const theta = 2 * Math.PI * u;
+    const phi = Math.acos(2 * v - 1);
+    
+    const direction = new THREE.Vector3(
+        Math.sin(phi) * Math.cos(theta),
+        Math.sin(phi) * Math.sin(theta),
+        Math.cos(phi)
+    );
+    
+    // Ensure direction is in hemisphere around normal
+    if (direction.dot(normal) < 0) {
+        direction.negate();
+    }
+    
+    return direction;
+}
+
+/**
+ * Create new geometry containing only specified faces
+ * @param {THREE.BufferGeometry} geometry - Source geometry
+ * @param {number[]} faceIndices - Array of face indices to include
+ * @returns {THREE.BufferGeometry} - New geometry with subset of faces
+ */
+function createGeometryFromFaces(geometry, faceIndices) {
+    const position = geometry.attributes.position;
+    const normal = geometry.attributes.normal;
+    const uv = geometry.attributes.uv;
+    const index = geometry.index;
+    
+    const newVertices = [];
+    const newNormals = [];
+    const newUVs = [];
+    const newIndices = [];
+    const vertexMap = new Map();
+    
+    let newVertexIndex = 0;
+    
+    for (const faceIndex of faceIndices) {
+        const i = faceIndex * 3;
+        
+        for (let j = 0; j < 3; j++) {
+            const vertexIndex = index.getX(i + j);
+            
+            if (!vertexMap.has(vertexIndex)) {
+                // Add new vertex
+                newVertices.push(
+                    position.getX(vertexIndex),
+                    position.getY(vertexIndex),
+                    position.getZ(vertexIndex)
+                );
+                
+                if (normal) {
+                    newNormals.push(
+                        normal.getX(vertexIndex),
+                        normal.getY(vertexIndex),
+                        normal.getZ(vertexIndex)
+                    );
+                }
+                
+                if (uv) {
+                    newUVs.push(
+                        uv.getX(vertexIndex),
+                        uv.getY(vertexIndex)
+                    );
+                }
+                
+                vertexMap.set(vertexIndex, newVertexIndex);
+                newVertexIndex++;
+            }
+            
+            newIndices.push(vertexMap.get(vertexIndex));
+        }
+    }
+    
+    // Create new geometry
+    const newGeometry = new THREE.BufferGeometry();
+    newGeometry.setAttribute('position', new THREE.Float32BufferAttribute(newVertices, 3));
+    
+    if (newNormals.length > 0) {
+        newGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(newNormals, 3));
+    } else {
+        newGeometry.computeVertexNormals();
+    }
+    
+    if (newUVs.length > 0) {
+        newGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(newUVs, 2));
+    }
+    
+    newGeometry.setIndex(newIndices);
+    
+    return newGeometry;
+}
+
+/**
+ * Compute vertex normals for geometry without normal attributes
+ * @param {THREE.BufferGeometry} geometry - Input geometry
+ * @returns {THREE.BufferAttribute} - Computed normals
+ */
+function computeVertexNormals(geometry) {
+    const clone = geometry.clone();
+    clone.computeVertexNormals();
+    return clone.attributes.normal;
+}
+
+/**
  * Main external surface extraction dispatcher
  * Routes to appropriate extraction method based on current mode
  * @param {THREE.BufferGeometry} geometry - Input geometry
@@ -202,6 +459,13 @@ async function extractExternalSurface(geometry) {
     switch (state.surfaceExtractionMode) {
         case 'convex':
             return extractConvexHull(geometry);
+            
+        case 'raycast':
+            return await extractExternalSurfaceRaycast(geometry, {
+                samplesPerFace: state.raycastSamples || 16,
+                visibilityThreshold: state.visibilityThreshold || 0.6,
+                maxRayDistance: state.maxRayDistance || 10
+            });
             
         case 'alpha':
             return await extractAlphaShape(geometry, state.alphaValue);
@@ -239,21 +503,34 @@ async function applyExternalSurfaceTransparency(mesh, opacity) {
         }
         
         // Step 2: Apply transparency using existing system
-        applyThresholdTransparency(mesh, opacity);
+        applyThresholdTransparency(mesh.material, opacity);
         
     } catch (error) {
         console.error('❌ Error in external surface transparency:', error);
         // Fallback to standard transparency on error
-        applyThresholdTransparency(mesh, opacity);
+        applyThresholdTransparency(mesh.material, opacity);
     }
 }
 
-// Helper function to show/hide alpha parameter controls
+// Helper function to show/hide parameter controls based on extraction mode
 function updateAlphaParameterVisibility() {
     const alphaGroup = document.getElementById('alphaValueGroup');
+    const raycastGroup = document.getElementById('raycastParametersGroup');
+    const visibilityGroup = document.getElementById('visibilityThresholdGroup');
+    
     if (alphaGroup) {
         const showAlpha = state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'alpha';
         alphaGroup.style.display = showAlpha ? 'block' : 'none';
+    }
+    
+    if (raycastGroup) {
+        const showRaycast = state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'raycast';
+        raycastGroup.style.display = showRaycast ? 'block' : 'none';
+    }
+    
+    if (visibilityGroup) {
+        const showVisibility = state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'raycast';
+        visibilityGroup.style.display = showVisibility ? 'block' : 'none';
     }
 }
 
@@ -1198,29 +1475,6 @@ function loadGLTFModel(url, filename, onSuccess, onError) {
 // ----------------------------------------------------------------
 // 7. UI Setup & Control Functions
 // ----------------------------------------------------------------
-function syncSliderNumber(slider, number) {
-    if (!slider || !number) return;
-
-    const updateNumber = () => {
-        number.value = slider.value;
-    };
-
-    const updateSlider = () => {
-        const value = parseFloat(number.value);
-        if (!isNaN(value) && value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
-            slider.value = value;
-        }
-    };
-
-    slider.addEventListener('input', updateNumber);
-    number.addEventListener('input', updateSlider);
-
-    // Return a cleanup function to remove listeners
-    return () => {
-        slider.removeEventListener('input', updateNumber);
-        number.removeEventListener('input', updateSlider);
-    };
-}
 
 function loadPresetsList() {
     const selector = document.getElementById('presetSelector');
@@ -1469,6 +1723,29 @@ function setupControls() {
         
         // Only re-apply if alpha mode is selected
         if (state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'alpha') {
+            const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
+            await updateMaterialTransparency(currentOpacity);
+        }
+    });
+
+    // Ray casting parameters
+    syncSliderNumber(document.getElementById('raycastSamples'), document.getElementById('raycastSamplesNum'));
+    safeAddEventListener('raycastSamples', 'input', async (e) => {
+        state.raycastSamples = parseInt(e.target.value);
+        
+        // Re-apply if ray casting mode is selected
+        if (state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'raycast') {
+            const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
+            await updateMaterialTransparency(currentOpacity);
+        }
+    });
+
+    syncSliderNumber(document.getElementById('visibilityThreshold'), document.getElementById('visibilityThresholdNum'));
+    safeAddEventListener('visibilityThreshold', 'input', async (e) => {
+        state.visibilityThreshold = parseFloat(e.target.value);
+        
+        // Re-apply if ray casting mode is selected
+        if (state.surfaceExtractionEnabled && state.surfaceExtractionMode === 'raycast') {
             const currentOpacity = parseFloat(document.getElementById('transparency')?.value || 1);
             await updateMaterialTransparency(currentOpacity);
         }
