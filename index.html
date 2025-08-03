@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
-  <script type="module" crossorigin src="/3d-model-viewer/assets/index-XwGRAyTq.js"></script>
+  <script type="module" crossorigin src="/3d-model-viewer/assets/index-DTdjQEHw.js"></script>
   <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-BAiTHrN0.css">
 </head>
 <body>
@@ -283,6 +283,16 @@
                         <input type="range" id="transparency" class="slider-input" min="0" max="1" step="0.01" value="1">
                         <input type="number" id="transparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
                     </div>
+                </div>
+                <div class="control-group">
+                    <label>Transparency Mode</label>
+                    <select id="transparencyMode" class="control-input">
+                        <option value="threshold" selected>Unified Surface</option>
+                        <option value="advanced">Advanced (High-Poly)</option>
+                        <option value="wboit">WBOIT (Alpha Test)</option>
+                        <option value="standard">Standard</option>
+                        <option value="dithered">Dithered</option>
+                    </select>
                 </div>
                 </div>
             </div>
