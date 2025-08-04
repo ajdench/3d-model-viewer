@@ -84,6 +84,10 @@ This project incorporates an advanced internal automation and memory management 
 
 ## 🔄 Recent Updates
 
+### Version 2.11.0: Control Synchronization & Strategic Roadmap
+- **`ControlSync` Class**: Implemented a new modular system for synchronizing UI controls, replacing previous ad-hoc functions with a robust, centralized, and maintainable solution.
+- **Strategic Roadmap**: Added `claude-todo.md`, a comprehensive document outlining the future architectural direction of the project, focusing on modularization and the implementation of core classes like `StateManager`, `EventManager`, and `ResourceManager`.
+
 ### Version 2.10.1: Multiple Guide Lines
 - **Dynamic Guide Lines**: Add and remove multiple, independent guide lines.
 - **Independent Controls**: Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.

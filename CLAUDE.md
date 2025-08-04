@@ -314,3 +314,21 @@ npm run deploy     # Deploy to GitHub Pages
 - Transform: `translateY(-50%) rotate(${angle}deg)` (center + rotate)
 
 **Implementation**: Synchronized HTML/JS state, responsive scaling, centered rotation origin
+
+## Strategic Development Roadmap
+
+### Todo Management
+- **[Claude Todo List](./claude-todo.md)**: Comprehensive strategic roadmap for architectural improvements
+- **Current Focus**: Modularization of monolithic codebase for 300% maintainability improvement
+- **Next Phase**: Core architecture classes (StateManager, EventManager, ResourceManager)
+
+### Architectural Status
+- **Current**: Mature functionality with professional features but monolithic structure (3,052-line main.js, 69+ global functions)
+- **Target**: Modular architecture with class-based components, systematic event management, and comprehensive testing
+- **Timeline**: 8-10 weeks for complete modularization across 3 phases
+
+### Recent Achievements
+- ✅ Professional ControlSync system implemented
+- ✅ Pitch/Yaw/Roll controls added with proper Euler rotation order
+- ✅ Comprehensive CVE security audit completed (cve-audit.md)
+- ✅ All slider-number synchronization issues resolved

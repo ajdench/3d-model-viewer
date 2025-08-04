@@ -1627,58 +1627,359 @@ function setupControls() {
         }
     });
 
-    // Slider-number sync function
+    /**
+     * ControlSync - Modular synchronization system for UI controls
+     * 
+     * Features:
+     * - Registry system tracks all synchronized control pairs
+     * - Error handling for missing elements
+     * - Debug/logging capabilities
+     * - Support for different value types (float, int, string)
+     * - Custom validation and callbacks
+     * - Backward compatibility with existing sync functions
+     * 
+     * Usage Examples:
+     * - controlSync.register('slider1', 'input1') // Basic sync
+     * - syncIntegerControls('samples', 'samplesNum') // Integer values
+     * - syncControls(element1, element2, { customValidator: fn }) // Advanced
+     * - window.testControlSync() // Debug in browser console
+     */
+    class ControlSync {
+        constructor(options = {}) {
+            this.registry = new Map(); // Track all synchronized control pairs
+            this.debug = options.debug || false;
+            this.errorHandler = options.errorHandler || this.defaultErrorHandler;
+            
+            if (this.debug) {
+                console.log('ControlSync initialized with debug mode enabled');
+            }
+        }
+        
+        /**
+         * Register a synchronized control pair
+         * @param {string|HTMLElement} primary - Primary control (usually slider) ID or element
+         * @param {string|HTMLElement} secondary - Secondary control (usually number input) ID or element
+         * @param {Object} options - Configuration options
+         */
+        register(primary, secondary, options = {}) {
+            const config = {
+                type: options.type || 'slider-number',
+                valueType: options.valueType || 'float', // 'float', 'int', 'string'
+                bidirectional: options.bidirectional !== false, // Default true
+                validateRange: options.validateRange !== false, // Default true
+                triggerEvents: options.triggerEvents !== false, // Default true
+                customValidator: options.customValidator || null,
+                onSync: options.onSync || null, // Callback when sync occurs
+                ...options
+            };
+            
+            const primaryEl = typeof primary === 'string' ? document.getElementById(primary) : primary;
+            const secondaryEl = typeof secondary === 'string' ? document.getElementById(secondary) : secondary;
+            
+            if (!primaryEl || !secondaryEl) {
+                return this.errorHandler('Missing elements', { primary, secondary, primaryEl, secondaryEl });
+            }
+            
+            const pairId = this.generatePairId(primaryEl, secondaryEl);
+            
+            // Check if already registered
+            if (this.registry.has(pairId)) {
+                if (this.debug) console.warn(`ControlSync: Pair ${pairId} already registered`);
+                return false;
+            }
+            
+            const syncPair = {
+                id: pairId,
+                primary: primaryEl,
+                secondary: secondaryEl,
+                config,
+                listeners: []
+            };
+            
+            this.setupSynchronization(syncPair);
+            this.registry.set(pairId, syncPair);
+            
+            if (this.debug) {
+                console.log(`ControlSync: Registered ${config.type} pair`, {
+                    primary: primaryEl.id || primaryEl.tagName,
+                    secondary: secondaryEl.id || secondaryEl.tagName,
+                    config
+                });
+            }
+            
+            return true;
+        }
+        
+        /**
+         * Setup bidirectional synchronization between elements
+         */
+        setupSynchronization(syncPair) {
+            const { primary, secondary, config } = syncPair;
+            
+            // Primary to secondary sync
+            const primaryListener = (e) => {
+                this.syncValues(primary, secondary, config, 'primary-to-secondary');
+            };
+            primary.addEventListener('input', primaryListener);
+            syncPair.listeners.push({ element: primary, event: 'input', listener: primaryListener });
+            
+            if (config.bidirectional) {
+                // Secondary to primary sync
+                const secondaryInputListener = (e) => {
+                    this.syncValues(secondary, primary, config, 'secondary-to-primary');
+                };
+                
+                const secondaryChangeListener = (e) => {
+                    this.syncValues(secondary, primary, config, 'secondary-to-primary');
+                };
+                
+                secondary.addEventListener('input', secondaryInputListener);
+                secondary.addEventListener('change', secondaryChangeListener);
+                
+                syncPair.listeners.push(
+                    { element: secondary, event: 'input', listener: secondaryInputListener },
+                    { element: secondary, event: 'change', listener: secondaryChangeListener }
+                );
+            }
+        }
+        
+        /**
+         * Synchronize values between elements
+         */
+        syncValues(source, target, config, direction) {
+            try {
+                let value = this.parseValue(source.value, config.valueType);
+                
+                // Custom validation
+                if (config.customValidator && !config.customValidator(value, source, target)) {
+                    if (this.debug) console.warn('ControlSync: Custom validation failed', { value, direction });
+                    return;
+                }
+                
+                // Range validation (for secondary-to-primary sync)
+                if (config.validateRange && direction === 'secondary-to-primary' && source.type === 'number') {
+                    const min = parseFloat(target.min);
+                    const max = parseFloat(target.max);
+                    
+                    if (!isNaN(min) && value < min) value = min;
+                    if (!isNaN(max) && value > max) value = max;
+                }
+                
+                // Update target value
+                target.value = this.formatValue(value, config.valueType);
+                
+                // Trigger events on target if needed
+                if (config.triggerEvents && direction === 'secondary-to-primary') {
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                
+                // Call sync callback
+                if (config.onSync) {
+                    config.onSync(value, source, target, direction);
+                }
+                
+                if (this.debug) {
+                    console.log(`ControlSync: ${direction}`, {
+                        value,
+                        source: source.id || source.tagName,
+                        target: target.id || target.tagName
+                    });
+                }
+                
+            } catch (error) {
+                this.errorHandler('Sync error', { error, source, target, direction });
+            }
+        }
+        
+        /**
+         * Parse value based on type
+         */
+        parseValue(value, type) {
+            switch (type) {
+                case 'int': return parseInt(value, 10);
+                case 'float': return parseFloat(value);
+                case 'string': return String(value);
+                default: return parseFloat(value);
+            }
+        }
+        
+        /**
+         * Format value for display
+         */
+        formatValue(value, type) {
+            if (isNaN(value)) return '';
+            
+            switch (type) {
+                case 'int': return Math.round(value).toString();
+                case 'float': return value.toString();
+                case 'string': return String(value);
+                default: return value.toString();
+            }
+        }
+        
+        /**
+         * Generate unique pair ID
+         */
+        generatePairId(primary, secondary) {
+            const primaryId = primary.id || `${primary.tagName}-${Date.now()}`;
+            const secondaryId = secondary.id || `${secondary.tagName}-${Date.now()}`;
+            return `${primaryId}:${secondaryId}`;
+        }
+        
+        /**
+         * Unregister a synchronized pair
+         */
+        unregister(primary, secondary) {
+            const primaryEl = typeof primary === 'string' ? document.getElementById(primary) : primary;
+            const secondaryEl = typeof secondary === 'string' ? document.getElementById(secondary) : secondary;
+            
+            if (!primaryEl || !secondaryEl) return false;
+            
+            const pairId = this.generatePairId(primaryEl, secondaryEl);
+            const syncPair = this.registry.get(pairId);
+            
+            if (!syncPair) return false;
+            
+            // Remove all event listeners
+            syncPair.listeners.forEach(({ element, event, listener }) => {
+                element.removeEventListener(event, listener);
+            });
+            
+            this.registry.delete(pairId);
+            
+            if (this.debug) {
+                console.log(`ControlSync: Unregistered pair ${pairId}`);
+            }
+            
+            return true;
+        }
+        
+        /**
+         * Get registry information (for debugging)
+         */
+        getRegistry() {
+            const registry = {};
+            this.registry.forEach((syncPair, pairId) => {
+                registry[pairId] = {
+                    primary: syncPair.primary.id || syncPair.primary.tagName,
+                    secondary: syncPair.secondary.id || syncPair.secondary.tagName,
+                    type: syncPair.config.type,
+                    listenerCount: syncPair.listeners.length
+                };
+            });
+            return registry;
+        }
+        
+        /**
+         * Default error handler
+         */
+        defaultErrorHandler(message, details) {
+            console.error(`ControlSync Error: ${message}`, details);
+            return false;
+        }
+        
+        /**
+         * Destroy all registered pairs
+         */
+        destroy() {
+            this.registry.forEach((syncPair, pairId) => {
+                syncPair.listeners.forEach(({ element, event, listener }) => {
+                    element.removeEventListener(event, listener);
+                });
+            });
+            this.registry.clear();
+            
+            if (this.debug) {
+                console.log('ControlSync: All pairs destroyed');
+            }
+        }
+    }
+    
+    // Create global ControlSync instance
+    const controlSync = new ControlSync({ debug: false });
+    
+    // Debug function for testing ControlSync (can be called from browser console)
+    window.testControlSync = function() {
+        console.log('=== ControlSync Registry ===');
+        const registry = controlSync.getRegistry();
+        console.table(registry);
+        console.log(`Total synchronized pairs: ${Object.keys(registry).length}`);
+        
+        // Test debug mode toggle
+        console.log('\n=== Enabling Debug Mode ===');
+        setControlSyncDebug(true);
+        setTimeout(() => {
+            console.log('\n=== Disabling Debug Mode ===');
+            setControlSyncDebug(false);
+        }, 2000);
+    };
+
+    // Backward-compatible wrapper functions using ControlSync
+    
+    /**
+     * Synchronize a slider with a number input using IDs
+     * @param {string} sliderId - ID of the slider element
+     * @param {string} numberId - ID of the number input element
+     */
     function syncSliderNumber(sliderId, numberId) {
-        const slider = document.getElementById(sliderId);
-        const number = document.getElementById(numberId);
-        if (!slider || !number) return;
-        
-        slider.addEventListener('input', () => {
-            number.value = slider.value;
-        });
-        
-        number.addEventListener('input', () => {
-            const value = parseFloat(number.value);
-            if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
-                slider.value = value;
-                slider.dispatchEvent(new Event('input'));
-            }
-        });
-        
-        // Add 'change' event listener for stepper buttons
-        number.addEventListener('change', () => {
-            const value = parseFloat(number.value);
-            if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
-                slider.value = value;
-                slider.dispatchEvent(new Event('input'));
-            }
+        return controlSync.register(sliderId, numberId, {
+            type: 'slider-number',
+            valueType: 'float'
         });
     }
 
-    // Helper function for syncing DOM elements (for dynamically created guide line controls)
+    /**
+     * Synchronize slider and number input elements directly (for dynamic controls)
+     * @param {HTMLElement} slider - Slider element
+     * @param {HTMLElement} numberInput - Number input element
+     */
     function syncSliderNumberElements(slider, numberInput) {
-        if (!slider || !numberInput) return;
-        
-        slider.addEventListener('input', () => {
-            numberInput.value = slider.value;
+        return controlSync.register(slider, numberInput, {
+            type: 'slider-number',
+            valueType: 'float'
         });
-        
-        numberInput.addEventListener('input', () => {
-            const value = parseFloat(numberInput.value);
-            if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
-                slider.value = value;
-                slider.dispatchEvent(new Event('input'));
-            }
+    }
+    
+    // Enhanced synchronization functions using ControlSync
+    
+    /**
+     * Synchronize controls with custom configuration
+     * @param {string|HTMLElement} primary - Primary control ID or element
+     * @param {string|HTMLElement} secondary - Secondary control ID or element
+     * @param {Object} options - Configuration options
+     */
+    function syncControls(primary, secondary, options = {}) {
+        return controlSync.register(primary, secondary, options);
+    }
+    
+    /**
+     * Synchronize integer controls (like samples, iterations)
+     * @param {string|HTMLElement} sliderId - Slider ID or element
+     * @param {string|HTMLElement} numberId - Number input ID or element
+     */
+    function syncIntegerControls(sliderId, numberId) {
+        return controlSync.register(sliderId, numberId, {
+            type: 'slider-number',
+            valueType: 'int'
         });
-        
-        // Add 'change' event listener for stepper buttons
-        numberInput.addEventListener('change', () => {
-            const value = parseFloat(numberInput.value);
-            if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
-                slider.value = value;
-                slider.dispatchEvent(new Event('input'));
-            }
-        });
+    }
+    
+    /**
+     * Get debug information about all synchronized controls
+     */
+    function getControlSyncRegistry() {
+        return controlSync.getRegistry();
+    }
+    
+    /**
+     * Enable/disable debug mode for ControlSync
+     * @param {boolean} enabled - Enable debug mode
+     */
+    function setControlSyncDebug(enabled) {
+        controlSync.debug = enabled;
+        if (enabled) {
+            console.log('ControlSync debug mode enabled. Registry:', controlSync.getRegistry());
+        }
     }
 
     // Setup all slider-number pairs
@@ -1887,7 +2188,7 @@ function setupControls() {
     });
 
     // Ray casting parameters
-    syncSliderNumber('raycastSamples', 'raycastSamplesNum');
+    syncIntegerControls('raycastSamples', 'raycastSamplesNum');
     safeAddEventListener('raycastSamples', 'input', async (e) => {
         state.raycastSamples = parseInt(e.target.value);
         

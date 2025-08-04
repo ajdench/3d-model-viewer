@@ -214,3 +214,13 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Independent Controls**: Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
 - **Dynamic UI**: The UI dynamically adds and removes control panes as lines are created or deleted, with titles that update automatically.
 
+### Control Synchronization (v2.11.0)
+- **`ControlSync` Class**: A new modular and robust system for synchronizing UI controls (e.g., sliders and number inputs).
+- **Centralized Management**: Replaces scattered `addEventListener` calls with a centralized registry, improving maintainability and reducing errors.
+- **Advanced Features**: Supports bidirectional synchronization, value validation, and custom callbacks.
+
+## Strategic Development Roadmap
+- **`claude-todo.md`**: A new file outlining the strategic roadmap for the project.
+- **Modularization**: The primary focus is on refactoring the monolithic `main.js` into smaller, reusable modules.
+- **Core Architecture**: The next phase involves creating `StateManager`, `EventManager`, and `ResourceManager` classes to form a solid architectural foundation.
+
