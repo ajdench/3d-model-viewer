@@ -1,5 +1,120 @@
 ## Gemini Development Guidelines
 
+## Internal Automation and Memory Management
+
+### Memory Management System
+
+Claude-dementia v3.0 compressed memory system with 10,000 token budget optimized for Claude Code workflows.
+
+#### Core Architecture
+```yaml
+Token Budget: 10,000 (Hard Limit)
+├── CLAUDE.md: 1,000 tokens (Core guide)
+├── Active Memory: 3,000 tokens (Current work)
+│   ├── status.md (Session updates & progress)
+│   └── context.md (Task context & priorities)
+├── Reference Memory: 5,000 tokens (Stable patterns)
+│   ├── architecture.md (System design)
+│   ├── patterns.md (Code patterns)
+│   └── decisions.md (Technical decisions)
+└── Buffer: 1,000 tokens (Overflow space)
+```
+
+#### Session Protocol
+**Every Session Start**: `cat memory/active/status.md memory/active/context.md`
+**Load As Needed**: `cat memory/reference/[relevant-file].md memory/patterns/[pattern].md`
+
+#### Memory Management Commands
+```bash
+# Core operations
+./memory/update.sh "changes"     # Update with auto-compression
+./memory/compress.sh             # Check usage and compress
+./memory/weekly-maintenance.sh   # Auto-archive old content
+
+# Quick access
+grep -r "pattern" memory/        # Search all memory
+cat memory/active/status.md      # Current status dashboard
+```
+
+### Python Automation Suite (`/scripts/`)
+
+**🏆 Highest ROI**: `session-logger.py` - Auto-generates session summaries from git commits
+```bash
+python scripts/session-logger.py  # Creates memory/current-session.md
+# Time saved: 5-10 minutes per session
+```
+
+**Pattern Detection**: `pattern-detector.py` - Discovers reusable code patterns automatically
+```bash
+python scripts/pattern-detector.py  # Finds error handling, validation, API patterns
+# Value: Builds pattern library without manual effort
+```
+
+**Question Management**: `question-tracker.py` - Prevents important questions from being forgotten
+```bash
+python scripts/question-tracker.py  # Reports open questions, reminds about old ones
+# Value: Never lose important clarifications
+```
+
+**Memory Search**: `memory-search.py` - Fast weighted search across all memory files
+```bash
+python scripts/memory-search.py "error handling"
+python scripts/memory-search.py "timeout" --type fix
+# Value: Find previous solutions in seconds
+```
+
+**Central Orchestration**: `memory-assistant.py` - Single interface to all tools
+```bash
+python scripts/memory-assistant.py start  # Session start routine
+python scripts/memory-assistant.py end    # Session end routine
+python scripts/memory-assistant.py search "topic"  # Quick search
+```
+
+### Daily Workflow Integration
+```bash
+# Morning routine
+python scripts/memory-assistant.py start
+# Shows: unanswered questions, last session summary
+
+# During development
+python scripts/memory-search.py "cors error"  # When hitting familiar problems
+
+# End of session
+python scripts/memory-assistant.py end
+# Runs: session logger, pattern detector, question check, index rebuild
+```
+
+### Documentation Templates
+**Fix Documentation**: `memory/fixes/YYYY-MM-DD-name.md`
+```markdown
+## Problem: [One line description]
+## Cause: [Root cause analysis]  
+## Fix: [Solution implemented]
+## Prevention: [Test/check added]
+```
+
+**Question Tracking**: `memory/questions/YYYY-MM-DD-topic.md`
+```markdown
+## Status: OPEN|ANSWERED
+## Q: [Specific question with context]
+## Context: [Why this question matters]
+## Options: [Considered approaches]
+## Answer: [When received, with rationale]
+```
+
+**Pattern Documentation**: `memory/patterns/pattern-name.md`
+```markdown
+## Use When: [Specific scenario]
+## Solution: [Approach and code example]
+## Example: path/to/implementation
+## Trade-offs: [Considerations and alternatives]
+```
+
+### ROI Analysis
+**Time Investment**: 5min setup + 2-3min daily + 10min weekly = ~30min/week
+**Time Saved**: 5-10min/day (documentation) + 10-30min/incident (search) + hours/month (patterns)
+**Quality Improvements**: Consistent documentation, growing pattern library, no lost context
+
 This project is a self-contained 3D model viewer that has been refactored to run in an offline environment. It uses Vite for development and bundling.
 
 ### Core Technologies

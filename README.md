@@ -8,6 +8,20 @@ A professional, interactive 3D model viewer built with Three.js, designed to be 
 
 ## 	✨ Features
 
+## Internal Automation and Memory Management
+
+This project incorporates an advanced internal automation and memory management system to streamline development and maintain consistency.
+
+- **Memory Management System**: Utilizes a compressed memory system (Claude-dementia v3.0) with a 10,000 token budget, optimized for efficient context management. It includes active memory for current work, reference memory for stable patterns and architectural decisions, and a buffer for overflow.
+- **Python Automation Suite**: A collection of Python scripts (`/scripts/`) automates key development tasks:
+    - `session-logger.py`: Auto-generates session summaries from git commits.
+    - `pattern-detector.py`: Automatically discovers reusable code patterns.
+    - `question-tracker.py`: Prevents important questions from being forgotten.
+    - `memory-search.py`: Provides fast, weighted search across all memory files.
+    - `memory-assistant.py`: A central interface for daily workflow integration.
+
+
+
 ### 	🎮 Interactive Controls
 - **Mouse Controls**: Left-click rotates the model, right-click pans the camera.
 - **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. It remains fixed in the viewer, independent of 3D scene movements, and is excluded from image captures.

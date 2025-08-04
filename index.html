@@ -125,12 +125,11 @@
                 <div class="section-content" id="guideline-content">
                     <div class="control-group-row">
                         <div class="control-group">
-                            <label>Add Line</label>
-                            <button id="addLine" class="button secondary">ADD LINE...</button>
-                        </div>
-                        <div class="control-group">
                             <label>Colour</label>
                             <input type="color" id="lineColour" class="color-input" value="#FFFF00">
+                        </div>
+                        <div class="control-group">
+                            <button id="hideUnhideGuide" class="button secondary">HIDE</button>
                         </div>
                     </div>
                     <div class="control-group">
@@ -161,6 +160,9 @@
                             <input type="number" id="linePosYNum" class="number-input" min="-50" max="50" step="1" value="0">
                         </div>
                     </div>
+                    <div class="control-group guide-line-bottom-button">
+                        <button id="addLine" class="button secondary">ADD LINE...</button>
+                    </div>
                 </div>
             </div>
             <template id="guideline-template">
@@ -171,13 +173,12 @@
                     </div>
                     <div class="section-content">
                         <div class="control-group-row">
-                             <div class="control-group">
-                                <label>Add Line</label>
-                                <button class="button secondary add-line-below">ADD LINE...</button>
-                            </div>
                             <div class="control-group">
                                 <label>Colour</label>
                                 <input type="color" class="color-input line-colour" value="#FFFF00">
+                            </div>
+                            <div class="control-group">
+                                <button class="button secondary hide-unhide-guide">HIDE</button>
                             </div>
                         </div>
                         <div class="control-group">
@@ -208,7 +209,12 @@
                                 <input type="number" class="number-input line-pos-y-num" min="-50" max="50" step="1" value="0">
                             </div>
                         </div>
-                        <button class="button button-danger remove-line">Remove Line</button>
+                        <div class="control-group guide-line-bottom-buttons">
+                            <div class="button-group">
+                                <button class="button secondary add-line-below">ADD LINE...</button>
+                                <button class="button button-danger remove-line">DELETE</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -315,12 +321,11 @@
                 <div class="section-content" id="material-content">
                     <div class="control-group-row">
                         <div class="control-group">
-                            <label>Complex</label>
-                            <button id="complexMaterialButton" class="button button-danger">COMPLEX</button>
-                        </div>
-                        <div class="control-group">
                             <label>Colour</label>
                             <input type="color" id="materialColor" class="color-input" value="#4CAF50">
+                        </div>
+                        <div class="control-group">
+                            <button id="complexMaterialButton" class="button button-danger">COMPLEX</button>
                         </div>
                     </div>
                 <div class="control-group">
@@ -348,11 +353,12 @@
                     <label>Transparency Mode</label>
                     <select id="transparencyMode" class="control-input">
                         <option value="external-surface">External Surface Only</option>
-                        <option value="threshold" selected>Unified Surface</option>
+                        <option value="threshold">Unified Surface</option>
                         <option value="advanced">Advanced (High-Poly)</option>
                         <option value="wboit">WBOIT (Alpha Test)</option>
-                        <option value="standard">Standard</option>
+                        <option value="standard" selected>Standard</option>
                         <option value="dithered">Dithered</option>
+                        <option value="convex">Convex Hull (Fast)</option>
                     </select>
                 </div>
                 <div class="control-group">

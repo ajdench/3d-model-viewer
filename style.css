@@ -942,14 +942,7 @@
             user-select: none;
         }
 
-        /* Guide line control alignment */
-        [data-section*="guideline"] .control-group-row .control-group:has(.color-input) {
-            flex: 0 0 80px; /* Fixed width for color input container */
-        }
-
-        [data-section*="guideline"] .control-group-row .control-group:has(.add-line-below, #addLine) {
-            flex: 1; /* Take remaining space for add line button container */
-        }
+        /* Guide line control alignment - colour picker layout */\n        [data-section*="guideline"] .control-group-row .control-group:has(.color-input) {\n            flex: 1; /* Take remaining space for color input container */\n        }\n\n        [data-section*="guideline"] .control-group-row .control-group:has(#hideUnhideGuide) {\n            flex: 0 0 80px; /* Fixed width for HIDE/UNHIDE button container */\n        }\n\n        /* Additional guide line panes - colour picker takes full width */\n        [data-section="guideline-added"] .control-group-row .control-group:has(.color-input) {\n            flex: 1;\n            width: 100%;\n        }
 
         /* Move Thickness and all controls below down by 10px in guide line panes */
         [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness),
@@ -968,8 +961,9 @@
             line-height: 1.2; /* Consistent line height for labels */
         }
 
-        /* Make color input match button total height including margins */
+        /* Make color input match slider containers width */
         [data-section*="guideline"] .color-input {
+            width: 100%;
             height: 37px; /* Match button height: 20px padding (10px*2) + 12px font + 5px for border/spacing */
             border: 1px solid #ddd;
             padding: 0;
@@ -979,15 +973,76 @@
             top: -1px; /* Move up 1 pixel for visual alignment */
         }
 
-        /* Ensure button in guideline sections has consistent margin */
-        [data-section*="guideline"] .control-group-row .button {
-            margin-bottom: 5px; /* Explicit margin to match color input */
+        /* HIDE/UNHIDE button sizing and precise alignment */
+        [data-section*="guideline"] #hideUnhideGuide {
+            height: 37px !important; /* Match color input and other controls */
+            margin-bottom: 3px !important; /* Reduced by 2px for proper bottom alignment */
+            margin-top: 19px !important; /* Add top margin to compensate for removed label */
+            width: 100% !important;
+            position: relative !important;
+            top: -1px !important; /* Move up 1px for proper top alignment */
         }
 
-        /* Move REMOVE LINE button down by 10px in guide line panes */
-        [data-section*="guideline"] .remove-line {
-            margin-top: 10px;
+        /* HIDE state - blue button with blue glow */
+        [data-section*="guideline"] #hideUnhideGuide.secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2) !important;
         }
+
+        [data-section*="guideline"] #hideUnhideGuide.secondary:hover {
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4) !important; /* Blue glow */
+        }
+
+        /* UNHIDE state - red button with red glow */
+        [data-section*="guideline"] #hideUnhideGuide.button-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+        }
+
+        [data-section*="guideline"] #hideUnhideGuide.button-danger:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important; /* Red glow */
+        }
+
+        /* Bottom button styling for guide lines - match RESET button spacing */
+        .guide-line-bottom-button {
+            margin-top: 0px !important; /* Remove extra margin */
+            margin-bottom: 0px !important; /* Remove control-group bottom margin to match RESET buttons */
+        }
+
+        .guide-line-bottom-button .button {
+            width: 100%; /* Full width for default pane */
+        }
+
+        .guide-line-bottom-buttons {
+            margin-top: 0px !important; /* Remove extra margin */
+            margin-bottom: 0px !important; /* Remove control-group bottom margin to match RESET buttons */
+        }
+
+        .guide-line-bottom-buttons .button-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .guide-line-bottom-buttons .button {
+            flex: 1; /* Equal width for both buttons */
+        }
+
+        /* Ensure ADD LINE button in additional panes is green (secondary) */
+        .guide-line-bottom-buttons .add-line-below {
+            background: linear-gradient(45deg, #4CAF50, #45a049) !important;
+        }
+
+        .guide-line-bottom-buttons .add-line-below:hover {
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4) !important;
+        }
+
+        /* Ensure REMOVE LINE button is red (danger) */
+        .guide-line-bottom-buttons .remove-line {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+        }
+
+        .guide-line-bottom-buttons .remove-line:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important;
+        }
+
 
         /* Material control alignment */
         [data-section="material"] .control-group-row .control-group:has(.color-input) {
@@ -1025,4 +1080,160 @@
         /* Ensure button in material sections has consistent margin */
         [data-section="material"] .control-group-row .button {
             margin-bottom: 5px; /* Explicit margin to match color input */
+        }
+
+
+        /* Additional guide line panes HIDE/UNHIDE button styling */
+        [data-section="guideline-added"] .hide-unhide-guide {
+            height: 37px !important;
+            margin-bottom: 3px !important;
+            margin-top: 19px !important;
+            width: 100% !important;
+            position: relative !important;
+            top: -1px !important;
+        }
+
+        /* Additional panes HIDE state - blue button with blue glow */
+        [data-section="guideline-added"] .hide-unhide-guide.secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2) !important;
+        }
+
+        [data-section="guideline-added"] .hide-unhide-guide.secondary:hover {
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4) !important;
+        }
+
+        /* Additional panes UNHIDE state - red button with red glow */
+        [data-section="guideline-added"] .hide-unhide-guide.button-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+        }
+
+        [data-section="guideline-added"] .hide-unhide-guide.button-danger:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important;
+        }
+
+        /* Additional guide line panes layout - same as default pane */
+        [data-section="guideline-added"] .control-group-row .control-group:has(.color-input) {
+            flex: 1; /* Colour picker takes remaining space like default pane */
+        }
+
+        [data-section="guideline-added"] .control-group-row .control-group:has(.hide-unhide-guide) {
+            flex: 0 0 80px; /* HIDE/UNHIDE button fixed width like default pane */
+        }
+
+        /* UNIFIED GUIDE LINE STYLING - OVERRIDE ALL PREVIOUS */
+        [data-section*="guideline"] .control-group-row .control-group:has(.color-input, .line-colour) {
+            flex: 1 !important; /* Colour picker takes remaining space */
+        }
+
+        [data-section*="guideline"] .control-group-row .control-group:has(#hideUnhideGuide, .hide-unhide-guide) {
+            flex: 0 0 80px !important; /* HIDE/UNHIDE button fixed width */
+        }
+
+        /* Apply same HIDE/UNHIDE styling to default pane */
+        [data-section="guideline"] #hideUnhideGuide {
+            height: 37px !important;
+            margin-bottom: 3px !important;
+            margin-top: 19px !important;
+            width: 100% !important;
+            position: relative !important;
+            top: -1px !important;
+        }
+
+        [data-section="guideline"] #hideUnhideGuide.secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2) !important;
+        }
+
+        [data-section="guideline"] #hideUnhideGuide.secondary:hover {
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4) !important;
+        }
+
+        [data-section="guideline"] #hideUnhideGuide.button-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+        }
+
+        [data-section="guideline"] #hideUnhideGuide.button-danger:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important;
+        }
+
+        /* Apply same layout styling to material pane - match guide line layout */
+        [data-section="material"] .control-group-row .control-group:has(.color-input) {
+            flex: 1 !important; /* Colour picker takes remaining space */
+        }
+
+        [data-section="material"] .control-group-row .control-group:has(#complexMaterialButton) {
+            flex: 0 0 80px !important; /* DEFAULT/COMPLEX button fixed width */
+        }
+
+        /* Apply same COMPLEX/DEFAULT styling to material pane button */
+        [data-section="material"] #complexMaterialButton {
+            height: 37px !important;
+            margin-bottom: 3px !important;
+            margin-top: 19px !important;
+            width: 100% !important;
+            position: relative !important;
+            top: -1px !important;
+        }
+
+        [data-section="material"] #complexMaterialButton.secondary {
+            background: linear-gradient(45deg, #9e9e9e, #757575) !important; /* Lighter grey for BASIC */
+            color: white !important;
+        }
+
+        [data-section="material"] #complexMaterialButton.secondary:hover {
+            box-shadow: none !important; /* No glow as per sunset */
+            transform: translateY(-2px);
+        }
+
+        [data-section="material"] #complexMaterialButton.button-danger {
+            background: linear-gradient(45deg, #2196F3, #1976D2) !important; /* Blue for COMPLEX */
+        }
+
+        [data-section="material"] #complexMaterialButton.button-danger:hover {
+            box-shadow: none !important; /* No glow as per sunset */
+            transform: translateY(-2px);
+        }
+
+        /* Add bottom border to all control sections */
+        .control-section {
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* SUNSET: Disable all button hover glow effects in CONTROLS */
+        .controls-panel .button:hover,
+        .controls-panel .button.secondary:hover,
+        .controls-panel .button.button-danger:hover,
+        .controls-panel #hideUnhideGuide:hover,
+        .controls-panel .hide-unhide-guide:hover,
+        .controls-panel .add-line-below:hover,
+        .controls-panel .remove-line:hover,
+        [data-section="guideline"] #hideUnhideGuide.secondary:hover,
+        [data-section="guideline"] #hideUnhideGuide.button-danger:hover,
+        [data-section="guideline-added"] .hide-unhide-guide.secondary:hover,
+        [data-section="guideline-added"] .hide-unhide-guide.button-danger:hover {
+            box-shadow: none !important;
+            /* Keep the translateY effect but remove glow */
+            transform: translateY(-2px);
+        }
+
+        /* MODULARIZED: Consistent bottom spacing for all control sections */
+        .control-section {
+            padding-bottom: 12px !important; /* Visual equality with side borders */
+        }
+
+        /* Ensure last elements in each pane have consistent bottom margin */
+        .control-section .section-content > *:last-child,
+        .control-section .section-content .button-group:last-child,
+        .control-section .section-content .control-group:last-child,
+        .control-section .section-content .guide-line-bottom-button,
+        .control-section .section-content .guide-line-bottom-buttons {
+            margin-bottom: 0 !important; /* Remove bottom margin from last elements */
+        }
+
+        /* PRESETS pane specific adjustments */
+        [data-section="presets"] {
+            padding-bottom: 20px !important; /* Custom bottom padding for presets */
+        }
+
+        [data-section="presets"] .control-group:has(#presetSelector) {
+            margin-top: 10px; /* 10px gap above Saved Presets */
         }

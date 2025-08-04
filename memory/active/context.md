@@ -2,11 +2,11 @@
 
 ## Current Project: 3D Model Viewer v2.10.0 with Claude-Dementia Integration
 
-### Project Status: Production-Ready with Full Surface Extraction System
+### Project Status: Production-Ready with Advanced Surface Extraction & Perfect UI Alignment
 - **Application**: Professional 3D Model Viewer (Three.js r179, Vite 7.0.6, ES6 modules)
 - **Memory System**: Complete claude-dementia v3.0 integration (10k token budget)
-- **Current Version**: v2.10.0 with complete Surface Extraction functionality
-- **Recent Focus**: Critical Surface Extraction bug fixes - missing material functions, UI synchronization, error-free execution
+- **Current Version**: v2.10.0+ with ray casting surface extraction and pixel-perfect UI alignment
+- **Recent Focus**: Ray casting implementation, CSS recovery from corruption, precise control alignment
 
 ## Key Learning and Evolution
 
@@ -27,12 +27,14 @@
    - **Enhancement**: Accessibility, animations, persistent state management
 
 ### Current Technical Excellence
-- **Guide Line System**: Fully functional with responsive viewport units
+- **Guide Line System**: Fully functional with responsive viewport units and pixel-perfect control alignment
 - **Lighting Controls**: Compact vertical sliders with dual-mode positioning
 - **Model Loading**: Support for OBJ, STL, GLTF, GLB with robust error handling
 - **Material System**: PBR materials with comprehensive property controls and 5 transparency modes
-- **Surface Extraction**: Complete ConvexGeometry implementation with future WASM/MeshLabJS preparation
+- **Surface Extraction**: Hybrid system - ConvexGeometry + Ray Casting (preserves shape) + future WASM/MeshLabJS
+- **Ray Casting**: JavaScript-only external surface extraction using Three.js Raycaster with configurable parameters
 - **Upload System**: Callback-based with 30-second timeout and proper cleanup
+- **CSS Recovery**: Proven disaster recovery from major file corruption using git restore
 
 ## Active Development Insights
 

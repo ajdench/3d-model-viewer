@@ -15,7 +15,8 @@ let state = {
     currentModelType: 'Default Torus Knot',
     presets: JSON.parse(localStorage.getItem('viewerPresets') || '{}'),
     lightingMode: 'basic', // 'basic' or 'complex'
-    transparencyMode: 'threshold', // 'threshold', 'wboit', 'standard', 'advanced', 'dithered'
+    materialMode: 'default', // 'default' or 'complex'
+    transparencyMode: 'standard', // 'standard', 'threshold', 'wboit', 'advanced', 'dithered', 'convex'
     surfaceExtractionMode: 'none', // 'none', 'convex', 'raycast', 'alpha' (future WASM), 'meshlab' (future)
     surfaceExtractionEnabled: false, // Enable/disable surface extraction
     alphaValue: 0.1, // Alpha parameter for future alpha shape extraction
@@ -880,17 +881,9 @@ function validateFile(file) {
     }
     
     // File size checks
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    const minSize = 10; // 10 bytes minimum
     
-    if (file.size > maxSize) {
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        throw new Error(`File too large: ${sizeMB}MB. Maximum size is 50MB.`);
-    }
     
-    if (file.size < minSize) {
-        throw new Error(`File appears to be empty or corrupted: ${file.size} bytes`);
-    }
+    
     
     console.log(`File validated: ${file.name}, size: ${(file.size / 1024).toFixed(2)}KB`);
     return fileName.split('.').pop();
@@ -1266,6 +1259,109 @@ function updateGuideLine() {
 
         overlay.appendChild(guideLine);
     });
+}
+
+function toggleGuideLineVisibility(lineId = null) {
+    if (lineId === null) {
+        // Main guide line toggle - toggles all guide lines
+        const overlay = document.getElementById('guideLineOverlay');
+        const button = document.getElementById('hideUnhideGuide');
+        
+        if (!overlay || !button) return;
+        
+        if (overlay.style.display === 'none') {
+            overlay.style.display = 'block';
+            button.textContent = 'HIDE';
+            button.classList.remove('button-danger');
+            button.classList.add('secondary');
+        } else {
+            overlay.style.display = 'none';
+            button.textContent = 'UNHIDE';
+            button.classList.remove('secondary');
+            button.classList.add('button-danger');
+        }
+    } else {
+        // Individual guide line toggle
+        const lineElement = document.querySelector(`[data-id="${lineId}"]`);
+        const button = document.querySelector(`[data-guideline-id="${lineId}"] .hide-unhide-guide`);
+        
+        if (!lineElement || !button) return;
+        
+        if (lineElement.style.display === 'none') {
+            lineElement.style.display = 'block';
+            button.textContent = 'HIDE';
+            button.classList.remove('button-danger');
+            button.classList.add('secondary');
+        } else {
+            lineElement.style.display = 'none';
+            button.textContent = 'UNHIDE';
+            button.classList.remove('secondary');
+            button.classList.add('button-danger');
+        }
+    }
+}
+
+function updateMaterialModeButtons() {
+    const complexButton = document.getElementById('complexMaterialButton');
+    if (!complexButton) return;
+    
+    if (state.materialMode === 'default') {
+        complexButton.textContent = 'COMPLEX';
+        complexButton.classList.remove('secondary');
+        complexButton.classList.add('button-danger');
+        hideAdvancedMaterialControls();
+    } else {
+        complexButton.textContent = 'BASIC';
+        complexButton.classList.remove('button-danger');
+        complexButton.classList.add('secondary');
+        showAdvancedMaterialControls();
+    }
+}
+
+function hideAdvancedMaterialControls() {
+    const transparencyModeGroup = document.querySelector('#transparencyMode')?.closest('.control-group');
+    
+    // Find and hide the entire Surface Extraction section by looking for the label
+    const surfaceExtractionLabels = document.querySelectorAll('label');
+    let surfaceExtractionGroup = null;
+    for (const label of surfaceExtractionLabels) {
+        if (label.textContent.trim() === 'Surface Extraction') {
+            surfaceExtractionGroup = label.closest('.control-group');
+            break;
+        }
+    }
+    
+    if (transparencyModeGroup) transparencyModeGroup.style.display = 'none';
+    if (surfaceExtractionGroup) surfaceExtractionGroup.style.display = 'none';
+    
+    // Also hide the parameter groups that might be visible
+    const alphaGroup = document.getElementById('alphaValueGroup');
+    const raycastGroup = document.getElementById('raycastParametersGroup');
+    const visibilityGroup = document.getElementById('visibilityThresholdGroup');
+    
+    if (alphaGroup) alphaGroup.style.display = 'none';
+    if (raycastGroup) raycastGroup.style.display = 'none';
+    if (visibilityGroup) visibilityGroup.style.display = 'none';
+}
+
+function showAdvancedMaterialControls() {
+    const transparencyModeGroup = document.querySelector('#transparencyMode')?.closest('.control-group');
+    
+    // Find and show the entire Surface Extraction section by looking for the label
+    const surfaceExtractionLabels = document.querySelectorAll('label');
+    let surfaceExtractionGroup = null;
+    for (const label of surfaceExtractionLabels) {
+        if (label.textContent.trim() === 'Surface Extraction') {
+            surfaceExtractionGroup = label.closest('.control-group');
+            break;
+        }
+    }
+    
+    if (transparencyModeGroup) transparencyModeGroup.style.display = 'block';
+    if (surfaceExtractionGroup) surfaceExtractionGroup.style.display = 'block';
+    
+    // Re-trigger visibility updates for parameter groups based on current settings
+    updateAlphaParameterVisibility();
 }
 
 // ----------------------------------------------------------------
@@ -1663,6 +1759,12 @@ function setupControls() {
         updateMaterialColour(e.target.value);
     });
     
+    // Complex Material mode button
+    safeAddEventListener('complexMaterialButton', 'click', () => {
+        state.materialMode = state.materialMode === 'default' ? 'complex' : 'default';
+        updateMaterialModeButtons();
+    });
+    
     safeAddEventListener('metalness', 'input', (e) => {
         updateMaterialProperty('metalness', parseFloat(e.target.value));
     });
@@ -1859,7 +1961,8 @@ function setupControls() {
                 metalness: state.model?.material?.metalness,
                 roughness: state.model?.material?.roughness,
                 opacity: state.model?.material?.opacity,
-                transparencyMode: state.transparencyMode
+                transparencyMode: state.transparencyMode,
+                materialMode: state.materialMode
             },
             surfaceExtraction: {
                 enabled: state.surfaceExtractionEnabled,
@@ -1961,6 +2064,12 @@ function setupControls() {
                 safeSetValue('transparencyMode', preset.material.transparencyMode);
                 // Re-apply transparency with the correct mode
                 await updateMaterialTransparency(preset.material.opacity);
+            }
+            
+            // Restore material mode if saved
+            if (preset.material.materialMode) {
+                state.materialMode = preset.material.materialMode;
+                updateMaterialModeButtons();
             }
         }
         
@@ -2084,6 +2193,10 @@ function setupControls() {
     });
 
     safeAddEventListener('addLine', 'click', addGuideLine);
+    
+    // Debug: Test if ADD LINE button exists
+    console.log('ADD LINE button:', document.getElementById('addLine'));
+    safeAddEventListener('hideUnhideGuide', 'click', toggleGuideLineVisibility);
 
     function addGuideLine() {
         const newId = state.guideLines.length > 0 ? Math.max(...state.guideLines.map(l => l.id)) + 1 : 0;
@@ -2123,10 +2236,29 @@ function setupControls() {
         header.textContent = `Guide Line ${state.guideLines.length}`;
 
         const removeButton = section.querySelector('.remove-line');
-        removeButton.addEventListener('click', () => deleteGuideLine(lineState.id));
+        console.log('removeButton found:', removeButton);
+        console.log('section HTML:', section.innerHTML);
+        if (removeButton) {
+            removeButton.addEventListener('click', () => deleteGuideLine(lineState.id));
+        } else {
+            console.error('Remove button not found in template!');
+        }
 
         const addLineBelowButton = section.querySelector('.add-line-below');
-        addLineBelowButton.addEventListener('click', addGuideLine);
+        console.log('addLineBelowButton found:', addLineBelowButton);
+        if (addLineBelowButton) {
+            addLineBelowButton.addEventListener('click', addGuideLine);
+        } else {
+            console.error('Add line below button not found in template!');
+        }
+
+        // Setup HIDE/UNHIDE button for additional panes
+        const hideUnhideButton = section.querySelector('.hide-unhide-guide');
+        if (hideUnhideButton) {
+            hideUnhideButton.addEventListener('click', () => toggleGuideLineVisibility(lineState.id));
+        } else {
+            console.error('Hide/Unhide button not found in additional pane template!');
+        }
 
         const colourInput = section.querySelector('.line-colour');
         colourInput.value = lineState.colour;
@@ -2517,6 +2649,7 @@ async function initializeViewer() {
         safeSetValue('linePosYNum', state.guideLines[0].posY);
         
         updateGuideLine(); // Initialize guide line
+        updateMaterialModeButtons(); // Initialize material mode
         console.log('✅ 3D Model Viewer initialized successfully');
     } catch (error) {
         console.error('❌ Error initializing viewer:', error);
