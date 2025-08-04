@@ -1644,6 +1644,15 @@ function setupControls() {
                 slider.dispatchEvent(new Event('input'));
             }
         });
+        
+        // Add 'change' event listener for stepper buttons
+        number.addEventListener('change', () => {
+            const value = parseFloat(number.value);
+            if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
+                slider.value = value;
+                slider.dispatchEvent(new Event('input'));
+            }
+        });
     }
 
     // Helper function for syncing DOM elements (for dynamically created guide line controls)
@@ -1655,6 +1664,15 @@ function setupControls() {
         });
         
         numberInput.addEventListener('input', () => {
+            const value = parseFloat(numberInput.value);
+            if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
+                slider.value = value;
+                slider.dispatchEvent(new Event('input'));
+            }
+        });
+        
+        // Add 'change' event listener for stepper buttons
+        numberInput.addEventListener('change', () => {
             const value = parseFloat(numberInput.value);
             if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
                 slider.value = value;
@@ -1677,8 +1695,7 @@ function setupControls() {
     syncSliderNumber('roughness', 'roughnessNum');
     syncSliderNumber('transparency', 'transparencyNum');
     syncSliderNumber('ambientLight', 'ambientLightNum');
-    syncSliderNumber('directionalLight', 'directionalLightNum');
-    syncSliderNumber('directionalLightRight', 'directionalLightRightNum');
+    // Note: directionalLight and directionalLightRight sliders don't have corresponding number inputs in HTML
 
     // Camera controls
     safeAddEventListener('posX', 'input', (e) => {
