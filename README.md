@@ -24,6 +24,7 @@ This project incorporates an advanced internal automation and memory management 
 
 ### 	🎮 Interactive Controls
 - **Mouse Controls**: Left-click rotates the model, right-click pans the camera.
+- **Advanced Rotation**: In addition to standard X, Y, and Z rotation, the viewer now supports intuitive, aircraft-style controls for Yaw, Pitch, and Roll.
 - **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. It remains fixed in the viewer, independent of 3D scene movements, and is excluded from image captures.
 - **Real-time View**: Live display of camera position, model rotation, and current model
 - **Precision Controls**: Sliders with editable number inputs for exact positioning

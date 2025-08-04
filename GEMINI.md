@@ -140,7 +140,7 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Model Selection**: A dropdown menu allows users to switch between several built-in models (Torus Knot, Cube, Sphere, Pyramid).
 - **Example Models**: Buttons to load example models like the Utah Teapot and Suzanne Monkey.
 - **Camera Controls**: Sliders and number inputs for adjusting the camera's position (X, Y, Z) and rotation (X, Y, Z).
-- **Model Controls**: Sliders and number inputs for adjusting the model's rotation (X, Y, Z).
+- **Model Controls**: Sliders and number inputs for adjusting the model's rotation (X, Y, Z) and advanced aircraft-style controls for Yaw, Pitch, and Roll.
 - **Material Properties**: Controls for adjusting the model's material, including color, metalness, roughness, and transparency.
 - **Lighting**: 
   - Sliders to control the intensity of ambient and directional lights.

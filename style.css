@@ -942,7 +942,20 @@
             user-select: none;
         }
 
-        /* Guide line control alignment - colour picker layout */\n        [data-section*="guideline"] .control-group-row .control-group:has(.color-input) {\n            flex: 1; /* Take remaining space for color input container */\n        }\n\n        [data-section*="guideline"] .control-group-row .control-group:has(#hideUnhideGuide) {\n            flex: 0 0 80px; /* Fixed width for HIDE/UNHIDE button container */\n        }\n\n        /* Additional guide line panes - colour picker takes full width */\n        [data-section="guideline-added"] .control-group-row .control-group:has(.color-input) {\n            flex: 1;\n            width: 100%;\n        }
+        /* Guide line control alignment - colour picker layout */
+        [data-section*="guideline"] .control-group-row .control-group:has(.color-input) {
+            flex: 1; /* Take remaining space for color input container */
+        }
+
+        [data-section*="guideline"] .control-group-row .control-group:has(#hideUnhideGuide) {
+            flex: 0 0 80px; /* Fixed width for HIDE/UNHIDE button container */
+        }
+
+        /* Additional guide line panes - colour picker takes full width */
+        [data-section="guideline-added"] .control-group-row .control-group:has(.color-input) {
+            flex: 1;
+            width: 100%;
+        }
 
         /* Move Thickness and all controls below down by 10px in guide line panes */
         [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness),

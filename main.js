@@ -23,6 +23,10 @@ let state = {
     raycastSamples: 16, // Ray samples per face for ray casting
     visibilityThreshold: 0.6, // Visibility threshold for external surface detection
     maxRayDistance: 10, // Maximum ray distance for visibility testing
+    // Pitch, Yaw, Roll rotation values (in addition to X, Y, Z)
+    modelYaw: 0,    // Rotation around Y-axis (turning left/right)
+    modelPitch: 0,  // Rotation around X-axis (nodding up/down)  
+    modelRoll: 0,   // Rotation around Z-axis (tilting left/right)
     guideLines: [{
         id: 0,
         thickness: 5,
@@ -890,9 +894,15 @@ function validateFile(file) {
 }
 
 function resetModelControls() {
-    ['modelRotX', 'modelRotY', 'modelRotZ', 'modelRotXNum', 'modelRotYNum', 'modelRotZNum'].forEach(id => {
+    ['modelRotX', 'modelRotY', 'modelRotZ', 'modelRotXNum', 'modelRotYNum', 'modelRotZNum',
+     'modelYaw', 'modelPitch', 'modelRoll', 'modelYawNum', 'modelPitchNum', 'modelRollNum'].forEach(id => {
         safeSetValue(id, 0);
     });
+    
+    // Reset state values for Pitch, Yaw, Roll
+    state.modelYaw = 0;
+    state.modelPitch = 0;
+    state.modelRoll = 0;
     // SUNSET: Zoom reset removed
     /*
     ['modelZoom', 'modelZoomNum'].forEach(id => {
@@ -1171,6 +1181,23 @@ function centerAndScaleModel(object) {
     const finalBox = new THREE.Box3().setFromObject(object);
     const finalCenter = finalBox.getCenter(new THREE.Vector3());
     object.position.sub(finalCenter);
+}
+
+function applyPitchYawRoll() {
+    if (!state.model) return;
+    
+    // Create a new Euler rotation in the order Yaw→Pitch→Roll (Y→X→Z)
+    // This creates combined rotations that behave like aircraft controls
+    const euler = new THREE.Euler(
+        degToRad(state.modelPitch), // X-axis (pitch - nodding up/down)
+        degToRad(state.modelYaw),   // Y-axis (yaw - turning left/right)
+        degToRad(state.modelRoll),  // Z-axis (roll - tilting left/right)
+        'YXZ'  // Apply in order: Yaw→Pitch→Roll
+    );
+    
+    // Apply the compound rotation to the model
+    // Note: This will override any individual X,Y,Z rotations when used
+    state.model.setRotationFromEuler(euler);
 }
 
 function focusModelOnScreen() {
@@ -1650,6 +1677,9 @@ function setupControls() {
     syncSliderNumber(document.getElementById('modelRotX'), document.getElementById('modelRotXNum'));
     syncSliderNumber(document.getElementById('modelRotY'), document.getElementById('modelRotYNum'));
     syncSliderNumber(document.getElementById('modelRotZ'), document.getElementById('modelRotZNum'));
+    syncSliderNumber(document.getElementById('modelYaw'), document.getElementById('modelYawNum'));
+    syncSliderNumber(document.getElementById('modelPitch'), document.getElementById('modelPitchNum'));
+    syncSliderNumber(document.getElementById('modelRoll'), document.getElementById('modelRollNum'));
     syncSliderNumber(document.getElementById('metalness'), document.getElementById('metalnessNum'));
     syncSliderNumber(document.getElementById('roughness'), document.getElementById('roughnessNum'));
     syncSliderNumber(document.getElementById('transparency'), document.getElementById('transparencyNum'));
@@ -1718,6 +1748,22 @@ function setupControls() {
         if (state.model) {
             state.model.rotation.z = degToRad(parseFloat(e.target.value));
         }
+    });
+    
+    // Pitch, Yaw, Roll event listeners (applied in order: Yaw→Pitch→Roll)
+    safeAddEventListener('modelYaw', 'input', (e) => {
+        state.modelYaw = parseFloat(e.target.value);
+        applyPitchYawRoll();
+    });
+    
+    safeAddEventListener('modelPitch', 'input', (e) => {
+        state.modelPitch = parseFloat(e.target.value);
+        applyPitchYawRoll();
+    });
+    
+    safeAddEventListener('modelRoll', 'input', (e) => {
+        state.modelRoll = parseFloat(e.target.value);
+        applyPitchYawRoll();
     });
     
     // SUNSET: Zoom event listener removed
@@ -1952,7 +1998,11 @@ function setupControls() {
             model: {
                 rotX: state.model?.rotation.x,
                 rotY: state.model?.rotation.y,
-                rotZ: state.model?.rotation.z
+                rotZ: state.model?.rotation.z,
+                // Pitch, Yaw, Roll values for aircraft-style controls
+                yaw: state.modelYaw,
+                pitch: state.modelPitch,
+                roll: state.modelRoll
                 // SUNSET: Zoom no longer saved in presets
                 // zoom: state.model?.scale.x
             },
@@ -2041,6 +2091,23 @@ function setupControls() {
             safeSetValue('modelRotZNum', Math.round(radToDeg(rotZ)));
             safeSetValue('modelZoom', zoom);
             safeSetValue('modelZoomNum', zoom);
+            
+            // Restore Pitch, Yaw, Roll values from preset
+            if (preset.model.yaw !== undefined) {
+                state.modelYaw = preset.model.yaw;
+                safeSetValue('modelYaw', preset.model.yaw);
+                safeSetValue('modelYawNum', preset.model.yaw);
+            }
+            if (preset.model.pitch !== undefined) {
+                state.modelPitch = preset.model.pitch;
+                safeSetValue('modelPitch', preset.model.pitch);
+                safeSetValue('modelPitchNum', preset.model.pitch);
+            }
+            if (preset.model.roll !== undefined) {
+                state.modelRoll = preset.model.roll;
+                safeSetValue('modelRoll', preset.model.roll);
+                safeSetValue('modelRollNum', preset.model.roll);
+            }
         }
         
         // Apply material settings
