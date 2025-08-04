@@ -52,30 +52,6 @@ function formatNumber(num) {
     return parseFloat(num).toFixed(2);
 }
 
-function syncSliderNumber(slider, numberInput) {
-    if (typeof slider === 'string') {
-        slider = document.getElementById(slider);
-    }
-    if (typeof numberInput === 'string') {
-        numberInput = document.getElementById(numberInput);
-    }
-    
-    if (!slider || !numberInput) return;
-    
-    slider.addEventListener('input', (e) => {
-        numberInput.value = e.target.value;
-    });
-    
-    numberInput.addEventListener('input', (e) => {
-        const value = parseFloat(e.target.value);
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
-        
-        if (!isNaN(value) && value >= min && value <= max) {
-            slider.value = value;
-        }
-    });
-}
 
 function radToDeg(rad) {
     return rad * (180 / Math.PI);
@@ -1670,22 +1646,39 @@ function setupControls() {
         });
     }
 
+    // Helper function for syncing DOM elements (for dynamically created guide line controls)
+    function syncSliderNumberElements(slider, numberInput) {
+        if (!slider || !numberInput) return;
+        
+        slider.addEventListener('input', () => {
+            numberInput.value = slider.value;
+        });
+        
+        numberInput.addEventListener('input', () => {
+            const value = parseFloat(numberInput.value);
+            if (value >= parseFloat(slider.min) && value <= parseFloat(slider.max)) {
+                slider.value = value;
+                slider.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+
     // Setup all slider-number pairs
-    syncSliderNumber(document.getElementById('posX'), document.getElementById('posXNum'));
-    syncSliderNumber(document.getElementById('posY'), document.getElementById('posYNum'));
-    syncSliderNumber(document.getElementById('posZ'), document.getElementById('posZNum'));
-    syncSliderNumber(document.getElementById('modelRotX'), document.getElementById('modelRotXNum'));
-    syncSliderNumber(document.getElementById('modelRotY'), document.getElementById('modelRotYNum'));
-    syncSliderNumber(document.getElementById('modelRotZ'), document.getElementById('modelRotZNum'));
-    syncSliderNumber(document.getElementById('modelYaw'), document.getElementById('modelYawNum'));
-    syncSliderNumber(document.getElementById('modelPitch'), document.getElementById('modelPitchNum'));
-    syncSliderNumber(document.getElementById('modelRoll'), document.getElementById('modelRollNum'));
-    syncSliderNumber(document.getElementById('metalness'), document.getElementById('metalnessNum'));
-    syncSliderNumber(document.getElementById('roughness'), document.getElementById('roughnessNum'));
-    syncSliderNumber(document.getElementById('transparency'), document.getElementById('transparencyNum'));
-    syncSliderNumber(document.getElementById('ambientLight'), document.getElementById('ambientLightNum'));
-    syncSliderNumber(document.getElementById('directionalLight'), document.getElementById('directionalLightNum'));
-    syncSliderNumber(document.getElementById('directionalLightRight'), document.getElementById('directionalLightRightNum'));
+    syncSliderNumber('posX', 'posXNum');
+    syncSliderNumber('posY', 'posYNum');
+    syncSliderNumber('posZ', 'posZNum');
+    syncSliderNumber('modelRotX', 'modelRotXNum');
+    syncSliderNumber('modelRotY', 'modelRotYNum');
+    syncSliderNumber('modelRotZ', 'modelRotZNum');
+    syncSliderNumber('modelYaw', 'modelYawNum');
+    syncSliderNumber('modelPitch', 'modelPitchNum');
+    syncSliderNumber('modelRoll', 'modelRollNum');
+    syncSliderNumber('metalness', 'metalnessNum');
+    syncSliderNumber('roughness', 'roughnessNum');
+    syncSliderNumber('transparency', 'transparencyNum');
+    syncSliderNumber('ambientLight', 'ambientLightNum');
+    syncSliderNumber('directionalLight', 'directionalLightNum');
+    syncSliderNumber('directionalLightRight', 'directionalLightRightNum');
 
     // Camera controls
     safeAddEventListener('posX', 'input', (e) => {
@@ -1865,7 +1858,7 @@ function setupControls() {
     });
 
     // Alpha parameter for future alpha shapes
-    syncSliderNumber(document.getElementById('alphaValue'), document.getElementById('alphaValueNum'));
+    syncSliderNumber('alphaValue', 'alphaValueNum');
     safeAddEventListener('alphaValue', 'input', async (e) => {
         state.alphaValue = parseFloat(e.target.value);
         
@@ -1877,7 +1870,7 @@ function setupControls() {
     });
 
     // Ray casting parameters
-    syncSliderNumber(document.getElementById('raycastSamples'), document.getElementById('raycastSamplesNum'));
+    syncSliderNumber('raycastSamples', 'raycastSamplesNum');
     safeAddEventListener('raycastSamples', 'input', async (e) => {
         state.raycastSamples = parseInt(e.target.value);
         
@@ -1888,7 +1881,7 @@ function setupControls() {
         }
     });
 
-    syncSliderNumber(document.getElementById('visibilityThreshold'), document.getElementById('visibilityThresholdNum'));
+    syncSliderNumber('visibilityThreshold', 'visibilityThresholdNum');
     safeAddEventListener('visibilityThreshold', 'input', async (e) => {
         state.visibilityThreshold = parseFloat(e.target.value);
         
@@ -2338,7 +2331,7 @@ function setupControls() {
         const thicknessNum = section.querySelector('.line-thickness-num');
         thicknessSlider.value = lineState.thickness;
         thicknessNum.value = lineState.thickness;
-        syncSliderNumber(thicknessSlider, thicknessNum);
+        syncSliderNumberElements(thicknessSlider, thicknessNum);
         thicknessSlider.addEventListener('input', (e) => {
             lineState.thickness = parseFloat(e.target.value);
             updateGuideLine();
@@ -2348,7 +2341,7 @@ function setupControls() {
         const transparencyNum = section.querySelector('.line-transparency-num');
         transparencySlider.value = lineState.transparency;
         transparencyNum.value = lineState.transparency;
-        syncSliderNumber(transparencySlider, transparencyNum);
+        syncSliderNumberElements(transparencySlider, transparencyNum);
         transparencySlider.addEventListener('input', (e) => {
             lineState.transparency = parseFloat(e.target.value);
             updateGuideLine();
@@ -2358,7 +2351,7 @@ function setupControls() {
         const angleNum = section.querySelector('.line-angle-num');
         angleSlider.value = lineState.angle;
         angleNum.value = lineState.angle;
-        syncSliderNumber(angleSlider, angleNum);
+        syncSliderNumberElements(angleSlider, angleNum);
         angleSlider.addEventListener('input', (e) => {
             lineState.angle = parseFloat(e.target.value);
             updateGuideLine();
@@ -2368,7 +2361,7 @@ function setupControls() {
         const posYNum = section.querySelector('.line-pos-y-num');
         posYSlider.value = lineState.posY;
         posYNum.value = lineState.posY;
-        syncSliderNumber(posYSlider, posYNum);
+        syncSliderNumberElements(posYSlider, posYNum);
         posYSlider.addEventListener('input', (e) => {
             lineState.posY = parseFloat(e.target.value);
             updateGuideLine();
