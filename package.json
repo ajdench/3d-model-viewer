@@ -8,7 +8,7 @@
     "build": "vite build",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "deploy-dev": "gh-pages -d dist -b gh-pages-dev"
+    "deploy-dev": "gh-pages -d dist -b gh-pages-dev-2"
   },
   "keywords": [],
   "author": "",
