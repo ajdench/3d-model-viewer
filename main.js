@@ -47,8 +47,7 @@ let mouseControls = {
 };
 
 // ----------------------------------------------------------------
-// 1. Basic Utility Functions
-// ----------------------------------------------------------------
+// 10. Initialization
 function formatNumber(num) {
     return parseFloat(num).toFixed(2);
 }
@@ -103,7 +102,6 @@ function safeAddEventListener(id, event, handler) {
 
 // ----------------------------------------------------------------
 // ControlSync - Global UI Control Synchronization System
-// ----------------------------------------------------------------
 
 /**
  * ControlSync - Modular synchronization system for UI controls
@@ -395,7 +393,6 @@ function setControlSyncDebug(enabled) {
 
 // ----------------------------------------------------------------
 // External Surface Extraction Functions (Hybrid Architecture)
-// ----------------------------------------------------------------
 
 /**
  * PHASE 1: Extract external surface using Three.js ConvexGeometry
@@ -811,6 +808,9 @@ function updateAlphaParameterVisibility() {
 function updateLightingModeButtons() {
     const basicButton = document.getElementById('basicModeButton');
     const complexButton = document.getElementById('complexModeButton');
+    const leftArrow = document.getElementById('left-direction-arrow');
+    const rightArrow = document.getElementById('right-direction-arrow');
+    const lightPad = document.getElementById('lightPad');
     
     if (basicButton && complexButton) {
         if (state.lightingMode === 'basic') {
@@ -820,6 +820,9 @@ function updateLightingModeButtons() {
             // COMPLEX unselected - grey
             complexButton.style.opacity = '0.6';
             complexButton.style.background = 'linear-gradient(45deg, #ccc, #999)';
+            // Hide direction arrows in BASIC mode
+            if (leftArrow) leftArrow.style.display = 'none';
+            if (rightArrow) rightArrow.style.display = 'none';
         } else {
             // COMPLEX selected - red
             complexButton.style.opacity = '1';
@@ -827,13 +830,19 @@ function updateLightingModeButtons() {
             // BASIC unselected - grey
             basicButton.style.opacity = '0.6';
             basicButton.style.background = 'linear-gradient(45deg, #ccc, #999)';
+            
+            // Show direction arrows in COMPLEX mode (positioned dynamically by drag handler)
+            if (leftArrow && rightArrow) {
+                leftArrow.style.display = 'block';
+                rightArrow.style.display = 'block';
+                // Position and rotation will be set by updateArrowPosition function
+            }
         }
     }
 }
 
 // ----------------------------------------------------------------
 // 2. Material Update Functions
-// ----------------------------------------------------------------
 function updateMaterialColour(colorValue) {
     console.log('Updating material color to:', colorValue);
     
@@ -1139,7 +1148,6 @@ function applyDitheredTransparency(mesh, opacity) {
 
 // ----------------------------------------------------------------
 // 3. File Handling & Model Loading Helpers
-// ----------------------------------------------------------------
 function validateFile(file) {
     if (!file) {
         throw new Error('No file provided');
@@ -1829,7 +1837,6 @@ function showAdvancedMaterialControls() {
 
 // ----------------------------------------------------------------
 // 6. Model Creation Functions
-// ----------------------------------------------------------------
 function createModel(modelType) {
     // Remove existing model
     if (state.model) {
@@ -2152,14 +2159,14 @@ function setupControls() {
     });
     
     safeAddEventListener('directionalLight', 'input', (e) => {
-        if (state.lights.directional) {
-            state.lights.directional.intensity = parseFloat(e.target.value);
+        if (state.lights.directionalRight) {
+            state.lights.directionalRight.intensity = parseFloat(e.target.value);
         }
     });
 
     safeAddEventListener('directionalLightRight', 'input', (e) => {
-        if (state.lights.directionalRight) {
-            state.lights.directionalRight.intensity = parseFloat(e.target.value);
+        if (state.lights.directional) {
+            state.lights.directional.intensity = parseFloat(e.target.value);
         }
     });
 
@@ -2180,6 +2187,7 @@ function setupControls() {
     safeAddEventListener('complexModeButton', 'click', () => {
         state.lightingMode = 'complex';
         updateLightingModeButtons();
+        updateArrowPosition(); // Position arrows when switching to complex mode
     });
 
     const dropZone = document.getElementById('dropZone');
@@ -2622,14 +2630,22 @@ function setupLightControls() {
         icon.style.top = `${pos.y}px`;
     };
 
+    // setArrowPosition removed - arrows now have fixed positions set by updateLightingModeButtons()
+
     const checkOverlap = (pos1, pos2, minDistance = 30) => {
         const dx = pos1.x - pos2.x;
         const dy = pos1.y - pos2.y;
         return Math.sqrt(dx * dx + dy * dy) < minDistance;
     };
 
+    // Get arrow elements
+    const leftArrow = document.getElementById('left-direction-arrow');
+    const rightArrow = document.getElementById('right-direction-arrow');
+
     setIconPosition(leftLightIcon, mapToPad(state.lights.directional.position));
     setIconPosition(rightLightIcon, mapToPad(state.lights.directionalRight.position));
+    
+    // Arrows are positioned dynamically to follow sun icons in COMPLEX mode
 
     function makeDraggable(icon, light, otherIcon, iconSide) {
         let isDragging = false;
@@ -2672,6 +2688,8 @@ function setupLightControls() {
 
             setIconPosition(icon, { x, y });
 
+            // Arrows remain at fixed positions - no longer follow sun icons
+
             const worldX = (x / lightPadRect.width) * 20 - 10;
             const worldY = (1 - (y / lightPadRect.height)) * 20 - 10;
             light.position.x = worldX;
@@ -2683,7 +2701,10 @@ function setupLightControls() {
                     ? verticalPercent * 90  // Left icon: rotates 0 -> 90 deg (clockwise)
                     : verticalPercent * -90; // Right icon: rotates 0 -> -90 deg (anti-clockwise)
 
-                icon.style.transform = `translate(-50%, -50%) rotate(${rotation}deg) ${icon.classList.contains('flipped') ? 'scaleX(-1)' : ''}`;
+                icon.style.transform = `translate(-50%, -50%) ${icon.classList.contains('flipped') ? 'scaleX(-1)' : ''}`;
+
+                // Update arrow positions to follow sun icons
+                updateArrowPosition();
 
                 const targetY = (0.5 - verticalPercent) * 10;
                 light.target.position.y = targetY;
@@ -2701,6 +2722,89 @@ function setupLightControls() {
 
     makeDraggable(leftLightIcon, state.lights.directional, rightLightIcon, 'left');
     makeDraggable(rightLightIcon, state.lights.directionalRight, leftLightIcon, 'right');
+
+    // Initialize arrow positions
+    updateArrowPosition();
+}
+
+function updateArrowPosition() {
+    if (state.lightingMode !== 'complex') return;
+
+    const leftIcon = document.getElementById('left-light-icon');
+    const rightIcon = document.getElementById('right-light-icon');
+    const leftArrow = document.getElementById('left-direction-arrow');
+    const rightArrow = document.getElementById('right-direction-arrow');
+    const lightPad = document.querySelector('.light-pad');
+
+    if (!leftIcon || !rightIcon || !leftArrow || !rightArrow || !lightPad) return;
+
+    // Get sun icon positions and sizes
+    const leftIconRect = leftIcon.getBoundingClientRect();
+    const rightIconRect = rightIcon.getBoundingClientRect();
+    const padRect = lightPad.getBoundingClientRect();
+
+    // Calculate sun emoji radius (approximate - sun emoji is roughly 24px)
+    const sunRadius = 12; // Half of approximate sun emoji size
+    const arrowOffset = 10; // Additional 10px beyond sun radius
+    const totalOffset = sunRadius + arrowOffset;
+
+    // Get icon centers relative to lightPad
+    const leftIconCenterX = leftIconRect.left + leftIconRect.width/2 - padRect.left;
+    const leftIconCenterY = leftIconRect.top + leftIconRect.height/2 - padRect.top;
+    const rightIconCenterX = rightIconRect.left + rightIconRect.width/2 - padRect.left;
+    const rightIconCenterY = rightIconRect.top + rightIconRect.height/2 - padRect.top;
+
+    // Calculate vertical positions as percentages (0 = top, 1 = bottom)
+    const leftVerticalPercent = leftIconCenterY / padRect.height;
+    const rightVerticalPercent = rightIconCenterY / padRect.height;
+
+    // Clock-based rotation system
+    function getClockRotation(verticalPercent, isLeft) {
+        if (isLeft) {
+            // Left arrows: Top=4:30 (135°), Middle=3:00 (90°), Bottom=1:30 (45°)
+            if (verticalPercent <= 0.5) {
+                // Top to middle: 4:30 to 3:00 (135° to 90°)
+                return 135 - (verticalPercent * 2) * 45; // 135° to 90°
+            } else {
+                // Middle to bottom: 3:00 to 1:30 (90° to 45°)
+                const progress = (verticalPercent - 0.5) * 2; // 0 to 1
+                return 90 - progress * 45; // 90° to 45°
+            }
+        } else {
+            // Right arrows: Top=7:30 (225°), Middle=9:00 (270°), Bottom=10:30 (315°)
+            if (verticalPercent <= 0.5) {
+                // Top to middle: 7:30 to 9:00 (225° to 270°)
+                return 225 + (verticalPercent * 2) * 45; // 225° to 270°
+            } else {
+                // Middle to bottom: 9:00 to 10:30 (270° to 315°)
+                const progress = (verticalPercent - 0.5) * 2; // 0 to 1
+                return 270 + progress * 45; // 270° to 315°
+            }
+        }
+    }
+
+    // Calculate arrow positions and rotations (swap logic to point inward)
+    const leftRotation = getClockRotation(leftVerticalPercent, false);  // Left arrow uses right logic to point inward
+    const rightRotation = getClockRotation(rightVerticalPercent, true); // Right arrow uses left logic to point inward
+
+    // Convert rotation to radians for position calculation
+    const leftRadians = (leftRotation - 90) * Math.PI / 180; // -90 to point from center outward
+    const rightRadians = (rightRotation - 90) * Math.PI / 180;
+
+    // Calculate arrow positions
+    const leftArrowX = leftIconCenterX + Math.cos(leftRadians) * totalOffset;
+    const leftArrowY = leftIconCenterY + Math.sin(leftRadians) * totalOffset;
+    const rightArrowX = rightIconCenterX + Math.cos(rightRadians) * totalOffset;
+    const rightArrowY = rightIconCenterY + Math.sin(rightRadians) * totalOffset;
+
+    // Apply positions and rotations
+    leftArrow.style.left = `${leftArrowX}px`;
+    leftArrow.style.top = `${leftArrowY}px`;
+    leftArrow.style.transform = `translate(-50%, -50%) rotate(${leftRotation}deg)`;
+
+    rightArrow.style.left = `${rightArrowX}px`;
+    rightArrow.style.top = `${rightArrowY}px`;
+    rightArrow.style.transform = `translate(-50%, -50%) rotate(${rightRotation}deg)`;
 }
 
 // ----------------------------------------------------------------

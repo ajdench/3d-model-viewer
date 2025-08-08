@@ -337,7 +337,7 @@
 
         .upload-status {
             font-size: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             padding: 8px;
             border-radius: 4px;
             text-align: center;
@@ -530,6 +530,30 @@
 
         .light-icon.flipped {
             transform: translate(-50%, -50%) scaleX(-1);
+        }
+
+        .direction-arrow {
+            position: absolute;
+            user-select: none;
+            pointer-events: none;
+            display: none; /* Hidden by default, shown only in COMPLEX mode */
+            width: 20px;
+            height: 20px;
+        }
+
+        .direction-arrow svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .direction-arrow.left-arrow {
+            /* Position centered inside left sun icon */
+            transform: translate(-50%, -50%);
+        }
+
+        .direction-arrow.right-arrow {
+            /* Position centered inside right sun icon */
+            transform: translate(-50%, -50%);
         }
 
         .lighting-controls-container {
@@ -847,7 +871,7 @@
         /* Upload area styling */
         .upload-area {
             position: absolute;
-            bottom: 13px; /* Adjusted up to accommodate upload status above buttons */
+            bottom: 10px; /* Match INTERACTION pane gap from model window edge */
             right: 10px; /* Align with BASIC button right edge */
             width: 230px;
             z-index: 10;
