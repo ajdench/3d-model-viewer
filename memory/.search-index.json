@@ -1,0 +1,61 @@
+{
+  "files": {
+    "implementations/automation-strategies.md": {
+      "size": 5426,
+      "modified": 1754154509.8947783,
+      "type": "implementation"
+    },
+    "active/context.md": {
+      "size": 3105,
+      "modified": 1754154343.7965698,
+      "type": "other"
+    },
+    "active/status.md": {
+      "size": 1579,
+      "modified": 1754154187.2565217,
+      "type": "other"
+    },
+    "reference/architecture.md": {
+      "size": 2567,
+      "modified": 1754154410.3352537,
+      "type": "other"
+    },
+    "reference/QUICK-REFERENCE.md": {
+      "size": 2969,
+      "modified": 1754153594.8750741,
+      "type": "other"
+    },
+    "reference/patterns.md": {
+      "size": 3613,
+      "modified": 1754154473.1043377,
+      "type": "other"
+    }
+  },
+  "keywords": {
+    "pattern": [
+      "implementations/automation-strategies.md",
+      "active/context.md",
+      "reference/architecture.md",
+      "reference/QUICK-REFERENCE.md",
+      "reference/patterns.md"
+    ],
+    "fix": [
+      "implementations/automation-strategies.md",
+      "reference/QUICK-REFERENCE.md",
+      "reference/patterns.md"
+    ],
+    "error": [
+      "active/context.md",
+      "reference/architecture.md",
+      "reference/patterns.md"
+    ],
+    "test": [
+      "reference/QUICK-REFERENCE.md",
+      "reference/patterns.md"
+    ]
+  },
+  "patterns": {},
+  "fixes": {},
+  "questions": {},
+  "built": "2025-08-02T18:13:24.078378"
+}
