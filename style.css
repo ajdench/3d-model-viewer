@@ -556,6 +556,23 @@
             transform: translate(-50%, -50%);
         }
 
+        /* SUNSET: Greyed out controls styling */
+        .sunset-controls {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        
+        .sunset-controls label {
+            color: #888 !important;
+        }
+        
+        .sunset-controls input,
+        .sunset-controls select {
+            background-color: #f5f5f5 !important;
+            color: #888 !important;
+            cursor: not-allowed !important;
+        }
+
         .lighting-controls-container {
             display: flex;
             align-items: flex-start;

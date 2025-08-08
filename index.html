@@ -368,6 +368,8 @@
                             <button id="complexMaterialButton" class="button button-danger">COMPLEX</button>
                         </div>
                     </div>
+                <!-- SUNSET: Complex Material Controls - Commented out and visually disabled -->
+                <!-- 
                 <div class="control-group">
                     <label>Metalness</label>
                     <div class="slider-container">
@@ -439,6 +441,36 @@
                         <input type="range" id="visibilityThreshold" class="slider-input" min="0.1" max="1" step="0.05" value="0.6">
                         <input type="number" id="visibilityThresholdNum" class="number-input" min="0.1" max="1" step="0.05" value="0.6">
                     </div>
+                </div>
+                -->
+                
+                <!-- Greyed out placeholder showing sunset controls -->
+                <div class="control-group sunset-controls">
+                    <label>Metalness</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider-input" min="0" max="1" step="0.01" value="0.1" disabled>
+                        <input type="number" class="number-input" min="0" max="1" step="0.01" value="0.1" disabled>
+                    </div>
+                </div>
+                <div class="control-group sunset-controls">
+                    <label>Roughness</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider-input" min="0" max="1" step="0.01" value="0.8" disabled>
+                        <input type="number" class="number-input" min="0" max="1" step="0.01" value="0.8" disabled>
+                    </div>
+                </div>
+                <div class="control-group sunset-controls">
+                    <label>Transparency</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider-input" min="0" max="1" step="0.01" value="1" disabled>
+                        <input type="number" class="number-input" min="0" max="1" step="0.01" value="1" disabled>
+                    </div>
+                </div>
+                <div class="control-group sunset-controls">
+                    <label>Transparency Mode</label>
+                    <select class="control-input" disabled>
+                        <option value="standard" selected>Standard</option>
+                    </select>
                 </div>
                 </div>
             </div>
