@@ -1,103 +1,55 @@
-# 3D Model Viewer v2.11.0
+# 3D Model Viewer v2.12.0
 
 A professional, interactive 3D model viewer built with Three.js (r179) and Vite. This is a single-page web application that allows users to load, view, and manipulate 3D models in various formats with an extensive set of controls.
 
+## Project Audit & Installation
+
+*   **[Project Audit](./audit.md):** A comprehensive review of the project's code maturity, architecture, security, and dependencies.
+*   **[Offline Installation Guide](./install.md):** Instructions for deploying the application on a private, offline web server.
+
 ## Key Features
 
-- **Multiple Model Formats**: Load `.obj`, `.stl`, `.gltf`, and `.glb` files via drag-and-drop or file input.
-- **Comprehensive Controls**: Adjust camera position, model rotation (including Yaw, Pitch, and Roll), materials (color, metalness, roughness), and lighting in real-time.
-- **Advanced Lighting**: Dual directional lights with an interactive 2D control pad and Basic/Complex modes for precise lighting adjustments.
-- **Multiple Guide Lines**: Add, customize, and remove multiple independent guide lines, each with its own controls for color, thickness, transparency, angle, and position.
-- **Control Synchronization**: A robust `ControlSync` system ensures that all UI controls (sliders and number inputs) are perfectly synchronized, providing a seamless user experience.
-- **Preset Management**: Save and load complete scene configurations (camera, model, materials, lighting) to and from `localStorage`.
-- **Image Capture**: Save the current view as a high-quality PNG file with a transparent background.
-- **External Surface Extraction**: A new experimental feature to extract and render only the external surfaces of a model, which can improve performance and visual clarity for complex, high-poly models.
+*   **Model Loading:** Load `.obj`, `.stl`, `.gltf`, and `.glb` files.
+*   **Interactive Controls:** Adjust camera, model, materials, and lighting in real-time.
+*   **Advanced Features:** Includes multiple guide lines, preset management, image capture, and experimental external surface extraction.
 
-## Change Logs
+## Architecture
 
-This project maintains two dedicated change logs to provide a clear and transparent history of all modifications:
-
-- **`claude-code-changes.md`**: A chronological record of all manual code modifications, design changes, and user-driven feature implementations.
-- **`gemini-code-changes.md`**: A log of all changes made by the Gemini assistant, including automated refactoring, process enhancements, and documentation updates.
-
-## Branching Strategy
-
-This project utilizes a dual-branch system for development and production:
-
-- **`main` / `gh-pages`**: The production environment. The `main` branch contains the stable, production-ready source code, which is built and deployed to the `gh-pages` branch.
-- **`Dev-2` / `gh-pages-dev-2`**: The development/staging environment. The `Dev-2` branch is used for active development, and its builds are deployed to the `gh-pages-dev-2` branch. This allows for a live, testable version of the application that is separate from the production deployment.
+The application is built with Vanilla JavaScript and Three.js, using Vite for development and bundling. It is a single-page application with a monolithic but well-documented codebase. The project is currently in the process of being refactored into a more modular architecture.
 
 ## Development
 
 ### Prerequisites
 
-- Node.js (v20.19.0 or higher)
-- npm (v8.0.0 or higher)
+*   Node.js (v20.19.0 or higher)
+*   npm (v8.0.0 or higher)
 
-### Setup
+### Setup & Commands
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/3d-model-viewer.git
-    cd 3d-model-viewer
-    ```
+1.  **Install Dependencies:** `npm install`
+2.  **Run Dev Server:** `npm run dev`
+3.  **Build for Production:** `npm run build`
 
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
+## Deployment
 
-### Running the Development Server
+The project is configured for deployment to GitHub Pages. The `dist` directory, created by the build process, is self-contained and can be deployed to any static web host.
 
-To start the Vite development server with hot-reloading, run:
+*   **Deploy to Production:** `npm run deploy`
+*   **Deploy to Staging:** `npm run deploy-dev`
 
-```bash
-npm run dev
-```
+## Branching Strategy
 
-This will start the server, typically on `http://localhost:5173`.
+*   **`main` / `gh-pages`**: Production environment.
+*   **`Dev-2` / `gh-pages-dev-2`**: Development and staging environment.
 
-### Building for Production
+## Project Documentation
 
-To create a production-ready build in the `dist` directory, run:
+This project maintains a detailed history of changes and development decisions in the following files:
 
-```bash
-npm run build
-```
+*   **`claude-code-changes.md`**: A log of manual code modifications.
+*   **`gemini-code-changes.md`**: A log of changes made by the Gemini assistant.
+*   **`CLAUDE.md` & `GEMINI.md`**: Comprehensive internal documentation and development guidelines.
 
-### Deployment
+## Current Status (August 9, 2025): Project Audit Complete
 
-The project includes a script to simplify deployment to GitHub Pages.
-
--   **Deploy to Production (`gh-pages`):**
-
-    ```bash
-    npm run deploy
-    ```
-
--   **Deploy to Development (`gh-pages-dev-2`):**
-
-    ```bash
-    npm run deploy-dev
-    ```
-
-## Evidence-Based Debugging
-
-This project adheres to a strict **Evidence-Based Debugging Protocol**. The core principle is to prioritize real-time, observable evidence (such as browser console errors) over theoretical code analysis. This ensures that development efforts are focused on fixing actual runtime issues rather than chasing phantom problems.
-
-## Current Status (August 9, 2025): CONTROLS SPACING STANDARDIZATION COMPLETE
-
-**Recent Achievement**: Comprehensive CONTROLS pane spacing standardization has been completed, achieving perfect visual balance across all control sections using a coordinated CSS variable system.
-
-**Key Improvements**:
-- **Visual Balance**: Achieved optical equality with 13px horizontal padding vs 15px total vertical spacing (12px section padding + 3px coordinated margin)
-- **CSS Architecture**: Implemented modular spacing system using global CSS variables (`--section-content-padding`, `--coordinated-bottom-margin`)
-- **Anti-Pattern Elimination**: Resolved undefined CSS variables, specificity conflicts, and competing padding rules
-- **Mode-Aware Spacing**: Fixed MATERIAL pane BASIC/COMPLEX mode rendering differences
-- **Global Consistency**: All 6+ control panes (CAPTURE, GUIDE LINE, CAMERA, MODEL, MATERIAL, PRESETS) now use consistent spacing
-
-**Technical Innovation**: Discovered that mathematical equality (15px = 15px) doesn't guarantee visual balance - optical adjustment was required to achieve true visual consistency.
-
-**Development Branch**: Active development continues on `Dev-2` branch with staging deployments to `gh-pages-dev-2` for testing.
-
-**Next Steps**: Ready to proceed with Phase 2: Quality Foundation, including testing infrastructure and continued UI/UX refinements.
+A full codebase audit has been completed, and the results have been documented in `audit.md`. The project is stable, and the next phase of development will focus on implementing a testing framework and refactoring the codebase into a more modular architecture, as outlined in the project's strategic roadmap.

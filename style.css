@@ -25,6 +25,9 @@
             /* Title to element spacing */
             --title-to-element-spacing: 15px; /* Consistent spacing from titles to first elements */
             
+            /* Section header spacing */
+            --section-header-to-content-gap: 15px; /* NEW: Gap between section header and first content element */
+            
             /* Special preset pane spacing */
             --preset-section-bottom-padding: 15px; /* Consistent with other sections, removing custom 20px */
         }
@@ -118,17 +121,17 @@
         .section-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start; /* FIXED: Align icons with top of title text */
             cursor: pointer;
-            padding: 2px 4px;
-            margin: -2px -4px 15px -4px;
+            padding: 0 4px 0 4px; /* FIXED: Minimal padding for click area */
+            margin: -2px -4px var(--section-header-to-content-gap) -4px; /* FIXED: Use new variable for proper spacing */
             user-select: none;
             border-radius: 4px;
             transition: background-color 0.2s ease;
         }
 
         .control-section.collapsed .section-header {
-            margin-bottom: 0; /* Remove bottom margin when collapsed */
+            margin-bottom: 0; /* FIXED: Remove extra spacing when collapsed */
         }
 
         .section-header:hover {
@@ -146,15 +149,20 @@
             font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            line-height: 1; /* FIXED: Match collapse icon line-height for perfect alignment */
         }
 
         .collapse-icon {
-            font-size: 14px;
+            font-size: 16px; /* FIXED: Match title font size for perfect alignment */
             color: #666;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             transform-origin: center;
-            margin-left: 8px;
+            margin-left: 8px; /* FIXED: Restore proper horizontal positioning */
             font-weight: bold;
+            /* FIXED: Align with top of title text */
+            line-height: 1;
+            position: relative;
+            top: -2px; /* FIXED: Move up to align with title text top */
         }
 
         .control-section.collapsed .collapse-icon {
@@ -948,7 +956,7 @@
 
         .model-buttons {
             display: flex;
-            gap: 5px;
+            gap: var(--button-row-gap); /* FIXED: Use parameterized button gap */
             margin-bottom: var(--control-group-spacing);
         }
 
@@ -1268,12 +1276,16 @@
 
         /* Apply same COMPLEX/DEFAULT styling to material pane button */
         [data-section="material"] #complexMaterialButton {
-            height: 37px !important;
-            margin-bottom: 3px !important;
+            height: var(--button-standard-height) !important; /* FIXED: Use standard button height */
+            margin-bottom: var(--control-element-bottom-margin) !important;
             margin-top: 19px !important;
             width: 100% !important;
             position: relative !important;
             top: -1px !important;
+            /* FIXED: Ensure consistent sizing between BASIC and COMPLEX modes */
+            padding: var(--button-standard-padding) !important;
+            font-size: var(--button-standard-font-size) !important;
+            box-sizing: border-box !important;
         }
 
         [data-section="material"] #complexMaterialButton.secondary {
@@ -1341,6 +1353,11 @@
         
         /* CAPTURE pane - FIXED: Eliminate competing padding rules for perfect visual balance */
         [data-section="capture"] .button-group:last-child {
+            margin-bottom: 0px !important; /* Remove margin from button group */
+        }
+        
+        /* CAPTURE pane buttons - FIXED: Apply coordinated margin to buttons inside last button group */
+        [data-section="capture"] .button-group:last-child .button {
             margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Coordinated padding system for visual balance */
         }
         

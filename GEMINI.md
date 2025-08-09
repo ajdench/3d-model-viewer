@@ -154,6 +154,15 @@ When asked to "Update Git", I will follow this process:
 - Styles are in `style.css`.
 - The `index.html` file is the main entry point.
 
+### Project Documentation
+This project maintains a detailed history of changes and development decisions in the following files:
+
+*   **`claude-code-changes.md`**: A log of manual code modifications.
+*   **`gemini-code-changes.md`**: A log of changes made by the Gemini assistant.
+*   **`CLAUDE.md` & `GEMINI.md`**: Comprehensive internal documentation and development guidelines.
+*   **`audit.md`**: A comprehensive review of the project's code maturity, architecture, security, and dependencies.
+*   **`install.md`**: Instructions for deploying the application on a private, offline web server.
+
 ### Features
 - **Model Loading**: Supports `.obj`, `.stl`, `.gltf`, `.glb`, and now `.dae` file formats. Models can be loaded via a file input or drag-and-drop.
 - **Model Selection**: A dropdown menu allows users to switch between several built-in models (Torus Knot, Cube, Sphere, Pyramid).
@@ -273,13 +282,9 @@ A fundamental shift in development methodology, prompted by the "syncSliderNumbe
 4.  **🎯 Initialization Check**: Confirm that the application initializes completely without errors before investigating issues in specific features.
 5.  **📊 Evidence Over Theory**: What the application *is actually doing* is more important than what the code *should be doing*.
 
-## Current Status (August 7, 2025): PHASE 1 COMPLETE
+## Current Status (August 9, 2025): Project Audit Complete
 
-**Problem**: The previous `TypeError` in `main.js` caused by syntax errors has been resolved, and Phase 1 of the remediation plan, "Critical Stabilization," is now complete.
-
-**Resolution**: The `main.js` file was manually corrected, resolving the orphaned code and syntax issues. Additionally, the controller system has been fully restored with over 20 missing event listeners systematically added, and the project is now at a stable baseline (v2.9.3-stable).
-
-**Next Steps**: The project is now ready to proceed with Phase 2: Quality Foundation, which includes implementing testing infrastructure and formalizing evidence-based debugging protocols.
+A full codebase audit has been completed, and the results have been documented in `audit.md`. The project is stable, and the next phase of development will focus on implementing a testing framework and refactoring the codebase into a more modular architecture, as outlined in the project's strategic roadmap.
 
 ## Comprehensive Remediation Plan (2025-08-06)
 
@@ -323,3 +328,24 @@ Based on comprehensive analysis of 24 distinct issues from memory files, codebas
 - **Phase 2**: >80% critical path test coverage, evidence-based debugging protocol adopted, function boundary violations identified
 - **Phase 3**: main.js <1000 lines, state management with clear boundaries, 60%+ coupling reduction
 - **Phase 4**: Bundle size optimized, performance monitoring operational, automated release pipeline
+
+## Recent Major Achievements (2025-08-09)
+
+### Critical UI Fixes Completed ✅
+**Session Summary**: Addressed four critical issues from user screenshot feedback:
+
+#### Completed Issues:
+1. **CAPTURE Pane Bottom Spacing** ✅ - Fixed inconsistent bottom spacing vs other panes
+2. **Minimize/Collapse Functionality** ✅ - Restored missing `setupCollapsibleSections()` call in initialization
+3. **MATERIALS Button Size Consistency** ✅ - Fixed COMPLEX/BASIC button sizing with standard variables
+4. **Parameterized Button Gaps** ✅ - Converted TORUS/LIBRARY buttons to use `--button-row-gap` variable
+
+#### Collapse Icon Alignment - Partial Progress 🔄
+**Status**: IN PROGRESS - Requires fine-tuning
+**New Variable Created**: `--section-header-to-content-gap: 15px`
+**Issues**: Complex alignment requirements for minus sign (−) vertical positioning and triangle (▼) horizontal consistency with global spacing system
+**Documentation**: Detailed in `memory/fixes/2025-08-09-collapse-icon-alignment-partial.md`
+
+### Guide Line Auto-Hide Animation Synchronization ✅ 
+**Achievement**: Successfully synchronized guide line visibility with UNHIDE button pulse animation
+**Implementation**: Callback-based architecture with coordinated flash effects during each pulse cycle

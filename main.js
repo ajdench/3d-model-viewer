@@ -1643,27 +1643,55 @@ function autoHideDefaultGuideLineOnFirstLoad() {
     // Mark that auto-hide has occurred to prevent future auto-hides
     sessionStorage.setItem('guideLineAutoHideOccurred', 'true');
     
-    // Hide the default guide line
+    // Get elements
     const overlay = document.getElementById('guideLineOverlay');
     const button = document.getElementById('hideUnhideGuide');
     
     console.log('Elements found - overlay:', !!overlay, 'button:', !!button);
     
     if (overlay && button) {
-        overlay.style.display = 'none';
+        // Update button to UNHIDE state immediately
         button.textContent = 'UNHIDE';
         button.classList.remove('secondary');
         button.classList.add('button-danger');
         
         console.log('Auto-hide applied, starting pulse animation');
-        // Add pulsing effect to notify user
-        pulseUnhideButton(button, 3);
+        // Add pulsing effect to notify user with synchronized guide line
+        pulseUnhideButtonWithSyncedGuideLine(button, overlay, 3);
     } else {
         console.error('Elements not found for auto-hide');
     }
 }
 
-function pulseUnhideButton(button, pulseCount) {
+function pulseUnhideButtonWithSyncedGuideLine(button, guideLineOverlay, pulseCount) {
+    // This function now correctly calls the global pulseUnhideButton function
+    // while synchronizing the guide line's visibility.
+    console.log('Starting button pulse with synchronized guide line');
+
+    // Hide guide line initially
+    guideLineOverlay.style.display = 'none';
+    guideLineOverlay.style.transition = 'opacity 0.2s ease';
+
+    // Call the main pulse function
+    pulseUnhideButton(button, pulseCount, (animationState) => {
+        // Synchronize the guide line with the pulse animation
+        if (animationState === 'pulse-up') {
+            // Show guide line when button scales up
+            guideLineOverlay.style.display = 'block';
+            guideLineOverlay.style.opacity = '1';
+        } else if (animationState === 'pulse-down') {
+            // Hide guide line when button scales down (creates flash effect)
+            guideLineOverlay.style.opacity = '0';
+        } else if (animationState === 'end') {
+            // Permanently hide it when the animation is over
+            guideLineOverlay.style.display = 'none';
+            guideLineOverlay.style.opacity = '1'; // Reset for future use
+            console.log('Guide line auto-hidden as pulse overlay ends');
+        }
+    });
+}
+
+function pulseUnhideButton(button, pulseCount, onStateChange = null) {
     // Capture styling
     const computedStyle = getComputedStyle(button);
     
@@ -1738,13 +1766,28 @@ function pulseUnhideButton(button, pulseCount) {
         currentScale = 1.15;
         clonedButton.style.transform = `scale(${currentScale})`;
         
+        // Trigger pulse-up callback
+        if (onStateChange) {
+            onStateChange('pulse-up');
+        }
+        
         setTimeout(() => {
             // Scale back down
             currentScale = 1;
             clonedButton.style.transform = `scale(${currentScale})`;
             
+            // Trigger pulse-down callback
+            if (onStateChange) {
+                onStateChange('pulse-down');
+            }
+            
             // Check if this was the last pulse's scale-down
             if (pulses >= pulseCount) {
+                // Trigger end callback
+                if (onStateChange) {
+                    onStateChange('end');
+                }
+                
                 // Keep position tracking running for much longer after the last scale-down
                 setTimeout(() => {
                     cancelAnimationFrame(animationId);
@@ -3116,6 +3159,7 @@ async function initializeViewer() {
         setupControls();
         setupLightControls();
         setupGuideLineControls(); // Set up guide line controls after DOM is ready
+        setupCollapsibleSections(); // FIXED: Initialize collapsible sections functionality
         loadPresetsList();
         updateLightingModeButtons(); // Initialize button states
         setupMouseControls(); // Call here after DOM is ready

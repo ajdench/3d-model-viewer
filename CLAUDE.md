@@ -495,7 +495,28 @@ Based on comprehensive analysis of 24 distinct issues from memory files, codebas
 ### Success Criteria
 - **Phase 1**: ✅ **COMPLETED** - Application loads without console errors, all UI functional, dev server operational, v2.9.3-stable baseline tagged
 
-## Recent Major Achievements (2025-08-08)
+## Recent Major Achievements (2025-08-09)
+
+### Critical UI Fixes Completed ✅
+**Session Summary**: Addressed four critical issues from user screenshot feedback:
+
+#### Completed Issues:
+1. **CAPTURE Pane Bottom Spacing** ✅ - Fixed inconsistent bottom spacing vs other panes
+2. **Minimize/Collapse Functionality** ✅ - Restored missing `setupCollapsibleSections()` call in initialization
+3. **MATERIALS Button Size Consistency** ✅ - Fixed COMPLEX/BASIC button sizing with standard variables
+4. **Parameterized Button Gaps** ✅ - Converted TORUS/LIBRARY buttons to use `--button-row-gap` variable
+
+#### Collapse Icon Alignment - Partial Progress 🔄
+**Status**: IN PROGRESS - Requires fine-tuning
+**New Variable Created**: `--section-header-to-content-gap: 15px`
+**Issues**: Complex alignment requirements for minus sign (−) vertical positioning and triangle (▼) horizontal consistency with global spacing system
+**Documentation**: Detailed in `memory/fixes/2025-08-09-collapse-icon-alignment-partial.md`
+
+### Guide Line Auto-Hide Animation Synchronization ✅ 
+**Achievement**: Successfully synchronized guide line visibility with UNHIDE button pulse animation
+**Implementation**: Callback-based architecture with coordinated flash effects during each pulse cycle
+
+## Previous Achievements (2025-08-08)
 
 ### LIGHTING COMPLEX Mode Directional Arrows - COMPLETE SUCCESS ✅
 **Issue**: Multi-session debugging marathon to implement functional directional arrows in COMPLEX lighting mode
