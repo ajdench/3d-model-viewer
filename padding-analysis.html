@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Padding Architecture Analysis</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .analysis-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+        .test-pane {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .measurement-ruler {
+            background: red;
+            height: 1px;
+            margin: 0;
+            width: 100%;
+        }
+        .spacing-info {
+            background: yellow;
+            padding: 5px;
+            margin: 5px 0;
+            font-size: 11px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="analysis-container">
+        <!-- CAPTURE Pane Test -->
+        <div class="test-pane">
+            <h3>CAPTURE Pane Analysis</h3>
+            <div class="control-section" data-section="capture">
+                <div class="section-content" id="capture-content">
+                    <div class="spacing-info">START: Section Content Padding: 15px sides, 12px bottom</div>
+                    <div class="button-group">
+                        <button class="button secondary">CLIPBOARD</button>
+                        <button class="button secondary">FILE</button>
+                    </div>
+                    <div class="spacing-info">END: Coordinated Bottom Margin: 3px (applied to button-group:last-child)</div>
+                </div>
+            </div>
+            <div class="measurement-ruler"></div>
+            <div class="spacing-info">Total Bottom Gap: 15px (12px section + 3px margin)</div>
+        </div>
+
+        <!-- GUIDE LINE Pane Test -->
+        <div class="test-pane">
+            <h3>GUIDE LINE Pane Analysis</h3>
+            <div class="control-section" data-section="guideline">
+                <div class="section-content" id="guideline-content">
+                    <div class="spacing-info">START: Section Content Padding: 15px sides, 12px bottom</div>
+                    <div class="control-group-row">
+                        <div class="control-group">
+                            <label>Colour</label>
+                            <input type="color" class="color-input" value="#FFFF00">
+                        </div>
+                        <div class="control-group">
+                            <button class="button secondary">HIDE</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Thickness</label>
+                        <div class="slider-container">
+                            <input type="range" class="slider-input" min="0" max="100" value="5">
+                            <input type="number" class="number-input" min="0" max="100" value="5">
+                        </div>
+                    </div>
+                    <div class="control-group guide-line-bottom-button">
+                        <button class="button secondary">ADD LINE...</button>
+                    </div>
+                    <div class="spacing-info">END: Coordinated Bottom Margin: 3px (applied to guide-line-bottom-button)</div>
+                </div>
+            </div>
+            <div class="measurement-ruler"></div>
+            <div class="spacing-info">Total Bottom Gap: 15px (12px section + 3px margin)</div>
+        </div>
+
+        <!-- Pure Internal Padding Test -->
+        <div class="test-pane">
+            <h3>PURE INTERNAL PADDING Test</h3>
+            <div class="control-section" style="padding: 15px; margin-bottom: 0;">
+                <div style="background: rgba(255,255,255,0.5); min-height: 100px;">
+                    <div class="spacing-info">Internal Padding: 15px all sides</div>
+                    <div class="button-group" style="margin-bottom: 0;">
+                        <button class="button secondary">CLIPBOARD</button>
+                        <button class="button secondary">FILE</button>
+                    </div>
+                    <div class="spacing-info">No element margins - only container padding</div>
+                </div>
+            </div>
+            <div class="measurement-ruler"></div>
+            <div class="spacing-info">Single source of truth: Container padding only</div>
+        </div>
+    </div>
+
+    <!-- CSS Variable Analysis -->
+    <div style="padding: 20px; background: #f0f0f0;">
+        <h2>Current CSS Variables</h2>
+        <table style="border-collapse: collapse; width: 100%;">
+            <tr style="background: #ddd;">
+                <th style="border: 1px solid #999; padding: 8px;">Variable</th>
+                <th style="border: 1px solid #999; padding: 8px;">Value</th>
+                <th style="border: 1px solid #999; padding: 8px;">Purpose</th>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #999; padding: 8px;">--section-content-padding</td>
+                <td style="border: 1px solid #999; padding: 8px;">15px</td>
+                <td style="border: 1px solid #999; padding: 8px;">Horizontal padding for section content</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #999; padding: 8px;">--section-content-padding-bottom</td>
+                <td style="border: 1px solid #999; padding: 8px;">12px</td>
+                <td style="border: 1px solid #999; padding: 8px;">Bottom padding for section content</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #999; padding: 8px;">--coordinated-bottom-margin</td>
+                <td style="border: 1px solid #999; padding: 8px;">3px</td>
+                <td style="border: 1px solid #999; padding: 8px;">Final element margin (12px + 3px = 15px total)</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #999; padding: 8px;">--control-element-bottom-margin</td>
+                <td style="border: 1px solid #999; padding: 8px;">5px</td>
+                <td style="border: 1px solid #999; padding: 8px;">Standard margin for elements within groups</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

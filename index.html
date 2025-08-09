@@ -442,34 +442,70 @@
                         <input type="number" id="visibilityThresholdNum" class="number-input" min="0.1" max="1" step="0.05" value="0.6">
                     </div>
                 </div>
+                <div class="control-group">
+                    <label>Transparency Mode</label>
+                    <select id="transparencyMode" class="control-input">
+                        <option value="external-surface">External Surface Only</option>
+                        <option value="threshold">Unified Surface</option>
+                        <option value="advanced">Advanced (High-Poly)</option>
+                        <option value="wboit">WBOIT (Alpha Test)</option>
+                        <option value="standard" selected>Standard</option>
+                        <option value="dithered">Dithered</option>
+                        <option value="convex">Convex Hull (Fast)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Surface Extraction</label>
+                    <div class="control-group-row">
+                        <div class="control-group">
+                            <input type="checkbox" id="surfaceExtractionEnabled" class="checkbox-input">
+                            <label for="surfaceExtractionEnabled">Enable</label>
+                        </div>
+                        <div class="control-group">
+                            <select id="surfaceExtractionMode" class="control-input" disabled>
+                                <option value="none">None</option>
+                                <option value="convex" selected>Convex Hull (Fast)</option>
+                                <option value="raycast">Ray Casting (Preserves Shape)</option>
+                                <option value="alpha">Alpha Shapes (Future)</option>
+                                <option value="meshlab">MeshLabJS (Future)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 -->
                 
-                <!-- Greyed out placeholder showing sunset controls -->
-                <div class="control-group sunset-controls">
+                <!-- Active material controls - functional sunset pattern -->
+                <div class="control-group">
                     <label>Metalness</label>
                     <div class="slider-container">
-                        <input type="range" class="slider-input" min="0" max="1" step="0.01" value="0.1" disabled>
-                        <input type="number" class="number-input" min="0" max="1" step="0.01" value="0.1" disabled>
+                        <input type="range" id="metalness" class="slider-input" min="0" max="1" step="0.01" value="0.1">
+                        <input type="number" id="metalnessNum" class="number-input" min="0" max="1" step="0.01" value="0.1">
                     </div>
                 </div>
-                <div class="control-group sunset-controls">
+                <div class="control-group">
                     <label>Roughness</label>
                     <div class="slider-container">
-                        <input type="range" class="slider-input" min="0" max="1" step="0.01" value="0.8" disabled>
-                        <input type="number" class="number-input" min="0" max="1" step="0.01" value="0.8" disabled>
+                        <input type="range" id="roughness" class="slider-input" min="0" max="1" step="0.01" value="0.8">
+                        <input type="number" id="roughnessNum" class="number-input" min="0" max="1" step="0.01" value="0.8">
                     </div>
                 </div>
-                <div class="control-group sunset-controls">
+                <div class="control-group">
                     <label>Transparency</label>
                     <div class="slider-container">
-                        <input type="range" class="slider-input" min="0" max="1" step="0.01" value="1" disabled>
-                        <input type="number" class="number-input" min="0" max="1" step="0.01" value="1" disabled>
+                        <input type="range" id="transparency" class="slider-input" min="0" max="1" step="0.01" value="1">
+                        <input type="number" id="transparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
                     </div>
                 </div>
-                <div class="control-group sunset-controls">
+                <div class="control-group">
                     <label>Transparency Mode</label>
-                    <select class="control-input" disabled>
+                    <select id="transparencyMode" class="control-input">
+                        <option value="external-surface">External Surface Only</option>
+                        <option value="threshold">Unified Surface</option>
+                        <option value="advanced">Advanced (High-Poly)</option>
+                        <option value="wboit">WBOIT (Alpha Test)</option>
                         <option value="standard" selected>Standard</option>
+                        <option value="dithered">Dithered</option>
+                        <option value="convex">Convex Hull (Fast)</option>
                     </select>
                 </div>
                 </div>

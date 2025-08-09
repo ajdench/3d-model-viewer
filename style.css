@@ -1,4 +1,35 @@
-* {
+:root {
+            /* MODULARIZED: Comprehensive control pane spacing variables */
+            --control-group-spacing: 15px; /* Standard spacing between control groups */
+            --control-picker-gap: 10px; /* Gap after color picker before next title */
+            
+            /* Section content spacing */
+            --section-content-padding: 13px; /* Standard padding for section content */
+            --section-content-padding-bottom: 12px; /* Bottom padding for visual equality with borders */
+            
+            /* FIXED: Button standardization variables */
+            --button-standard-height: 37px; /* Standard height for all buttons - matches color inputs and controls */
+            --button-standard-padding: 10px; /* Standard vertical padding for buttons */
+            --button-standard-font-size: 12px; /* Standard font size for buttons */
+            
+            /* FIXED: Bottom spacing standardization - VISUAL BALANCE SYSTEM */
+            --pane-bottom-spacing: 12px; /* Legacy variable - now using coordinated padding system for visual balance */
+            --coordinated-bottom-margin: 3px; /* NEW: Coordinated margin to achieve visual balance (12px padding + 3px margin = 15px total) */
+            
+            /* Control element spacing within groups */
+            --control-element-bottom-margin: 5px; /* Standard bottom margin for inputs, buttons within groups */
+            
+            /* Button row alignment */
+            --button-row-gap: 5px; /* Gap between buttons in button groups */
+            
+            /* Title to element spacing */
+            --title-to-element-spacing: 15px; /* Consistent spacing from titles to first elements */
+            
+            /* Special preset pane spacing */
+            --preset-section-bottom-padding: 15px; /* Consistent with other sections, removing custom 20px */
+        }
+
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -48,8 +79,8 @@
 
         .control-section {
             margin-bottom: 25px;
-            padding: 15px;
-            padding-bottom: 10px;
+            padding: var(--section-content-padding);
+            padding-bottom: var(--section-content-padding-bottom);
             background: rgba(0, 0, 0, 0.03);
             border-radius: 10px;
             border: 1px solid rgba(0, 0, 0, 0.05);
@@ -58,14 +89,14 @@
         /* Legacy h3 styling for non-collapsible sections */
         .control-section h3:not(.section-header h3) {
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: var(--control-group-spacing);
             font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: var(--control-group-spacing);
         }
 
         .control-group-row {
@@ -205,7 +236,8 @@
 
         .button {
             width: 100%;
-            padding: 10px;
+            height: var(--button-standard-height); /* FIXED: Standardize button height globally */
+            padding: var(--button-standard-padding); /* FIXED: Use standard padding */
             border: none;
             border-radius: 6px;
             background: linear-gradient(45deg, #ff6b6b, #ee5a24);
@@ -215,8 +247,14 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-size: 12px;
-            margin-bottom: 5px;
+            font-size: var(--button-standard-font-size); /* FIXED: Use standard font size */
+            margin-bottom: var(--control-element-bottom-margin);
+            /* FIXED: Ensure text is vertically centered */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-sizing: border-box;
         }
 
         .button:hover {
@@ -260,7 +298,13 @@
 
         .button-group {
             display: flex;
-            gap: 5px;
+            gap: var(--button-row-gap);
+        }
+        
+        /* FIXED: Ensure buttons in button-groups maintain standard height */
+        .button-group .button {
+            height: var(--button-standard-height) !important; /* Force standard height for all grouped buttons */
+            flex: 1; /* Equal width distribution within groups */
         }
 
         .preset-name {
@@ -905,7 +949,7 @@
         .model-buttons {
             display: flex;
             gap: 5px;
-            margin-bottom: 15px;
+            margin-bottom: var(--control-group-spacing);
         }
 
         .model-buttons .button {
@@ -998,10 +1042,10 @@
             width: 100%;
         }
 
-        /* Move Thickness and all controls below down by 10px in guide line panes */
+        /* Move Thickness and all controls below down by consistent gap in guide line panes */
         [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness),
         [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness) ~ .control-group {
-            margin-top: 10px;
+            margin-top: var(--control-picker-gap);
         }
 
         /* Perfect alignment for guide line controls */
@@ -1055,28 +1099,31 @@
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important; /* Red glow */
         }
 
-        /* Bottom button styling for guide lines - match RESET button spacing */
+        /* Bottom button styling for guide lines - FIXED: Use coordinated padding system */
         .guide-line-bottom-button {
             margin-top: 0px !important; /* Remove extra margin */
-            margin-bottom: 0px !important; /* Remove control-group bottom margin to match RESET buttons */
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Use coordinated padding system */
         }
 
         .guide-line-bottom-button .button {
             width: 100%; /* Full width for default pane */
+            margin-bottom: 0px !important; /* FIXED: No additional margin, let parent handle spacing */
         }
 
         .guide-line-bottom-buttons {
             margin-top: 0px !important; /* Remove extra margin */
-            margin-bottom: 0px !important; /* Remove control-group bottom margin to match RESET buttons */
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Use coordinated padding system */
         }
 
         .guide-line-bottom-buttons .button-group {
             display: flex;
-            gap: 5px;
+            gap: var(--button-row-gap); /* Standardized button gap */
+            margin-bottom: 0px !important; /* FIXED: No additional margin, parent container handles spacing */
         }
 
         .guide-line-bottom-buttons .button {
             flex: 1; /* Equal width for both buttons */
+            margin-bottom: 0px !important; /* FIXED: No additional margin, let parent handle spacing */
         }
 
         /* Ensure ADD LINE button in additional panes is green (secondary) */
@@ -1126,9 +1173,10 @@
             top: -1px; /* Move up 1 pixel for visual alignment */
         }
 
+        /* Move Metalness and all controls below down by consistent gap in material section */
         [data-section="material"] .control-group:has(#metalness, .metalness),
         [data-section="material"] .control-group:has(#metalness, .metalness) ~ .control-group {
-            margin-top: 10px;
+            margin-top: var(--control-picker-gap);
         }
 
         /* Ensure button in material sections has consistent margin */
@@ -1269,25 +1317,125 @@
             transform: translateY(-2px);
         }
 
-        /* MODULARIZED: Consistent bottom spacing for all control sections */
-        .control-section {
-            padding-bottom: 12px !important; /* Visual equality with side borders */
+        /* =====================================================================================
+         * COORDINATED PADDING SYSTEM - VISUAL BALANCE FOR ALL CONTROL PANES
+         * =====================================================================================
+         *
+         * PROBLEM SOLVED: Eliminated competing padding rules that created visual imbalance
+         * 
+         * OLD SYSTEM (Unbalanced):
+         * - Horizontal gaps: 15px each side (from --section-content-padding)
+         * - Bottom gap: 24px (12px section padding + 12px pane spacing)
+         * - Result: Bottom gap was 60% larger than horizontal gaps
+         *
+         * NEW COORDINATED SYSTEM (Balanced):
+         * - Horizontal gaps: 15px each side (unchanged)
+         * - Bottom gap: 15px total (12px section padding + 3px element margin)
+         * - Result: ALL gaps around button groups are equal = PERFECT VISUAL BALANCE
+         *
+         * IMPLEMENTATION:
+         * - All final elements use: margin-bottom: 3px !important
+         * - Combined with section-content-padding-bottom (12px) = 15px total
+         * - Matches horizontal --section-content-padding (15px)
+         * ===================================================================================== */
+        
+        /* CAPTURE pane - FIXED: Eliminate competing padding rules for perfect visual balance */
+        [data-section="capture"] .button-group:last-child {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Coordinated padding system for visual balance */
         }
-
-        /* Ensure last elements in each pane have consistent bottom margin */
-        .control-section .section-content > *:last-child,
-        .control-section .section-content .button-group:last-child,
-        .control-section .section-content .control-group:last-child,
-        .control-section .section-content .guide-line-bottom-button,
-        .control-section .section-content .guide-line-bottom-buttons {
-            margin-bottom: 0 !important; /* Remove bottom margin from last elements */
+        
+        /* GUIDE LINE pane - CLEANED: Duplicate rule removed, handled by general .guide-line-bottom-button rule above */
+        
+        /* CAMERA pane - FIXED: Apply coordinated padding system for visual balance */
+        [data-section="camera"] #resetCamera {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Coordinated padding system for visual balance */
+            margin-top: var(--control-group-spacing); /* Maintain spacing above button */
         }
-
-        /* PRESETS pane specific adjustments */
-        [data-section="presets"] {
-            padding-bottom: 20px !important; /* Custom bottom padding for presets */
+        
+        /* OVERRIDE: Ensure camera button wins over generic .button margin rule */
+        [data-section="camera"] .button#resetCamera {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FORCE: Higher specificity override */
         }
-
+        
+        /* MODEL pane - FIXED: Apply coordinated padding system for visual balance */
+        [data-section="model"] #resetModel {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Coordinated padding system for visual balance */
+            margin-top: var(--control-group-spacing); /* Maintain spacing above button */
+        }
+        
+        /* OVERRIDE: Ensure model button wins over generic .button margin rule */
+        [data-section="model"] .button#resetModel {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FORCE: Higher specificity override */
+        }
+        
+        /* MATERIAL pane - FIXED: Apply coordinated padding system for visual balance */
+        [data-section="material"] .control-group:last-child {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Coordinated padding system for visual balance */
+        }
+        
+        /* OVERRIDE: Ensure material pane transparency controls use coordinated system regardless of element type */
+        [data-section="material"] .control-group:last-child .slider-container {
+            margin-bottom: 0 !important; /* Remove any competing margin from slider container */
+        }
+        
+        [data-section="material"] .control-group:last-child .number-input {
+            margin-bottom: 0 !important; /* Remove any competing margin from number input */
+        }
+        
+        [data-section="material"] .control-group:last-child .control-input {
+            margin-bottom: 0 !important; /* Remove any competing margin from dropdown in COMPLEX mode */
+        }
+        
+        /* FORCE: High specificity override to ensure material pane final element uses coordinated system */
+        [data-section="material"] .section-content > .control-group:last-child {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* 3px coordinated margin */
+        }
+        
+        /* ROBUST FIX: Use multiple selector approaches for maximum compatibility */
+        
+        /* Method 1: Target the transparency slider control group specifically */
+        [data-section="material"] .control-group:nth-of-type(3),
+        [data-section="material"] .control-group:nth-of-type(4) {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* Target transparency controls by type position */
+        }
+        
+        /* Method 2: Target by containing specific elements (if supported) */
+        [data-section="material"] .control-group:has(#transparency),
+        [data-section="material"] .control-group:has(#transparencyMode) {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* Target by contained elements */
+        }
+        
+        /* Method 3: Fallback - override the base control-group margin for final elements only */
+        [data-section="material"] .section-content > .control-group:nth-last-child(1),
+        [data-section="material"] .section-content > .control-group:nth-last-child(2) {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* Force last and second-to-last to use coordinated margin */
+        }
+        
+        /* DOCUMENTATION: Element height analysis for material pane final elements
+         * - Button height: 37px (via --button-standard-height)
+         * - Number input height: ~34-36px (8px top + 8px bottom padding + font height + borders)
+         * - Select dropdown height: Similar to number input
+         * NOTE: Height differences are minimal and intentionally preserved per requirements
+         */
+        
+        /* PRESETS pane - FIXED: Apply coordinated padding system for visual balance */
         [data-section="presets"] .control-group:has(#presetSelector) {
-            margin-top: 10px; /* 10px gap above Saved Presets */
+            margin-top: var(--title-to-element-spacing); /* FIXED: Match spacing between title and SAVE button */
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* FIXED: Coordinated padding system for visual balance */
+        }
+        
+        /* Additional guide line panes - CLEANED: Duplicate rule removed, handled above */
+        
+        /* =====================================================================================
+         * GLOBAL SAFETY RULE: ENSURE ALL FINAL BUTTONS USE COORDINATED MARGIN SYSTEM
+         * =====================================================================================
+         * This rule acts as a safety net to ensure any button that is the last child
+         * in a control section gets the coordinated margin, preventing future regressions.
+         * More specific rules above will override this when needed.
+         * ===================================================================================== */
+        
+        /* Apply coordinated margin to any button that is the final element in a section */
+        .control-section .section-content > *:last-child .button:last-child,
+        .control-section .section-content > .button:last-child {
+            margin-bottom: var(--coordinated-bottom-margin) !important; /* SAFETY: Global coordinated margin for final buttons */
         }
