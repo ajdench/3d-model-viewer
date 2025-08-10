@@ -35,7 +35,18 @@ let state = {
         transparency: 0.5,
         angle: 0,
         posY: 0
-    }]
+    }],
+    // 3D Orientation Widget
+    orientationWidget: {
+        enabled: true,
+        size: { width: 120, height: 120 },
+        position: { x: 10, y: 50 },
+        camera: null,
+        scene: null,
+        axesHelper: null,
+        compass: null,
+        lastModelRotation: { x: 0, y: 0, z: 0 }
+    }
 };
 
 let mouseControls = {
@@ -1531,13 +1542,165 @@ function animate() {
     // Update WBOIT shader uniforms that need per-frame updates
     updateWBOITUniforms();
     
+    // Update orientation widget with current model rotation
+    updateOrientationWidget();
+    
+    // Disable auto-clear for multiple viewports
+    state.renderer.autoClear = false;
+    
+    // Clear and render main scene
+    state.renderer.clear();
     state.renderer.render(state.scene, state.camera);
+    
+    // Render orientation widget overlay
+    renderOrientationWidget();
+    
     updateCameraInfo();
 }
 
 function updateWBOITUniforms() {
     // No longer needed since we're using enhanced standard materials
     // instead of custom shaders for WBOIT
+}
+
+// ==================== 3D ORIENTATION WIDGET ====================
+
+function initOrientationWidget() {
+    console.log('initOrientationWidget called, enabled:', state.orientationWidget.enabled);
+    
+    if (!state.orientationWidget.enabled) return;
+    
+    try {
+        const widget = state.orientationWidget;
+        
+        // Create separate scene for widget
+        widget.scene = new THREE.Scene();
+        // Keep widget background transparent, will add visual border via geometry
+        
+        // Create orthographic camera for consistent widget appearance
+        const aspect = widget.size.width / widget.size.height;
+        widget.camera = new THREE.OrthographicCamera(-2 * aspect, 2 * aspect, 2, -2, 0.1, 10);
+        widget.camera.position.set(2, 2, 2);
+        widget.camera.lookAt(0, 0, 0);
+        
+        console.log('Widget camera created:', widget.camera);
+        
+        // Add background plane for visual container
+        const bgGeometry = new THREE.PlaneGeometry(3.8, 3.8);
+        const bgMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xfafafa, 
+            transparent: true, 
+            opacity: 0.9,
+            side: THREE.DoubleSide
+        });
+        const bgPlane = new THREE.Mesh(bgGeometry, bgMaterial);
+        bgPlane.position.z = -2; // Behind other elements
+        widget.scene.add(bgPlane);
+
+        // Add axes helper for orientation visualization
+        widget.axesHelper = new THREE.AxesHelper(1.5);
+        widget.scene.add(widget.axesHelper);
+        console.log('Axes helper added');
+        
+        // Add subtle lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        widget.scene.add(ambientLight);
+        
+        // Add compass/orientation indicator
+        createOrientationCompass();
+        
+        console.log('Orientation widget initialized successfully, scene children:', widget.scene.children.length);
+    } catch (error) {
+        console.warn('Orientation widget disabled due to error:', error);
+        state.orientationWidget.enabled = false;
+    }
+}
+
+function createOrientationCompass() {
+    const widget = state.orientationWidget;
+    
+    // Create optimized compass geometry (low-poly ring)
+    const compassGeometry = new THREE.RingGeometry(1.2, 1.4, 16);
+    const compassMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x666666, 
+        transparent: true, 
+        opacity: 0.7 
+    });
+    
+    const compass = new THREE.Mesh(compassGeometry, compassMaterial);
+    compass.rotation.x = -Math.PI / 2; // Lay flat
+    
+    widget.scene.add(compass);
+    widget.compass = compass;
+}
+
+function updateOrientationWidget() {
+    if (!state.model || !state.orientationWidget.enabled) return;
+    
+    const widget = state.orientationWidget;
+    const modelRotation = state.model.rotation;
+    
+    // Check if model rotation has changed (with small threshold for performance)
+    const rotChanged = 
+        Math.abs(modelRotation.x - widget.lastModelRotation.x) > 0.01 ||
+        Math.abs(modelRotation.y - widget.lastModelRotation.y) > 0.01 ||
+        Math.abs(modelRotation.z - widget.lastModelRotation.z) > 0.01;
+    
+    if (rotChanged) {
+        // Sync axes helper rotation with main model
+        widget.axesHelper.rotation.copy(modelRotation);
+        
+        // Update compass rotation
+        if (widget.compass) {
+            widget.compass.rotation.x = -Math.PI / 2; // Keep compass flat
+            widget.compass.rotation.z = modelRotation.y; // Rotate with Y-axis
+        }
+        
+        // Store current rotation
+        widget.lastModelRotation = {
+            x: modelRotation.x,
+            y: modelRotation.y,
+            z: modelRotation.z
+        };
+    }
+}
+
+function renderOrientationWidget() {
+    if (!state.orientationWidget.enabled || !state.orientationWidget.scene) {
+        console.log('Widget disabled or scene not ready');
+        return;
+    }
+    
+    // Position above INTERACTION pane (top-left area)
+    const widget = state.orientationWidget;
+    const canvas = state.renderer.domElement;
+    
+    // Position above INTERACTION pane - top-left with padding from top
+    const padding = 10;
+    const widgetX = padding;
+    const canvasHeight = canvas.clientHeight;
+    const widgetY = canvasHeight - widget.size.height - 180; // Position above INTERACTION pane
+    
+    console.log('Rendering widget at:', { x: widgetX, y: widgetY, width: widget.size.width, height: widget.size.height, canvasHeight });
+    
+    // Save current viewport and scissor state
+    const currentViewport = new THREE.Vector4();
+    state.renderer.getCurrentViewport(currentViewport);
+    const scissorTest = state.renderer.getScissorTest();
+    
+    // Set widget viewport
+    state.renderer.setViewport(widgetX, widgetY, widget.size.width, widget.size.height);
+    
+    // Enable scissor test
+    state.renderer.setScissorTest(true);
+    state.renderer.setScissor(widgetX, widgetY, widget.size.width, widget.size.height);
+    
+    // Render widget scene
+    state.renderer.render(state.orientationWidget.scene, state.orientationWidget.camera);
+    
+    // Restore previous state
+    state.renderer.setScissorTest(scissorTest);
+    state.renderer.setViewport(currentViewport);
 }
 
 function updateGuideLine() {
@@ -1583,23 +1746,23 @@ function updateGuideLine() {
 
 function toggleGuideLineVisibility(lineId = null) {
     if (lineId === null) {
-        // Main guide line toggle - toggles all guide lines
-        const overlay = document.getElementById('guideLineOverlay');
+        // Main guide line toggle - only toggles the default guide line (id 0)
+        const defaultLineElement = document.querySelector('[data-id="0"]');
         const button = document.getElementById('hideUnhideGuide');
         
-        if (!overlay || !button) return;
+        if (!defaultLineElement || !button) return;
         
         // FIXED: Check both style.display and computed style for proper visibility detection
-        const isHidden = overlay.style.display === 'none' || 
-                        getComputedStyle(overlay).display === 'none';
+        const isHidden = defaultLineElement.style.display === 'none' || 
+                        getComputedStyle(defaultLineElement).display === 'none';
         
         if (isHidden) {
-            overlay.style.display = 'block';
+            defaultLineElement.style.display = 'block';
             button.textContent = 'HIDE';
             button.classList.remove('button-danger');
             button.classList.add('secondary');
         } else {
-            overlay.style.display = 'none';
+            defaultLineElement.style.display = 'none';
             button.textContent = 'UNHIDE';
             button.classList.remove('secondary');
             button.classList.add('button-danger');
@@ -1643,50 +1806,51 @@ function autoHideDefaultGuideLineOnFirstLoad() {
     // Mark that auto-hide has occurred to prevent future auto-hides
     sessionStorage.setItem('guideLineAutoHideOccurred', 'true');
     
-    // Get elements
-    const overlay = document.getElementById('guideLineOverlay');
+    // Get elements - now targeting the default guide line specifically
+    const defaultLineElement = document.querySelector('[data-id="0"]');
     const button = document.getElementById('hideUnhideGuide');
     
-    console.log('Elements found - overlay:', !!overlay, 'button:', !!button);
+    console.log('Elements found - defaultLine:', !!defaultLineElement, 'button:', !!button);
     
-    if (overlay && button) {
-        // Update button to UNHIDE state immediately
+    if (defaultLineElement && button) {
+        // Hide the default guide line and update button to UNHIDE state
+        defaultLineElement.style.display = 'none';
         button.textContent = 'UNHIDE';
         button.classList.remove('secondary');
         button.classList.add('button-danger');
         
-        console.log('Auto-hide applied, starting pulse animation');
+        console.log('Auto-hide applied to default guide line, starting pulse animation');
         // Add pulsing effect to notify user with synchronized guide line
-        pulseUnhideButtonWithSyncedGuideLine(button, overlay, 3);
+        pulseUnhideButtonWithSyncedGuideLine(button, defaultLineElement, 3);
     } else {
         console.error('Elements not found for auto-hide');
     }
 }
 
-function pulseUnhideButtonWithSyncedGuideLine(button, guideLineOverlay, pulseCount) {
+function pulseUnhideButtonWithSyncedGuideLine(button, guideLineElement, pulseCount) {
     // This function now correctly calls the global pulseUnhideButton function
-    // while synchronizing the guide line's visibility.
+    // while synchronizing the individual guide line's visibility.
     console.log('Starting button pulse with synchronized guide line');
 
-    // Hide guide line initially
-    guideLineOverlay.style.display = 'none';
-    guideLineOverlay.style.transition = 'opacity 0.2s ease';
+    // Hide guide line initially (already done in autoHide but ensuring state)
+    guideLineElement.style.display = 'none';
+    guideLineElement.style.transition = 'opacity 0.2s ease';
 
     // Call the main pulse function
     pulseUnhideButton(button, pulseCount, (animationState) => {
         // Synchronize the guide line with the pulse animation
         if (animationState === 'pulse-up') {
             // Show guide line when button scales up
-            guideLineOverlay.style.display = 'block';
-            guideLineOverlay.style.opacity = '1';
+            guideLineElement.style.display = 'block';
+            guideLineElement.style.opacity = '1';
         } else if (animationState === 'pulse-down') {
             // Hide guide line when button scales down (creates flash effect)
-            guideLineOverlay.style.opacity = '0';
+            guideLineElement.style.opacity = '0';
         } else if (animationState === 'end') {
             // Permanently hide it when the animation is over
-            guideLineOverlay.style.display = 'none';
-            guideLineOverlay.style.opacity = '1'; // Reset for future use
-            console.log('Guide line auto-hidden as pulse overlay ends');
+            guideLineElement.style.display = 'none';
+            guideLineElement.style.opacity = '1'; // Reset for future use
+            console.log('Default guide line auto-hidden as pulse overlay ends');
         }
     });
 }
@@ -1716,7 +1880,16 @@ function pulseUnhideButton(button, pulseCount, onStateChange = null) {
         transform-origin: center center;
         transition: transform 0.2s ease;
         z-index: 1;
+        box-sizing: border-box;
     `;
+    
+    // Ensure standard button classes are preserved for proper styling
+    if (button.classList.contains('secondary')) {
+        clonedButton.classList.add('secondary');
+    }
+    if (button.classList.contains('button-danger')) {
+        clonedButton.classList.add('button-danger');
+    }
     
     // Copy all computed styles to ensure identical appearance
     clonedButton.style.background = computedStyle.background;
@@ -1731,9 +1904,13 @@ function pulseUnhideButton(button, pulseCount, onStateChange = null) {
     clonedButton.style.lineHeight = computedStyle.lineHeight;
     clonedButton.style.boxShadow = computedStyle.boxShadow;
     
-    // Ensure red UNHIDE styling is applied (button-danger class styles)
+    // Ensure correct UNHIDE styling is applied based on universal system classes
     if (button.classList.contains('button-danger')) {
         clonedButton.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5a24)';
+    } else if (button.classList.contains('button-danger')) {
+        clonedButton.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5a24)';
+    } else if (button.classList.contains('secondary')) {
+        clonedButton.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';   // Green background for secondary state
     }
     
     overlay.appendChild(clonedButton);
@@ -1749,6 +1926,7 @@ function pulseUnhideButton(button, pulseCount, onStateChange = null) {
         clonedButton.style.width = `${rect.width}px`;
         clonedButton.style.height = `${rect.height}px`;
         clonedButton.style.transform = `scale(${currentScale})`;
+        clonedButton.style.transformOrigin = 'center center';
     };
     
     // Continuous position tracking
@@ -1821,13 +1999,13 @@ function updateMaterialModeButtons() {
     
     if (state.materialMode === 'default') {
         complexButton.textContent = 'COMPLEX';
-        complexButton.classList.remove('secondary');
-        complexButton.classList.add('button-danger');
+        complexButton.classList.remove('state-secondary');
+        complexButton.classList.add('state-primary');
         hideAdvancedMaterialControls();
     } else {
         complexButton.textContent = 'BASIC';
-        complexButton.classList.remove('button-danger');
-        complexButton.classList.add('secondary');
+        complexButton.classList.remove('state-primary');
+        complexButton.classList.add('state-secondary');
         showAdvancedMaterialControls();
     }
 }
@@ -2926,6 +3104,16 @@ function setupGuideLineControls() {
         state.guideLines.push(newLine);
         window.addGuideLineControl(newLine);
         updateGuideLine();
+        
+        // FIXED: Ensure new guide lines are always visible when created
+        setTimeout(() => {
+            const newLineElement = document.querySelector(`[data-id="${newId}"]`);
+            if (newLineElement) {
+                newLineElement.style.display = 'block';
+                console.log(`New guide line ${newId} set to visible`);
+            }
+        }, 50); // Small delay to ensure DOM update
+        
         window.updateGuideLineTitles();
     };
     
@@ -3141,6 +3329,9 @@ function initThreeJS() {
     
     // Create initial model
     createModel('default');
+    
+    // Initialize 3D orientation widget
+    initOrientationWidget();
     
     // Handle window resize
     handleResize();

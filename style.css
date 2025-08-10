@@ -102,15 +102,92 @@
             margin-bottom: var(--control-group-spacing);
         }
 
+        /* =====================================================================================
+         * UNIVERSAL CONTROL ROW SYSTEM - PHASE 1 MODULARIZATION
+         * Eliminates 35+ duplicated CSS rules across 5 button architectures
+         * ===================================================================================== */
+        
         .control-group-row {
             display: flex;
-            gap: 8px; /* Standardize gap for precise alignment */
+            gap: 8px;
             align-items: flex-end;
         }
 
         .control-group-row .control-group {
             flex: 1;
             margin-bottom: 0;
+        }
+
+        /* UNIVERSAL PATTERN 1: Color Picker + Button Layout */
+        .control-row-color-button {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .control-row-color-button .color-container {
+            flex: 1; /* Color picker takes remaining space */
+        }
+
+        .control-row-color-button .color-container label {
+            font-size: 12px !important;
+            color: #555 !important;
+            font-weight: 500 !important;
+            margin-bottom: 8px !important; /* FIXED: Increased to match visual spacing of preset labels */
+            display: block !important;
+        }
+
+        .control-row-color-button .button-container {
+            flex: 0 0 80px; /* Button gets fixed 80px width */
+        }
+
+        /* UNIVERSAL PATTERN 2: Standard Button Sizing - FIXED for consistent appearance */
+        .universal-toggle-button {
+            height: 37px !important;
+            margin-bottom: 3px !important;
+            margin-top: 19px !important;
+            width: 100% !important;
+            position: relative !important;
+            top: -1px !important;
+            box-sizing: border-box !important;
+            /* CRITICAL FIX: Ensure identical sizing across all state transitions */
+            min-width: 80px !important;
+            max-width: 80px !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* UNIVERSAL PATTERN 3: Button State Classes - FIXED for identical sizing */
+        .universal-toggle-button.state-primary {
+            background: linear-gradient(45deg, #2196F3, #1976D2) !important;
+            color: white !important;
+            /* CRITICAL: Force identical dimensions regardless of content */
+            width: 80px !important;
+            height: 37px !important;
+            line-height: 1 !important;
+            font-size: 12px !important;
+        }
+
+        .universal-toggle-button.state-secondary {
+            background: linear-gradient(45deg, #9e9e9e, #757575) !important;
+            color: white !important;
+            /* CRITICAL: Force identical dimensions regardless of content */
+            width: 80px !important;
+            height: 37px !important;
+            line-height: 1 !important;
+            font-size: 12px !important;
+        }
+
+        .universal-toggle-button.state-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24) !important;
+            color: white !important;
+            /* CRITICAL: Force identical dimensions regardless of content */
+            width: 80px !important;
+            height: 37px !important;
+            line-height: 1 !important;
+            font-size: 12px !important;
         }
 
         .delete-line {
@@ -203,6 +280,11 @@
             font-weight: 500;
         }
 
+        /* GUIDE LINE sections: Add spacing above first label after color picker */
+        [data-section*="guideline"] .control-row-color-button + .control-group label {
+            margin-top: 8px !important; /* FIXED: Match spacing consistency */
+        }
+
         .control-input, .slider-input {
             width: 100%;
             padding: 8px 12px;
@@ -236,7 +318,7 @@
 
         .color-input {
             width: 100%;
-            height: 40px;
+            height: 37px; /* FIXED: Match button height for consistent alignment */
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -1035,58 +1117,32 @@
             user-select: none;
         }
 
-        /* Guide line control alignment - colour picker layout */
-        [data-section*="guideline"] .control-group-row .control-group:has(.color-input) {
-            flex: 1; /* Take remaining space for color input container */
-        }
+        /* GUIDE LINE SECTIONS: Now use Universal Control Row System */
+        /* Old .control-group-row rules removed - now using .control-row-color-button */
 
-        [data-section*="guideline"] .control-group-row .control-group:has(#hideUnhideGuide) {
-            flex: 0 0 80px; /* Fixed width for HIDE/UNHIDE button container */
-        }
-
-        /* Additional guide line panes - colour picker takes full width */
-        [data-section="guideline-added"] .control-group-row .control-group:has(.color-input) {
-            flex: 1;
-            width: 100%;
-        }
-
-        /* Move Thickness and all controls below down by consistent gap in guide line panes */
-        [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness),
-        [data-section*="guideline"] .control-group:has(#lineThickness, .line-thickness) ~ .control-group {
-            margin-top: var(--control-picker-gap);
-        }
-
-        /* Perfect alignment for guide line controls */
-        [data-section*="guideline"] .control-group-row {
-            align-items: flex-start; /* Align from top to ensure labels are level */
-        }
-
-        /* Ensure both labels have consistent spacing */
-        [data-section*="guideline"] .control-group-row .control-group label {
-            margin-bottom: 5px !important;
-            line-height: 1.2; /* Consistent line height for labels */
-        }
-
-        /* Make color input match slider containers width */
+        /* Guide line color input styling - FIXED to match MATERIALS appearance */
         [data-section*="guideline"] .color-input {
             width: 100%;
-            height: 37px; /* Match button height: 20px padding (10px*2) + 12px font + 5px for border/spacing */
-            border: 1px solid #ddd;
+            height: 37px; /* Match MATERIALS height */
+            border: 1px solid #ddd; /* Match MATERIALS border */
+            border-radius: 6px;
+            cursor: pointer;
             padding: 0;
             box-sizing: border-box;
-            margin-bottom: 5px; /* Match button's margin-bottom */
+            margin-bottom: 5px;
             position: relative;
-            top: -1px; /* Move up 1 pixel for visual alignment */
+            top: -1px; /* Match MATERIALS positioning */
         }
 
-        /* HIDE/UNHIDE button sizing and precise alignment */
+        /* HIDE/UNHIDE button - FIXED: Apply same positioning as MATERIALS button */
         [data-section*="guideline"] #hideUnhideGuide {
-            height: 37px !important; /* Match color input and other controls */
-            margin-bottom: 3px !important; /* Reduced by 2px for proper bottom alignment */
-            margin-top: 19px !important; /* Add top margin to compensate for removed label */
+            height: 37px !important; /* Match button standard height */
+            margin-bottom: 5px !important; /* Match color input margin */
+            margin-top: 22px !important; /* FIXED: Align button top with color input top (12px font + 1.2 line-height + 8px margin = ~22px) */
             width: 100% !important;
             position: relative !important;
-            top: -1px !important; /* Move up 1px for proper top alignment */
+            top: -1px !important; /* Match color input positioning */
+            box-sizing: border-box !important;
         }
 
         /* HIDE state - blue button with blue glow */
@@ -1153,55 +1209,46 @@
         }
 
 
-        /* Material control alignment */
-        [data-section="material"] .control-group-row .control-group:has(.color-input) {
-            flex: 0 0 80px; /* Fixed width for color input container */
-        }
+        /* Material control alignment - REMOVED: Conflicting rules that break button sizing */
+        /* These were backwards - color input should flex: 1, button should be fixed width */
 
-        [data-section="material"] .control-group-row .control-group:has(.button) {
-            flex: 1; /* Take remaining space for button container */
-        }
-
-        [data-section="material"] .control-group-row {
-            align-items: flex-start; /* Align from top to ensure labels are level */
-        }
-
-        [data-section="material"] .control-group-row .control-group label {
-            margin-bottom: 5px !important;
-            line-height: 1.2; /* Consistent line height for labels */
-        }
-
+        /* MATERIAL SECTION: Simplified - Universal System handles layout */
         [data-section="material"] .color-input {
-            height: 37px; /* Match button height: 20px padding (10px*2) + 12px font + 5px for border/spacing */
+            height: 37px;
             border: 1px solid #ddd;
             padding: 0;
             box-sizing: border-box;
-            margin-bottom: 5px; /* Match button's margin-bottom */
+            margin-bottom: 5px;
             position: relative;
-            top: -1px; /* Move up 1 pixel for visual alignment */
+            top: -1px;
         }
 
-        /* Move Metalness and all controls below down by consistent gap in material section */
+        /* Move Metalness controls down by consistent gap */
         [data-section="material"] .control-group:has(#metalness, .metalness),
         [data-section="material"] .control-group:has(#metalness, .metalness) ~ .control-group {
             margin-top: var(--control-picker-gap);
         }
 
-        /* Ensure button in material sections has consistent margin */
-        [data-section="material"] .control-group-row .button {
-            margin-bottom: 5px; /* Explicit margin to match color input */
-        }
 
-
-        /* Additional guide line panes HIDE/UNHIDE button styling */
+        /* Additional guide line panes HIDE/UNHIDE button - FIXED: Apply same positioning as default guide line */
         [data-section="guideline-added"] .hide-unhide-guide {
-            height: 37px !important;
-            margin-bottom: 3px !important;
-            margin-top: 19px !important;
+            height: 37px !important; /* Match button standard height */
+            margin-bottom: 5px !important; /* Match color input margin */
+            margin-top: 22px !important; /* FIXED: Align button top with color input top (12px font + 1.2 line-height + 8px margin = ~22px) */
             width: 100% !important;
             position: relative !important;
-            top: -1px !important;
+            top: -1px !important; /* Match color input positioning */
+            box-sizing: border-box !important;
         }
+
+        /* MATERIALS COMPLEX/BASIC button - FIXED: Apply same positioning as guide line buttons */
+        [data-section="material"] #complexMaterialButton {
+            margin-top: 22px !important; /* FIXED: Align button top with color input top (12px font + 1.2 line-height + 8px margin = ~22px) */
+            margin-bottom: 5px !important; /* Match color input margin */
+        }
+
+        /* 3D Orientation Widget - rendered directly on canvas */
+        /* Widget positioning handled via Three.js viewport, no CSS needed */
 
         /* Additional panes HIDE state - blue button with blue glow */
         [data-section="guideline-added"] .hide-unhide-guide.secondary {
@@ -1221,32 +1268,14 @@
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important;
         }
 
-        /* Additional guide line panes layout - same as default pane */
-        [data-section="guideline-added"] .control-group-row .control-group:has(.color-input) {
-            flex: 1; /* Colour picker takes remaining space like default pane */
-        }
+        /* ADDITIONAL GUIDE LINE PANES: Now use Universal Control Row System */
+        /* Old .control-group-row rules removed - now using .control-row-color-button */
 
-        [data-section="guideline-added"] .control-group-row .control-group:has(.hide-unhide-guide) {
-            flex: 0 0 80px; /* HIDE/UNHIDE button fixed width like default pane */
-        }
+        /* Guide line styling - standard layout since buttons are no longer universal */
 
-        /* UNIFIED GUIDE LINE STYLING - OVERRIDE ALL PREVIOUS */
-        [data-section*="guideline"] .control-group-row .control-group:has(.color-input, .line-colour) {
-            flex: 1 !important; /* Colour picker takes remaining space */
-        }
-
-        [data-section*="guideline"] .control-group-row .control-group:has(#hideUnhideGuide, .hide-unhide-guide) {
-            flex: 0 0 80px !important; /* HIDE/UNHIDE button fixed width */
-        }
-
-        /* Apply same HIDE/UNHIDE styling to default pane */
+        /* Default pane HIDE/UNHIDE button - restored to standard styling */
         [data-section="guideline"] #hideUnhideGuide {
-            height: 37px !important;
-            margin-bottom: 3px !important;
-            margin-top: 19px !important;
-            width: 100% !important;
-            position: relative !important;
-            top: -1px !important;
+            /* Standard button styling ensures proper getBoundingClientRect() positioning */
         }
 
         [data-section="guideline"] #hideUnhideGuide.secondary {
@@ -1265,47 +1294,8 @@
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important;
         }
 
-        /* Apply same layout styling to material pane - match guide line layout */
-        [data-section="material"] .control-group-row .control-group:has(.color-input) {
-            flex: 1 !important; /* Colour picker takes remaining space */
-        }
-
-        [data-section="material"] .control-group-row .control-group:has(#complexMaterialButton) {
-            flex: 0 0 80px !important; /* DEFAULT/COMPLEX button fixed width */
-        }
-
-        /* Apply same COMPLEX/DEFAULT styling to material pane button */
-        [data-section="material"] #complexMaterialButton {
-            height: var(--button-standard-height) !important; /* FIXED: Use standard button height */
-            margin-bottom: var(--control-element-bottom-margin) !important;
-            margin-top: 19px !important;
-            width: 100% !important;
-            position: relative !important;
-            top: -1px !important;
-            /* FIXED: Ensure consistent sizing between BASIC and COMPLEX modes */
-            padding: var(--button-standard-padding) !important;
-            font-size: var(--button-standard-font-size) !important;
-            box-sizing: border-box !important;
-        }
-
-        [data-section="material"] #complexMaterialButton.secondary {
-            background: linear-gradient(45deg, #9e9e9e, #757575) !important; /* Lighter grey for BASIC */
-            color: white !important;
-        }
-
-        [data-section="material"] #complexMaterialButton.secondary:hover {
-            box-shadow: none !important; /* No glow as per sunset */
-            transform: translateY(-2px);
-        }
-
-        [data-section="material"] #complexMaterialButton.button-danger {
-            background: linear-gradient(45deg, #2196F3, #1976D2) !important; /* Blue for COMPLEX */
-        }
-
-        [data-section="material"] #complexMaterialButton.button-danger:hover {
-            box-shadow: none !important; /* No glow as per sunset */
-            transform: translateY(-2px);
-        }
+        /* MATERIAL SECTION: Now using Universal Control Row System */
+        /* All button sizing and layout handled by .control-row-color-button and .universal-toggle-button classes */
 
         /* Add bottom border to all control sections */
         .control-section {

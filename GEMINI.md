@@ -125,6 +125,8 @@ This project is a self-contained 3D model viewer that has been refactored to run
 ### Development Commands
 - **Run Development Server**: `npm run dev`
 - **Create Production Build**: `npm run build`
+- **Preview Production Build**: `npm run preview`
+- **Deploy to GitHub Pages**: `npm run deploy`
 - **Run Development Server and Open Browser**: `./start-dev.sh`
 
 ### Branching Strategy
