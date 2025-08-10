@@ -16,7 +16,35 @@
                 <div>Loading 3D Viewer...</div>
             </div>
             <div class="info-panel">
-                <div id="info" class="info-display">
+                <!-- Horizontal VIEW layout with 3D widget and data columns -->
+                <div id="horizontal-view-container" class="horizontal-view-container">
+                    <!-- VIEW section with 3D Orientation Widget on the left -->
+                    <div class="orientation-widget-section">
+                        <h4>VIEW</h4>
+                        <canvas id="orientationWidget" class="orientation-widget-canvas"></canvas>
+                        <!-- SUNSET: Model name removed for now -->
+                        <!-- <div class="model-info">Model: Default Torus Knot</div> -->
+                    </div>
+                    
+                    <!-- Data columns in the middle -->
+                    <div class="data-columns-container">
+                        <div class="data-column">
+                            <div class="data-label">Model Rotation:</div>
+                            <div class="data-values" id="model-rotation-display">0° 0° 0°</div>
+                        </div>
+                        <div class="data-column">
+                            <div class="data-label">Camera Position:</div>
+                            <div class="data-values" id="camera-position-display">0 0 5</div>
+                        </div>
+                        <div class="data-column">
+                            <div class="data-label">Camera Rotation:</div>
+                            <div class="data-values" id="camera-rotation-display">0° 0° 0°</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Original VIEW panel (hidden but preserved for compatibility) -->
+                <div id="info" class="info-display" style="display: none;">
                     <h4>VIEW</h4>
                     <p><b>Camera Position:</b> (0, 0, 5)</p>
                     <!-- SUNSET: Camera Rotation display removed -->
@@ -108,7 +136,7 @@
                             <div class="drop-subtext">or click to browse</div>
                         </div>
                         <div class="supported-formats">
-                            Supports: .obj, .stl, .gltf, .glb
+                            Supports: .obj, .stl, .gltf, .glb, .dae
                         </div>
                     </div>
                     <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae" style="display: none;" />

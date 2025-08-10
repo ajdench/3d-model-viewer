@@ -519,6 +519,73 @@
             gap: 10px;
             pointer-events: none; /* Allow interactions to pass through */
         }
+
+        /* Horizontal VIEW layout styling */
+        .horizontal-view-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            pointer-events: auto;
+            margin-top: 10px; /* Align VIEW with LIGHTING vertical position */
+        }
+
+        /* 3D Orientation Widget Section */
+        .orientation-widget-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Left-align VIEW title with INTERACTION */
+        }
+        
+        .orientation-widget-section h4 {
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px; /* Align VIEW title with LIGHTING title baseline */
+            margin-left: 15px; /* Match INTERACTION's left padding (15px) */
+        }
+
+        .orientation-widget-canvas {
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            background: transparent;
+        }
+
+        /* Data columns styling - white text on transparent background */
+        .data-columns-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            margin-top: 4px; /* Match VIEW title position to align with LIGHTING baseline */
+        }
+
+        .data-column {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 120px;
+        }
+
+        .data-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #555; /* Match LIGHTING and VIEW title color */
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .data-values {
+            font-size: 12px;
+            color: #555; /* Match LIGHTING and VIEW title color */
+            font-weight: normal;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
         
         .info-panel > * {
             pointer-events: auto; /* Re-enable interactions for child elements */
@@ -904,7 +971,7 @@
             right: 68px; /* Right edge 10px from left edge of BASIC button */
             top: calc(50% - 1px); /* Same vertical position */
             transform: translateY(-50%); /* Adjust to true center */
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24); /* Red background */
+            /* Background controlled by JavaScript state management */
         }
 
         #complexModeButton:hover {

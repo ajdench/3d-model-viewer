@@ -1164,12 +1164,12 @@ function validateFile(file) {
         throw new Error('No file provided');
     }
     
-    const validExtensions = ['.obj', '.stl', '.gltf', '.glb'];
+    const validExtensions = ['.obj', '.stl', '.gltf', '.glb', '.dae'];
     const fileName = file.name.toLowerCase();
     const isValid = validExtensions.some(ext => fileName.endsWith(ext));
     
     if (!isValid) {
-        throw new Error(`Unsupported file format: "${file.name}". Currently supported: .obj, .stl`);
+        throw new Error(`Unsupported file format: "${file.name}". Currently supported: .obj, .stl, .gltf, .glb, .dae`);
     }
     
     // File size checks
@@ -1244,9 +1244,12 @@ function handleFileUpload(file) {
             case 'glb':
                 loadGLTFModel(url, file.name, cleanupAndSuccess, cleanupAndError);
                 break;
+            case 'dae':
+                loadDAEModel(url, file.name, cleanupAndSuccess, cleanupAndError);
+                break;
             default:
                 clearTimeout(uploadTimeout);
-                showUploadStatus('Currently only .obj, .stl, .gltf, and .glb files are supported', 'error');
+                showUploadStatus('Currently only .obj, .stl, .gltf, .glb, and .dae files are supported', 'error');
                 URL.revokeObjectURL(url);
         }
     } catch (error) {
@@ -1419,6 +1422,7 @@ function updateCameraInfo() {
             // <p><b>Camera Rotation:</b> (${formatNumber(rotXDeg)}°, ${formatNumber(rotYDeg)}°, ${formatNumber(rotZDeg)}°)</p>
         }
         */
+        // Update original VIEW panel (hidden but preserved for compatibility)
         const infoEl = document.getElementById('info');
         if (infoEl) {
             infoEl.innerHTML = `
@@ -1428,7 +1432,36 @@ function updateCameraInfo() {
                 <p><span class="info-label">Model:</span><span class="info-values-container"><span class="model-name-box">${state.currentModelType}</span></span></p>
             `;
         }
+        
+        // Update new horizontal data display
+        updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, modelRotZDeg, rot, rotXDeg, rotYDeg, rotZDeg);
     }
+}
+
+function updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, modelRotZDeg, camRot, camRotXDeg, camRotYDeg, camRotZDeg) {
+    // Update Model Rotation display
+    const modelRotationDisplay = document.getElementById('model-rotation-display');
+    if (modelRotationDisplay) {
+        modelRotationDisplay.textContent = `${Math.round(modelRotXDeg)}° ${Math.round(modelRotYDeg)}° ${Math.round(modelRotZDeg)}°`;
+    }
+    
+    // Update Camera Position display
+    const cameraPositionDisplay = document.getElementById('camera-position-display');
+    if (cameraPositionDisplay) {
+        cameraPositionDisplay.textContent = `${Math.round(pos.x)} ${Math.round(pos.y)} ${Math.round(pos.z)}`;
+    }
+    
+    // Update Camera Rotation display (restored from SUNSET)
+    const cameraRotationDisplay = document.getElementById('camera-rotation-display');
+    if (cameraRotationDisplay) {
+        cameraRotationDisplay.textContent = `${Math.round(camRotXDeg)}° ${Math.round(camRotYDeg)}° ${Math.round(camRotZDeg)}°`;
+    }
+    
+    // SUNSET: Model Name display removed
+    // const modelNameDisplay = document.getElementById('model-name-display');
+    // if (modelNameDisplay) {
+    //     modelNameDisplay.textContent = state.currentModelType;
+    // }
 }
 
 function centerAndScaleModel(object) {
@@ -1572,30 +1605,34 @@ function initOrientationWidget() {
     
     try {
         const widget = state.orientationWidget;
+        const canvas = document.getElementById('orientationWidget');
+        
+        if (!canvas) {
+            console.warn('Orientation widget canvas not found, disabling widget');
+            state.orientationWidget.enabled = false;
+            return;
+        }
+        
+        // Create dedicated renderer for widget
+        widget.renderer = new THREE.WebGLRenderer({ 
+            canvas: canvas,
+            antialias: true,
+            alpha: true,
+            preserveDrawingBuffer: false
+        });
+        widget.renderer.setSize(80, 80);
+        widget.renderer.setClearColor(0x000000, 0);
         
         // Create separate scene for widget
         widget.scene = new THREE.Scene();
-        // Keep widget background transparent, will add visual border via geometry
         
         // Create orthographic camera for consistent widget appearance
-        const aspect = widget.size.width / widget.size.height;
+        const aspect = 1; // Square canvas
         widget.camera = new THREE.OrthographicCamera(-2 * aspect, 2 * aspect, 2, -2, 0.1, 10);
         widget.camera.position.set(2, 2, 2);
         widget.camera.lookAt(0, 0, 0);
         
         console.log('Widget camera created:', widget.camera);
-        
-        // Add background plane for visual container
-        const bgGeometry = new THREE.PlaneGeometry(3.8, 3.8);
-        const bgMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xfafafa, 
-            transparent: true, 
-            opacity: 0.9,
-            side: THREE.DoubleSide
-        });
-        const bgPlane = new THREE.Mesh(bgGeometry, bgMaterial);
-        bgPlane.position.z = -2; // Behind other elements
-        widget.scene.add(bgPlane);
 
         // Add axes helper for orientation visualization
         widget.axesHelper = new THREE.AxesHelper(1.5);
@@ -1666,41 +1703,14 @@ function updateOrientationWidget() {
 }
 
 function renderOrientationWidget() {
-    if (!state.orientationWidget.enabled || !state.orientationWidget.scene) {
-        console.log('Widget disabled or scene not ready');
+    if (!state.orientationWidget.enabled || !state.orientationWidget.scene || !state.orientationWidget.renderer) {
         return;
     }
     
-    // Position above INTERACTION pane (top-left area)
     const widget = state.orientationWidget;
-    const canvas = state.renderer.domElement;
     
-    // Position above INTERACTION pane - top-left with padding from top
-    const padding = 10;
-    const widgetX = padding;
-    const canvasHeight = canvas.clientHeight;
-    const widgetY = canvasHeight - widget.size.height - 180; // Position above INTERACTION pane
-    
-    console.log('Rendering widget at:', { x: widgetX, y: widgetY, width: widget.size.width, height: widget.size.height, canvasHeight });
-    
-    // Save current viewport and scissor state
-    const currentViewport = new THREE.Vector4();
-    state.renderer.getCurrentViewport(currentViewport);
-    const scissorTest = state.renderer.getScissorTest();
-    
-    // Set widget viewport
-    state.renderer.setViewport(widgetX, widgetY, widget.size.width, widget.size.height);
-    
-    // Enable scissor test
-    state.renderer.setScissorTest(true);
-    state.renderer.setScissor(widgetX, widgetY, widget.size.width, widget.size.height);
-    
-    // Render widget scene
-    state.renderer.render(state.orientationWidget.scene, state.orientationWidget.camera);
-    
-    // Restore previous state
-    state.renderer.setScissorTest(scissorTest);
-    state.renderer.setViewport(currentViewport);
+    // Render widget scene using dedicated renderer
+    widget.renderer.render(widget.scene, widget.camera);
 }
 
 function updateGuideLine() {
@@ -2268,7 +2278,7 @@ function loadDAEModel(url, filename, onSuccess, onError) {
                 state.scene.remove(state.model);
             }
 
-            // Apply default material to all meshes in the DAE scene
+            // Apply default material to meshes and remove line objects for consistency
             collada.scene.traverse((child) => {
                 if (child.isMesh) {
                     child.material = new THREE.MeshStandardMaterial({
@@ -2279,6 +2289,11 @@ function loadDAEModel(url, filename, onSuccess, onError) {
                         opacity: 1.0,
                         side: THREE.FrontSide
                     });
+                } else if (child.isLine || child.isLineSegments) {
+                    // Remove line objects to match other formats (OBJ/STL/GLTF appearance)
+                    if (child.parent) {
+                        child.parent.remove(child);
+                    }
                 }
             });
 

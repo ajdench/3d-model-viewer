@@ -9,19 +9,10 @@ A professional, interactive 3D model viewer built with Three.js (r179) and Vite.
 
 ## Key Features
 
-*   **Model Loading**: Supports `.obj`, `.stl`, `.gltf`, `.glb`, and now `.dae` file formats. Models can be loaded via a file input or drag-and-drop.
-*   **Model Selection**: A dropdown menu allows users to switch between several built-in models (Torus Knot, Cube, Sphere, Pyramid).
-*   **Camera Controls**: Sliders and number inputs for adjusting the camera's position (X, Y, Z) and rotation (X, Y, Z).
-*   **Model Controls**: Sliders and number inputs for adjusting the model's rotation (X, Y, Z) and advanced aircraft-style controls for Yaw, Pitch, and Roll.
-*   **Material Properties**: Controls for adjusting the model's material, including color, metalness, roughness, and transparency.
-*   **Lighting**: 
-  - Sliders to control the intensity of ambient and directional lights.
-  - An interactive 2D control pad to visually adjust the X/Y position of the directional lights.
-*   **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. It remains fixed in the viewer, independent of 3D scene movements, and is excluded from image captures.
-*   **Presets**: Users can save and load their own presets for camera, model, material, and lighting settings.
-*   **Reset Functionality**: Buttons to reset the camera and model to their default states.
-*   **Responsive Viewer**: The 3D viewer resizes to fit its container.
-*   **Image Capture**: Save a 2D PNG image of the current model view to a file with a transparent background. (Clipboard functionality is currently disabled due to technical issues.)
+*   **Model Loading**: Supports `.obj`, `.stl`, `.gltf`, `.glb`, and `.dae` file formats. Models can be loaded via a file input or drag-and-drop.
+*   **Interactive Controls**: Adjust camera, model, materials, and lighting in real-time.
+*   **Advanced Features**: Includes multiple guide lines, preset management, image capture, and experimental external surface extraction.
+*   **Enhanced VIEW Panel**: Redesigned with a horizontal layout, including a 3D orientation widget and dedicated data columns for model rotation, camera position, and camera rotation.
 
 ## Architecture
 
