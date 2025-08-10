@@ -54,12 +54,12 @@ The application is built with Vanilla JavaScript and Three.js, using Vite for de
 The project is configured for deployment to GitHub Pages. The `dist` directory, created by the build process, is self-contained and can be deployed to any static web host.
 
 *   **Deploy to Production:** `npm run deploy`
-*   **Deploy to Staging:** `npm run deploy-dev`
+*   **Deploy to Staging:** `npm run deploy-dev-3`
 
 ## Branching Strategy
 
 *   **`main` / `gh-pages`**: Production environment.
-*   **`Dev-2` / `gh-pages-dev-2`**: Development and staging environment.
+*   **`Dev-3` / `gh-pages-dev-3`**: Development and staging environment.
 
 ## Project Documentation
 

@@ -132,8 +132,8 @@ This project is a self-contained 3D model viewer that has been refactored to run
 ### Branching Strategy
 - **`main`**: The primary branch for production-ready code.
 - **`gh-pages`**: The branch for production deployments via GitHub Pages.
-- **`Dev-2`**: The primary development branch for new features and bug fixes.
-- **`gh-pages-dev-2`**: The branch for development deployments, allowing for a separate, live staging environment.
+- **`Dev-3`**: The primary development branch for new features and bug fixes.
+- **`gh-pages-dev-3`**: The branch for development deployments, allowing for a separate, live staging environment.
 
 ### Git Workflow
 When asked to "Update Git", I will follow this process:
@@ -143,8 +143,8 @@ When asked to "Update Git", I will follow this process:
 4.  **Update README:** Update `README.md` with any relevant changes.
 5.  **Git Status:** Run `git status` to review all changes.
 6.  **Commit:** Create a commit message, get user approval, and then run `git add .` and `git commit`.
-7.  **Push to Dev:** Push the changes to the `Dev-2` branch with `git push origin Dev-2`.
-8.  **Deploy to Staging:** Deploy the `Dev-2` branch to the `gh-pages-dev-2` branch.
+7.  **Push to Dev:** Push the changes to the `Dev-3` branch with `git push origin Dev-3`.
+8.  **Deploy to Staging:** Deploy the `Dev-3` branch to the `gh-pages-dev-3` branch.
 9.  **Confirmation:** Announce when the process is complete.
 
 
