@@ -127,6 +127,7 @@ This project is a self-contained 3D model viewer that has been refactored to run
 - **Create Production Build**: `npm run build`
 - **Preview Production Build**: `npm run preview`
 - **Deploy to GitHub Pages**: `npm run deploy`
+- **Deploy to Staging**: `npm run deploy-dev`
 - **Run Development Server and Open Browser**: `./start-dev.sh`
 
 ### Branching Strategy
@@ -167,15 +168,13 @@ This project maintains a detailed history of changes and development decisions i
 
 ### Features
 - **Model Loading**: Supports `.obj`, `.stl`, `.gltf`, `.glb`, and `.dae` file formats. Models can be loaded via a file input or drag-and-drop.
-- **Model Selection**: A dropdown menu allows users to switch between several built-in models (Torus Knot, Cube, Sphere, Pyramid).
-- **Example Models**: Buttons to load example models like the Utah Teapot and Suzanne Monkey.
 - **Camera Controls**: Sliders and number inputs for adjusting the camera's position (X, Y, Z) and rotation (X, Y, Z).
 - **Model Controls**: Sliders and number inputs for adjusting the model's rotation (X, Y, Z) and advanced aircraft-style controls for Yaw, Pitch, and Roll.
 - **Material Properties**: Controls for adjusting the model's material, including color, metalness, roughness, and transparency.
 - **Lighting**: 
   - Sliders to control the intensity of ambient and directional lights.
   - An interactive 2D control pad to visually adjust the X/Y position of the directional lights.
-- **Guide Line Overlay**: A configurable 2D overlay line with adjustable thickness, color, transparency, angle, and vertical position. It remains fixed in the viewer, independent of 3D scene movements, and is excluded from image captures.
+- **Multiple Guide Lines**: Users can now add and remove multiple, independent guide lines. Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
 - **Presets**: Users can save and load their own presets for camera, model, material, and lighting settings.
 - **Reset Functionality**: Buttons to reset the camera and model to their default states.
 - **Responsive Viewer**: The 3D viewer resizes to fit its container.
@@ -183,56 +182,30 @@ This project maintains a detailed history of changes and development decisions i
 - **Enhanced VIEW Panel**: Redesigned with a horizontal layout, including a 3D orientation widget and dedicated data columns for model rotation, camera position, and camera rotation.
 
 ### UI/UX Enhancements
-- **VIEW STATUS Panel**: The coordinate and model name displays have been redesigned into uniformly sized and aligned white boxes for a cleaner, more organized appearance.
-- **Controls Panel**: The main title has been standardized, and redundant sub-headings have been removed for a more streamlined look.
-- **Drag-and-Drop Text**: Updated to "_Drag-and-drop_ your 3D model here" for improved clarity.
+- **VIEW Panel Redesign**: The main "VIEW" panel has been redesigned into a horizontal layout, featuring a 3D orientation widget and dedicated data columns for Model Rotation, Model Attitude (Yaw, Pitch, Roll), Camera Position, and Camera Rotation.
+- **Coordinated Padding System**: A new CSS variable-based system (`--coordinated-bottom-margin`) ensures visually balanced and consistent spacing across all control panes.
+- **Button Standardization**: All buttons now use standardized height, padding, and font size variables for a uniform appearance.
+- **Lighting Grid Layout**: The lighting control panel has been refactored to use a precise CSS Grid layout for better alignment and maintainability.
+- **Sunset of Hover Glow**: The glow effect on button hovers in the main controls panel has been removed for a cleaner look.
 
 ### Sunset Features
-- **Zoom Control**: The dedicated "Zoom" slider and its corresponding display in the "VIEWER STATS" panel have been removed. The camera's Z-position, controlled by the mouse wheel, now serves as the primary zooming mechanism, providing a more intuitive and standard user experience. The underlying code has been commented out for potential future reference.
+- **Zoom Control**: The dedicated "Zoom" slider and its corresponding display in the "VIEWER STATS" panel have been removed. The camera's Z-position, controlled by the mouse wheel, now serves as the primary zooming mechanism.
 - **Control Scheme**: The legacy "Model-centric" control scheme has been removed to simplify the user experience. The application now exclusively uses the "Standard (Camera-centric)" control scheme.
 
 ### Known Issues
-- The `handleResize` function was missing, causing an error during viewer initialization. This has been fixed by adding the function to `main.js`.
-- The "Viewer Stats" and "Interaction Controls" dialogs were restyled for consistency.
-- The mouse controls were updated to remove middle-click functionality and reassign right-click to panning.
-- A right directional light was added to provide more control over model lighting.
-- **CSS Deprecation Warning**: The `slider-vertical` appearance property is deprecated. This has been addressed in `style.css`.
 - **Recurring Build Failures**: Persistent `TypeError: Identifier "..." has already been declared` errors during `npm run build` due to duplicate function definitions in `main.js`. This is currently being addressed programmatically.
-
-### Web App Rendering Fault (August 7, 2025)
-- **Problem**: The web application failed to render after an attempt to fix deployment issues by changing asset paths in `index.html` from absolute to relative.
-- **Root Cause**: The change from `<link rel="stylesheet" href="style.css?v=..."` to `<script type="module" crossorigin src="./assets/index-DrNG4NvB.js"></script><link rel="stylesheet" crossorigin href="./assets/index-D3boxNoJ.css">` in `index.html` caused the web app to stop rendering correctly.
-- **Resolution**: The problematic changes in `index.html` were immediately reverted to restore the web app's rendering functionality.
-
-### Deployment Issues (gh-pages-dev)
-- **Problem**: `npm run deploy-dev` (using `gh-pages`) reported success, but the `gh-pages-dev` branch on GitHub remained empty.
-- **Root Cause**: 
-    1. `npm run build` was failing due to incorrect asset paths in `index.html` (hardcoded absolute paths like `/3d-model-viewer/assets/...`).
-    2. The `gh-pages` package itself seemed to have issues pushing to an existing remote branch reliably, even after clearing its cache.
-- **Resolution**: 
-    1. Corrected asset paths in `index.html` to be relative (`./assets/...`).
-    2. Modified `vite.config.js` to use a relative base path (`./`).
-    3. Implemented a robust manual Git push process using an orphan branch (`git checkout --orphan`, `git --work-tree`, `git push --force`) to directly push the `dist` folder's contents to `gh-pages-dev`.
 
 ## Major Changes (v2.4+)
 
-### Lighting Controls Redesign (v2.4)
-- **Compact Layout**: Redesigned LIGHTING CONTROLS panel with compact, integrated layout.
-- **Vertical Sliders**: Left and Right directional light controls positioned as vertical sliders.
-- **Integrated Ambient Controls**: Ambient light slider and value input positioned below main controls.
-- **Dynamic Boundaries**: JavaScript recalculates positioning boundaries in real-time.
+### Multiple Guide Lines (v2.10.1)
+- **Dynamic Guide Lines**: Users can now add and remove multiple, independent guide lines.
+- **Independent Controls**: Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
+- **Dynamic UI**: The UI dynamically adds and removes control panes as lines are created or deleted, with titles that update automatically.
 
-### Advanced Lighting Modes System (v2.5+)
-- **Dual Modes**: Implemented dual-mode lighting system with "BASIC" and "COMPLEX" buttons.
-- **Basic Mode**: Simple light positioning.
-- **Complex Mode**: Advanced features including icon rotation and light targeting based on vertical position.
-- **Light Targets**: Each directional light has a dedicated Three.js Object3D target for precise aiming.
-
-### Guide Line Controls Configuration (v2.4+)
-- **Updated Value Ranges**: New value ranges and calculations for thickness, vertical position, transparency, and angle.
-- **Responsive Scaling**: Thickness uses viewport height units (vh) for responsive scaling.
-- **Position Mapping**: Position uses percentage-based positioning for consistent placement.
-- **Transform Origin**: Ensures rotation around the true center.
+### Control Synchronization (v2.11.0)
+- **`ControlSync` Class**: A new modular and robust system for synchronizing UI controls (e.g., sliders and number inputs).
+- **Centralized Management**: Replaces scattered `addEventListener` calls with a centralized registry, improving maintainability and reducing errors.
+- **Advanced Features**: Supports bidirectional synchronization, value validation, and custom callbacks.
 
 ### UI Refinements (v2.7+)
 - **Boxless Design**: Removed backgrounds, borders, and shadows from VIEW, LIGHTING, and INTERACTION panels for cleaner appearance.
@@ -252,21 +225,6 @@ This project maintains a detailed history of changes and development decisions i
 - **Vite**: Upgraded from 7.0.5 to 7.0.6.
 - **Resolved Deprecation**: Fixed `punycode` module deprecation warning.
 
-### UI Alignment (v2.6)
-- **Pixel-perfect flexbox gaps**: Achieved precise spacing and alignment using flexbox.
-- **CSS table layout**: Utilized CSS table properties for structured content.
-- **Mathematical precision**: Ensured pixel-perfect alignment through precise calculations.
-
-### Multiple Guide Lines (v2.10.1)
-- **Dynamic Guide Lines**: Users can now add and remove multiple, independent guide lines.
-- **Independent Controls**: Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
-- **Dynamic UI**: The UI dynamically adds and removes control panes as lines are created or deleted, with titles that update automatically.
-
-### Control Synchronization (v2.11.0)
-- **`ControlSync` Class**: A new modular and robust system for synchronizing UI controls (e.g., sliders and number inputs).
-- **Centralized Management**: Replaces scattered `addEventListener` calls with a centralized registry, improving maintainability and reducing errors.
-- **Advanced Features**: Supports bidirectional synchronization, value validation, and custom callbacks.
-
 ## Strategic Development Roadmap
 - **`claude-todo.md`**: A new file outlining the strategic roadmap for the project.
 - **Modularization**: The primary focus is on refactoring the monolithic `main.js` into smaller, reusable modules.
@@ -285,31 +243,32 @@ A fundamental shift in development methodology, prompted by the "syncSliderNumbe
 4.  **🎯 Initialization Check**: Confirm that the application initializes completely without errors before investigating issues in specific features.
 5.  **📊 Evidence Over Theory**: What the application *is actually doing* is more important than what the code *should be doing*.
 
-## Current Status (August 9, 2025): Project Audit Complete
+## Current Status (August 11, 2025): Codebase Review Complete
 
-A full codebase audit has been completed, and the results have been documented in `audit.md`. The project is stable, and the next phase of development will focus on implementing a testing framework and refactoring the codebase into a more modular architecture, as outlined in the project's strategic roadmap.
+A full codebase review has been completed. The project is stable, with significant recent enhancements to the UI, feature set, and underlying architecture. The next phase of development will focus on implementing a testing framework and refactoring the codebase into a more modular architecture, as outlined in the project's strategic roadmap (`claude-todo.md`).
 
-## Comprehensive Remediation Plan (2025-08-06)
+## Comprehensive Remediation Plan (2025-08-07)
 
 ### Executive Summary
-Based on comprehensive analysis of 24 distinct issues from memory files, codebase structure, and GitHub repository. Current system status: **STABLE** with syncSliderNumber crisis resolved and guide line system restored. **v2.9.2** confirmed as most stable baseline for remediation work.
+Based on comprehensive analysis of 24 distinct issues from memory files, codebase structure, and GitHub repository. **Phase 1 Complete**: Critical stabilization achieved with v2.9.3-stable baseline and full controller system restoration.
 
 ### Critical Findings
-- **Current System**: STABLE (no blocking issues for development)
-- **Primary Baseline**: v2.9.2 (last stable before function duplication crisis)
-- **High-Impact Technical Debt**: 2,499-line main.js with 66 global functions (300% maintainability improvement possible)
+- **Current System**: FULLY STABLE (Phase 1 complete, ready for Phase 2)
+- **Primary Baseline**: v2.9.3-stable (complete controller system restoration)
+- **High-Impact Technical Debt**: 3600+ line main.js with many global functions.
 
 ### Four-Phase Remediation Strategy
 
-#### **PHASE 1: Critical Stabilization** (1-2 weeks) - IMMEDIATE Priority
-1. **System Verification**: Complete functional testing of current application state
-2. **Environment Fixes**: Resolve iCloud sync interference with development server  
-3. **Baseline Protection**: Create formal v2.9.2 release tag for a stable rollback point
+#### **PHASE 1: Critical Stabilization** - ✅ **COMPLETED** (v2.9.3-stable)
+1. ✅ **System Verification**: Complete functional testing completed - all controls working
+2. ✅ **Controller Restoration**: 20+ missing event listeners added systematically  
+3. ✅ **Baseline Protection**: v2.9.3-stable tag created for stable rollback point
+4. ✅ **Evidence-Based Debugging**: Runtime verification methodology established
 
 #### **PHASE 2: Quality Foundation** (3-4 weeks) - HIGH Priority  
 4. **Testing Infrastructure**: Implement Jest/Vitest with browser console error detection
 5. **Evidence-Based Debugging**: Mandate runtime verification over theoretical code analysis
-6. **Function Boundary Audit**: Systematic review of all 66 global functions for proper placement
+6. **Function Boundary Audit**: Systematic review of all global functions for proper placement
 
 #### **PHASE 3: Core Architecture** (4-5 weeks) - MEDIUM Priority
 7. **Modularization**: Break monolithic main.js into feature modules (StateManager, EventManager, ResourceManager)
@@ -321,44 +280,14 @@ Based on comprehensive analysis of 24 distinct issues from memory files, codebas
 11. **Quality Gates**: Automated testing pipelines, performance monitoring, release validation  
 12. **Documentation System**: Architectural patterns library and comprehensive developer guides
 
-### ROI Analysis
-- **Time Investment**: 10-14 weeks total
-- **Expected Returns**: 300% maintenance improvement, 200% development speed improvement, 5min vs 2-4hr incident response
-- **Transforms**: Mature but architecturally fragile application → professionally structured, maintainable, and scalable codebase
-
-### Success Criteria
-- **Phase 1**: Application loads without console errors, all UI functional, dev server operational, v2.9.2 baseline tagged
-- **Phase 2**: >80% critical path test coverage, evidence-based debugging protocol adopted, function boundary violations identified
-- **Phase 3**: main.js <1000 lines, state management with clear boundaries, 60%+ coupling reduction
-- **Phase 4**: Bundle size optimized, performance monitoring operational, automated release pipeline
-
-## Recent Major Achievements (2025-08-09)
-
-### Critical UI Fixes Completed ✅
-**Session Summary**: Addressed four critical issues from user screenshot feedback:
-
-#### Completed Issues:
-1. **CAPTURE Pane Bottom Spacing** ✅ - Fixed inconsistent bottom spacing vs other panes
-2. **Minimize/Collapse Functionality** ✅ - Restored missing `setupCollapsibleSections()` call in initialization
-3. **MATERIALS Button Size Consistency** ✅ - Fixed COMPLEX/BASIC button sizing with standard variables
-4. **Parameterized Button Gaps** ✅ - Converted TORUS/LIBRARY buttons to use `--button-row-gap` variable
-
-#### Collapse Icon Alignment - Partial Progress 🔄
-**Status**: IN PROGRESS - Requires fine-tuning
-**New Variable Created**: `--section-header-to-content-gap: 15px`
-**Issues**: Complex alignment requirements for minus sign (−) vertical positioning and triangle (▼) horizontal consistency with global spacing system
-**Documentation**: Detailed in `memory/fixes/2025-08-09-collapse-icon-alignment-partial.md`
-
-### Guide Line Auto-Hide Animation Synchronization ✅ 
-**Achievement**: Successfully synchronized guide line visibility with UNHIDE button pulse animation
-**Implementation**: Callback-based architecture with coordinated flash effects during each pulse cycle
-
-## Recent Major Achievements (2025-08-10) - Claude's Work
+## Recent Major Achievements (2025-08-11)
 
 ### UI Overhaul and .DAE Integration ✅
-**Session Summary**: Claude implemented a significant UI overhaul for the VIEW panel and fully integrated .DAE file support.
+**Session Summary**: A significant UI overhaul for the VIEW panel was implemented and .DAE file support was fully integrated.
 
 #### Key Changes:
 1. **VIEW Panel Redesign**: Introduced a new horizontal layout with a 3D orientation widget and dedicated data columns for model rotation, camera position, and camera rotation. This also restored the camera rotation display.
 2. **.DAE File Support**: Full integration of .DAE file format loading, including updates to `index.html`, `main.js` (validation, handling, and loader integration), and `style.css`.
-3. **Architectural Documentation**: Created new memory files (`architectural-debt-patterns.md`, `file-format-extension-pattern.md`, `layout-alignment-inconsistencies.md`, `file-format-support-analysis.md`) detailing architectural debt patterns, file format extension patterns, and specific layout alignment inconsistencies, indicating a strong focus on understanding and addressing underlying architectural issues.
+3. **Multiple Guide Lines**: The guide line system was enhanced to support adding and controlling multiple, independent guide lines.
+4. **`ControlSync` Class**: A new, robust class for synchronizing UI controls was implemented, improving architectural quality.
+5. **CSS Refinements**: Implemented a coordinated padding system and standardized button styles for a cleaner, more consistent UI.

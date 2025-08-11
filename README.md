@@ -11,7 +11,7 @@ A professional, interactive 3D model viewer built with Three.js (r179) and Vite.
 
 *   **Model Loading**: Supports `.obj`, `.stl`, `.gltf`, `.glb`, and `.dae` file formats. Models can be loaded via a file input or drag-and-drop.
 *   **Interactive Controls**: Adjust camera, model, materials, and lighting in real-time.
-*   **Advanced Features**: Includes multiple guide lines, preset management, image capture, and experimental external surface extraction.
+*   **Advanced Features**: Includes multiple dynamic guide lines, preset management, and image capture.
 *   **Enhanced VIEW Panel**: Redesigned with a horizontal layout, including a 3D orientation widget and dedicated data columns for model rotation, camera position, and camera rotation.
 
 ## Architecture
@@ -45,7 +45,7 @@ The application is built with Vanilla JavaScript and Three.js, using Vite for de
 The project is configured for deployment to GitHub Pages. The `dist` directory, created by the build process, is self-contained and can be deployed to any static web host.
 
 *   **Deploy to Production:** `npm run deploy`
-*   **Deploy to Staging:** `npm run deploy-dev-3`
+*   **Deploy to Staging:** `npm run deploy-dev`
 
 ## Branching Strategy
 
@@ -60,9 +60,9 @@ This project maintains a detailed history of changes and development decisions i
 *   **`gemini-code-changes.md`**: A log of changes made by the Gemini assistant.
 *   **`CLAUDE.md` & `GEMINI.md`**: Comprehensive internal documentation and development guidelines.
 
-## Current Status (August 9, 2025): Project Audit Complete
+## Current Status (August 11, 2025): Codebase Review Complete
 
-A full codebase audit has been completed, and the results have been documented in `audit.md`. The project is stable, and the next phase of development will focus on implementing a testing framework and refactoring the codebase into a more modular architecture, as outlined in the project's strategic roadmap.
+A full codebase review has been completed. The project is stable, with significant recent enhancements to the UI, feature set, and underlying architecture. The next phase of development will focus on implementing a testing framework and refactoring the codebase into a more modular architecture, as outlined in the project's strategic roadmap.
 
 ## Strategic Development Roadmap
 - **`claude-todo.md`**: A new file outlining the strategic roadmap for the project.
