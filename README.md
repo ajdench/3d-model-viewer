@@ -13,6 +13,7 @@ A professional, interactive 3D model viewer built with Three.js (r179) and Vite.
 *   **Interactive Controls**: Adjust camera, model, materials, and lighting in real-time.
 *   **Advanced Features**: Includes multiple dynamic guide lines, preset management, and image capture.
 *   **Enhanced VIEW Panel**: Redesigned with a horizontal layout, including a 3D orientation widget and dedicated data columns for model rotation, camera position, and camera rotation.
+*   **Comprehensive Save/Load System**: Complete scene state persistence with `.3dview` file format.
 
 ## Architecture
 

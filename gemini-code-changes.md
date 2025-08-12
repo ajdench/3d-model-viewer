@@ -8,6 +8,13 @@
 
 ## August 2025
 
+### 2025-08-12 - DOCS AND VERSIONING
+
+**[2025-08-12] [DOCS] [VERSIONING]**: Updated project documentation and versioning to align with the latest state of the application (v2.12.0).
+- **Files**: `package.json`, `GEMINI.md`, `README.md`, `gemini-code-changes.md`
+- **Impact**: Synchronized the project version in `package.json` with `README.md`. Updated `GEMINI.md` to include more detailed information from `CLAUDE.md`, ensuring consistency. Corrected the line count for `main.js` in the technical debt section. Added the "Comprehensive Save/Load System" to the features list in `README.md`.
+- **Gemini Task ID**: 20250812-docs-versioning
+
 ### 2025-08-08 - BRANCHING REFACTOR
 
 **[2025-08-08] [PROCESS] [GIT]**: Created new `Dev-2` and `gh-pages-dev-2` branches to resolve persistent deployment issues. The old `Dev` and `gh-pages-dev` branches were deleted.
@@ -19,7 +26,7 @@
 
 **[2025-08-08] [PROCESS] [AUTOMATION]**: Enhanced the "Update Git" process to include dedicated change logs for both Claude and Gemini.
 - **Files**: `claude-code-changes.md`, `gemini-code-changes.md`
-- **Impact**: Establishes a formal, dual-track change logging system. Gemini now maintains its own log, and both are included in all future commits. This improves transparency and debugging by clearly attributing changes to either the user (via Claude) or the assistant (Gemini).
+- **Impact**: Establishes a formal, dual-track change logging system. Gemini now maintains its own log, and a new entry was added to `claude-code-changes.md` to initialize it.
 - **Gemini Task ID**: 20250808-update-git-process
 
 ### 2025-08-08 - GIT REPOSITORY RESOLUTION

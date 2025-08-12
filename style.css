@@ -420,25 +420,27 @@
         }
 
         .drop-zone {
-            border: 2px dashed #ddd;
+            border: none; /* REMOVED: Clean padding-only design */
             border-radius: 8px;
-            padding: 20px;
+            padding: var(--ui-padding-large);
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.5);
-            margin: 10px 0;
+            background: rgba(250, 250, 250, 0.5); /* Even lighter grey for upload area */
+            margin: var(--ui-padding-small) 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Gentle shadow for definition */
         }
 
         .drop-zone:hover {
-            border-color: #007bff;
-            background: rgba(0, 123, 255, 0.05);
+            background: rgba(250, 250, 250, 0.7); /* Light grey on hover - no blue */
+            transform: translateY(-1px); /* Subtle lift effect */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); /* Enhanced shadow on hover */
         }
 
         .drop-zone.dragover {
-            border-color: #007bff;
-            background: rgba(0, 123, 255, 0.1);
-            transform: scale(1.02);
+            background: rgba(250, 250, 250, 0.9); /* Lighter grey on drag over - no blue */
+            transform: scale(1.02) translateY(-2px); /* Scale and lift effect */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); /* Grey shadow for active state */
         }
 
         .drop-zone-content {
@@ -524,7 +526,7 @@
         .horizontal-view-container {
             display: flex;
             align-items: flex-start;
-            gap: 20px;
+            gap: 10px; /* Reduced from 20px to free up space for LIGHTING */
             pointer-events: auto;
             margin-top: 10px; /* Align VIEW with LIGHTING vertical position */
         }
@@ -558,7 +560,7 @@
         /* Data columns styling - white text on transparent background */
         .data-columns-container {
             display: flex;
-            gap: 30px;
+            gap: 5px; /* Reduced from 10px to compress columns further */
             align-items: flex-start;
             margin-top: 4px; /* Match VIEW title position to align with LIGHTING baseline */
         }
@@ -708,13 +710,21 @@
         }
 
         .light-pad {
-            position: relative;
+            position: absolute;
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Perfect centering */
+            top: 10px; /* Match other elements' top position */
             width: 128px;
+            min-width: 128px;
+            max-width: 128px;
             height: 150px;
+            flex-shrink: 0;
             background: rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             margin-top: 10px;
+            /* Position sun control box with 10px gap from right value box (matching button gap) */
+            margin-right: 10px;
         }
 
         .light-icon {
@@ -777,8 +787,11 @@
         .lighting-controls-container {
             display: flex;
             align-items: flex-start;
-            gap: 15px;
+            gap: 12px; /* Optimized gap for proper spacing */
             margin-top: 10px;
+            justify-content: flex-start; /* Changed from space-between for predictable positioning */
+            width: 100%; /* Full container width */
+            position: relative;
         }
 
         .light-slider-container {
@@ -787,8 +800,32 @@
             align-items: center;
             justify-content: flex-start;
             flex-shrink: 0;
-            height: 160px;
+            width: 50px; /* Reduced from 65px for better fit */
+            height: 190px;
             margin-top: 10px;
+        }
+        
+        /* RIGHT slider alignment: position at far right of container */
+        .light-slider-container.right-slider {
+            align-items: flex-end; /* Right-align the slider and value box */
+            position: absolute;
+            right: 0; /* Position at right edge of container */
+            top: 10px; /* Match margin-top */
+        }
+        
+        /* LEFT slider alignment: position at far left of container */
+        .light-slider-container.left-slider {
+            align-items: flex-start; /* Left-align for mirroring */
+            position: absolute;
+            left: 0; /* Position at left edge of container */
+            top: 10px; /* Match margin-top */
+        }
+        
+        /* Directional light number inputs positioned below sliders with 8px gap */
+        .light-slider-container .number-input-small {
+            margin-top: 8px;
+            width: 45px;
+            text-align: center;
         }
 
         .vertical-slider {
@@ -841,6 +878,20 @@
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid rgba(0, 0, 0, 0.1);
+            /* AMBIENT LIGHT divider: extend from left value box to right value box */
+            position: relative;
+        }
+        
+        /* Extend the ambient light divider line to match slider span */
+        .ambient-light-controls::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            /* Align with the outer edges of the slider containers */
         }
 
         .ambient-label {
@@ -857,11 +908,15 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            max-width: 200px;
+            /* Align with the slider container positions for proper span */
+            width: 100%;
+            /* Ensure it spans from left value box to right value box */
+            justify-content: space-between;
+            padding: 0; /* No additional padding - use full width */
         }
 
         .horizontal-slider {
-            width: 150px;
+            flex: 1; /* Take available space between left and right boundaries */
             padding: 0;
             height: 20px;
             border-radius: 10px;
@@ -869,6 +924,8 @@
             outline: none;
             opacity: 0.7;
             transition: opacity 0.2s;
+            /* Ensure slider spans from left value box to right value box area */
+            min-width: 150px;
         }
 
         .horizontal-slider:hover {
@@ -939,48 +996,7 @@
             margin: 0;
         }
 
-        #basicModeButton {
-            width: auto; /* Auto width based on content */
-            height: 18px; /* Slightly taller than title */
-            padding: 4px 4px; /* Equal padding all sides for square borders */
-            font-size: 10px; /* Back to correct text size */
-            font-weight: 600;
-            /* Ensure text is vertically centered within the button */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1; /* Reset line-height for precise control */
-            position: absolute;
-            right: 10px; /* Match the gap from top of button to control box */
-            top: calc(50% - 1px); /* Center vertically in container, nudged up 1px */
-            transform: translateY(-50%); /* Adjust to true center */
-        }
-
-        #complexModeButton {
-            width: auto; /* Auto width based on content */
-            height: 18px; /* Same height as main button */
-            padding: 4px 4px; /* Equal padding all sides for square borders */
-            font-size: 10px; /* Same text size */
-            font-weight: 600;
-            /* Ensure text is vertically centered within the button */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1; /* Reset line-height for precise control */
-            position: absolute;
-            right: 68px; /* Right edge 10px from left edge of BASIC button */
-            top: calc(50% - 1px); /* Same vertical position */
-            transform: translateY(-50%); /* Adjust to true center */
-            /* Background controlled by JavaScript state management */
-        }
-
-        #complexModeButton:hover {
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4); /* Red glow on hover */
-        }
-
-        #basicModeButton:hover {
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4); /* Green glow on hover */
-        }
+        /* OLD BUTTON POSITIONING RULES REMOVED - CONFLICTED WITH NEW CLEAN LAYOUT */
 
          .guide-line-overlay {
             position: absolute;
@@ -1016,11 +1032,31 @@
         }
         
         #light-controls {
-            position: absolute;
+            /* MIGRATED TO MASTER GRID: Positioning now handled by .lighting-grid-area */
+            /* position: absolute;
             top: 10px;
             right: 16px;
-            width: 230px;
-            z-index: 10;
+            width: 290px;
+            z-index: 10; */
+            position: relative; /* Grid child positioning */
+            width: 100%; /* Fill grid area */
+        }
+        
+        /* LIGHTING title alignment: align to left edge of pane */
+        #light-controls .title-container {
+            /* Title container already spans full width and aligns left */
+            /* No additional changes needed - current positioning is correct */
+        }
+        
+        /* Fine-tune the overall layout to achieve precise alignment */
+        #light-controls .lighting-controls-container {
+            /* Remove padding to use full container width for proper alignment */
+            padding: 0; /* No padding - use full width */
+            /* Container spans full 290px width with absolute positioned elements */
+            /* Left slider: 0px, Sun pad: centered, Right slider: 290px-50px = 240px */
+            width: 100%; /* Use full container width */
+            height: 200px; /* Set explicit height for absolute positioned children */
+            max-width: 270px; /* Constrain to prevent overflow */
         }
 
         /* Responsive positioning for different screen sizes */
@@ -1031,7 +1067,7 @@
             }
             
             #light-controls {
-                width: 230px;
+                width: 290px;
                 font-size: 11px;
             }
         }
@@ -1046,9 +1082,8 @@
             }
             
             #light-controls {
-                top: 10px;
-                right: 10px;
-                width: 210px;
+                /* REMOVED: Old absolute positioning conflicts with new grid layout */
+                width: 290px;
                 font-size: 10px;
                 padding: 10px;
             }
@@ -1067,7 +1102,7 @@
             
             #light-controls {
                 width: calc(100vw - 300px - 40px);
-                min-width: 190px;
+                min-width: 290px;
             }
         }
 
@@ -1088,14 +1123,17 @@
 
         /* Upload area styling */
         .upload-area {
-            position: absolute;
-            bottom: 10px; /* Match INTERACTION pane gap from model window edge */
-            right: 10px; /* Align with BASIC button right edge */
+            /* MIGRATED TO MASTER GRID: Positioning now handled by .upload-grid-area */
+            /* position: absolute;
+            bottom: 10px;
+            right: 10px;
             width: 230px;
-            z-index: 10;
+            z-index: 10; */
+            position: relative; /* Grid child positioning */
+            width: 100%; /* Fill grid area */
             background: transparent; /* Boxless design */
             color: #333;
-            padding: 15px 15px 7px 15px;
+            padding: var(--ui-padding-medium) var(--ui-padding-medium) var(--ui-padding-tiny) var(--ui-padding-medium); /* Use consistent padding variables */
             border-radius: 10px;
             font-family: 'Arial', sans-serif;
             font-size: 12px;
@@ -1110,6 +1148,17 @@
         }
 
         .model-buttons .button {
+            flex: 1;
+        }
+
+        /* Bottom buttons - mirror top buttons with equivalent gap above */
+        .model-buttons-bottom {
+            display: flex;
+            gap: var(--button-row-gap); /* Same gap as top buttons */
+            margin-top: 20px; /* Larger gap above to match visual spacing */
+        }
+
+        .model-buttons-bottom .button {
             flex: 1;
         }
 
@@ -1512,4 +1561,574 @@
         .control-section .section-content > *:last-child .button:last-child,
         .control-section .section-content > .button:last-child {
             margin-bottom: var(--coordinated-bottom-margin) !important; /* SAFETY: Global coordinated margin for final buttons */
+        }
+
+        /* =============================================================================
+         * MASTER RIGHT-UI GRID ARCHITECTURE SYSTEM
+         * Unified grid system for LIGHTING + Upload area perfect alignment
+         * =============================================================================
+         */
+
+        /* Master grid container for right-side UI elements */
+        .right-ui-grid {
+            position: absolute;
+            top: 10px;
+            right: 23px; /* Moved left by 13px for proper margin matching bottom */
+            bottom: 10px;
+            width: var(--right-ui-width);
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "lighting"
+                "spacer"
+                "upload";
+            gap: var(--right-ui-gap);
+            pointer-events: none; /* Allow clicks through to model */
+            z-index: 10;
+        }
+
+        /* Grid area wrappers */
+        .lighting-grid-area {
+            grid-area: lighting;
+            pointer-events: auto;
+            padding: 0 0 var(--ui-padding-large) 0; /* Spacing between sections */
+            margin-right: 0; /* Reset margin since moving entire container */
+            margin-top: -2px; /* Move lighting controls 2px up */
+        }
+
+        .upload-grid-area {
+            grid-area: upload;
+            pointer-events: auto;
+            padding: 0; /* Pure content positioning */
+            margin-right: -15px; /* Move upload area 15px to the right */
+        }
+
+        /* =============================================================================
+         * CLEAN LIGHTING CONTROLS SYSTEM
+         * Simplified layout aligned with VIEW titles and upload area
+         * =============================================================================
+         */
+
+        /* Clean LIGHTING Controls - Aligned with VIEW titles */
+        .lighting-section {
+            width: var(--right-ui-width);
+            padding: 0;
+            position: relative;
+        }
+
+        /* Header with title and buttons - Aligned to VIEW baseline */
+        .lighting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 15px;
+            margin-top: 14px; /* Align LIGHTING title with VIEW titles */
+        }
+
+        .lighting-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .lighting-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mode-button {
+            display: inline-block;
+            padding: 2px 8px 4px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: #9e9e9e;
+            color: white;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+
+        .mode-button.active {
+            background: #4CAF50;
+        }
+
+        .mode-button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Main controls row */
+        .lighting-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        /* Slider groups (left and right) */
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .vertical-slider {
+            width: 20px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            writing-mode: vertical-lr;
+            direction: rtl;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .vertical-slider:hover {
+            opacity: 1;
+        }
+
+        .vertical-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+        }
+
+        .vertical-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-value {
+            width: 45px;
+            margin-top: 8px;
+            padding: 4px;
+            text-align: center;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        /* Sun control center */
+        .sun-control {
+            width: 128px;
+            height: 120px;
+            background: rgba(250, 250, 250, 0.5); /* Same light grey as upload area */
+            border: none; /* No border like upload area */
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            padding: 0 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Same shadow as upload area */
+        }
+
+        .sun-icon {
+            font-size: 20px;
+            margin: 0;
+            position: static !important;
+            transform: none !important;
+        }
+
+        /* Override old light-icon positioning for new layout */
+        .sun-control .light-icon {
+            position: static !important;
+            transform: none !important;
+            cursor: grab;
+            font-size: 20px;
+        }
+
+        .sun-control .light-icon.flipped {
+            position: static !important;
+            transform: scaleX(-1) !important;
+        }
+
+        /* Ambient light controls */
+        .ambient-label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            margin-top: 8px;
+        }
+
+        .ambient-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .horizontal-slider {
+            flex: 1;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .horizontal-slider:hover {
+            opacity: 1;
+        }
+
+        .horizontal-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+        }
+
+        .horizontal-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* =============================================================================
+         * MODULAR LIGHTING GRID ARCHITECTURE SYSTEM (LEGACY - FOR REFERENCE)
+         * Professional CSS Grid layout with mathematical precision
+         * =============================================================================
+         */
+
+        :root {
+            /* === MASTER GRID ARCHITECTURE SYSTEM === */
+            /* Universal spacing - padding only, no margins/borders */
+            --ui-padding-large: 20px;   /* Between major sections */
+            --ui-padding-medium: 15px;  /* Within sections */
+            --ui-padding-small: 10px;   /* Between controls */
+            --ui-padding-tiny: 5px;     /* Within controls */
+            
+            /* Right UI grid dimensions */
+            --right-ui-width: 260px;    /* INCREASED: Allow wider grid for perfect alignment */
+            --right-ui-gap: 0px;        /* No gaps - pure padding spacing */
+            
+            /* === LIGHTING PANEL GRID SYSTEM === */
+            /* RESPONSIVE: Now based on master grid width instead of fixed values */
+            --lighting-panel-width: var(--right-ui-width); /* Use master grid width */
+            --lighting-panel-padding: var(--ui-padding-medium); /* Use consistent padding */
+            --lighting-content-width: calc(var(--lighting-panel-width) - (var(--lighting-panel-padding) * 2));
+            
+            /* Grid measurements */
+            --slider-width: 20px;
+            --value-box-width: 45px;
+            --sun-control-width: 128px;
+            --outer-margin: 15px; /* NEW: Inset margin for slider positioning */
+            --button-gap: 7.5px; /* REDUCED: Gap reduction by 0.75 factor (10px * 0.75 = 7.5px) */
+            
+            /* Button dimensions */
+            --basic-button-width: 58px;
+            --complex-button-width: 68px;
+            
+            /* Calculated grid points - Mathematical precision */
+            --grid-left-edge: var(--outer-margin); /* UPDATED: Start after outer margin */
+            --grid-left-value-start: var(--grid-left-edge);
+            --grid-left-value-end: calc(var(--grid-left-value-start) + var(--value-box-width));
+            
+            --grid-basic-button-right: calc(var(--lighting-content-width) - var(--outer-margin)); /* UPDATED: Account for right outer margin */
+            --grid-basic-button-left: calc(var(--grid-basic-button-right) - var(--basic-button-width));
+            
+            /* MASTER GRID ALIGNMENT: Right value box aligns with upload area content right edge */
+            /* Now that both elements are in master grid, use coordinated positioning */
+            --upload-content-padding: var(--ui-padding-medium); /* Upload area internal padding */
+            --alignment-target: calc(var(--right-ui-width) - var(--upload-content-padding)); /* Right edge of upload content */
+            --grid-right-value-end: var(--alignment-target);
+            --grid-right-value-start: calc(var(--grid-right-value-end) - var(--value-box-width));
+            
+            /* REDUCED: Sun control gaps by 0.75 factor for tighter layout */
+            --grid-sun-gap-reduction: calc(var(--sun-control-width) * 0.25 / 2); /* 25% reduction split between both sides */
+            --grid-sun-center: calc((var(--grid-left-value-end) + var(--grid-right-value-start)) / 2);
+            --grid-sun-start: calc(var(--grid-sun-center) - (var(--sun-control-width) / 2) + var(--grid-sun-gap-reduction));
+            --grid-sun-end: calc(var(--grid-sun-center) + (var(--sun-control-width) / 2) - var(--grid-sun-gap-reduction));
+            
+            --grid-complex-button-right: calc(var(--grid-basic-button-left) - var(--button-gap));
+            --grid-complex-button-left: calc(var(--grid-complex-button-right) - var(--complex-button-width));
+        }
+
+        /* Main lighting grid container */
+        .lighting-grid-container {
+            display: grid;
+            width: 100%;
+            grid-template-columns: 
+                [panel-start] var(--outer-margin)
+                [title-start left-value-start] var(--value-box-width)
+                [left-value-end left-gap-start] 1fr
+                [left-gap-end sun-start] var(--sun-control-width)
+                [sun-end right-gap-start] 1fr  
+                [right-gap-end right-value-start] var(--value-box-width)
+                [right-value-end] 1fr /* FLEXIBLE: Allow grid to extend as needed for alignment */
+                [basic-button-end panel-end];
+            grid-template-rows: 
+                [title-row] auto
+                [controls-row] auto
+                [ambient-row] auto;
+            gap: 10px 0;
+            position: relative;
+        }
+
+        /* Title row with button positioning */
+        .lighting-title-row {
+            grid-column: panel-start / panel-end;
+            grid-row: title-row;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .lighting-title {
+            margin: 0;
+            font-size: 12px;
+            color: #555;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .lighting-buttons-container {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: var(--button-gap);
+            align-items: center;
+            /* FIXED: Ensure buttons vertically align with LIGHTING title center */
+            line-height: 1;
+        }
+
+        /* Main controls row */
+        .lighting-controls-row {
+            grid-column: panel-start / panel-end;
+            grid-row: controls-row;
+            display: contents;
+        }
+
+        /* Left slider positioned at left value area */
+        .lighting-left-slider {
+            grid-column: left-value-start / left-value-end;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-self: start;
+        }
+
+        /* Sun control perfectly centered */
+        .lighting-sun-control {
+            grid-column: sun-start / sun-end;
+            justify-self: center;
+            align-self: start;
+            position: relative;
+            width: var(--sun-control-width);
+            height: 150px;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Right slider - PERFECT ALIGNMENT WITH UPLOAD AREA */
+        .lighting-right-slider {
+            grid-column: right-value-start / right-value-end;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; /* Align to right edge of value box */
+            justify-self: end; /* Position at right edge of grid area */
+            /* CLEAN: No background, pure padding-only design */
+            padding: var(--ui-padding-tiny);
+        }
+
+        /* Ambient light spans from left value box to right value box */
+        .lighting-ambient-row {
+            grid-column: left-value-start / right-value-end;
+            grid-row: ambient-row;
+            margin-top: 15px;
+            padding-top: 15px;
+            /* border-top: 1px solid rgba(0, 0, 0, 0.1); REMOVED: No border line above ambient light */
+        }
+
+        .lighting-ambient-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .lighting-ambient-label {
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        .lighting-ambient-slider {
+            flex: 1;
+        }
+
+        /* =============================================================================
+         * REUSABLE COMPONENT STYLES
+         * =============================================================================
+         */
+
+        /* Vertical slider styling (reusable) */
+        .grid-vertical-slider {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            width: var(--slider-width);
+            height: 150px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            border-radius: 10px;
+        }
+
+        .grid-vertical-slider:hover {
+            opacity: 1;
+        }
+
+        .grid-vertical-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+        }
+
+        .grid-vertical-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Value box styling (reusable) - BORDERLESS DESIGN */
+        .grid-value-box {
+            width: var(--value-box-width);
+            margin-top: 8px;
+            padding: var(--ui-padding-tiny);
+            text-align: center;
+            font-size: 11px;
+            border: none; /* REMOVED: Clean padding-only design */
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.9); /* Subtle background for definition */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Gentle shadow for depth */
+        }
+
+        /* Button styling (reusable) - Updated to match original .button design */
+        .grid-mode-button {
+            height: 18px;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #9e9e9e, #757575);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .grid-mode-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(158, 158, 158, 0.4);
+        }
+
+        .grid-mode-button.state-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .grid-mode-button.state-primary:hover {
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        /* Horizontal slider styling (reusable) */
+        .grid-horizontal-slider {
+            width: 100%;
+            height: 20px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .grid-horizontal-slider:hover {
+            opacity: 1;
+        }
+
+        /* =============================================================================
+         * RESPONSIVE ADAPTATIONS
+         * =============================================================================
+         */
+
+        @media (max-width: 1200px) {
+            :root {
+                --lighting-panel-width: 270px;
+                --sun-control-width: 110px;
+                --outer-margin: 12px; /* REDUCED: Smaller margin for medium screens */
+            }
+            
+            .lighting-title,
+            .lighting-ambient-label {
+                font-size: 11px;
+            }
+            
+            .grid-mode-button {
+                font-size: 9px;
+                height: 16px;
+                padding: 3px 6px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --lighting-panel-width: 250px;
+                --sun-control-width: 100px;
+                --value-box-width: 40px;
+                --outer-margin: 10px; /* REDUCED: Even smaller margin for small screens */
+            }
+            
+            .grid-vertical-slider {
+                height: 120px;
+            }
+            
+            .lighting-sun-control {
+                height: 120px;
+            }
         }

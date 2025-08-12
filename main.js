@@ -2481,6 +2481,16 @@ function setupControls() {
         });
     });
 
+    // SAVE SCENE Button Event Listener
+    safeAddEventListener('saveSceneButton', 'click', () => {
+        saveViewerState();
+    });
+
+    // LOAD SCENE Button Event Listener
+    safeAddEventListener('loadSceneButton', 'click', () => {
+        loadViewerState();
+    });
+
     // Camera Position Controls Synchronization
     syncSliderNumber('posX', 'posXNum');
     syncSliderNumber('posY', 'posYNum'); 
@@ -3399,6 +3409,240 @@ function showLoadingError(message) {
                 <div style="font-size: 14px; color: #666;">Please refresh the page to try again</div>
             </div>
         `;
+    }
+}
+
+// Save viewer state to JSON file
+function saveViewerState() {
+    try {
+        const sceneState = {
+            version: "2.0",
+            timestamp: new Date().toISOString(),
+            camera: {
+                position: {
+                    x: state.camera.position.x,
+                    y: state.camera.position.y,
+                    z: state.camera.position.z
+                },
+                rotation: {
+                    x: state.camera.rotation.x,
+                    y: state.camera.rotation.y,
+                    z: state.camera.rotation.z
+                }
+            },
+            model: {
+                type: state.currentModelType,
+                rotation: {
+                    x: state.model ? state.model.rotation.x : 0,
+                    y: state.model ? state.model.rotation.y : 0,
+                    z: state.model ? state.model.rotation.z : 0
+                },
+                yaw: state.modelYaw,
+                pitch: state.modelPitch,
+                roll: state.modelRoll
+            },
+            lighting: {
+                mode: state.lightingMode,
+                ambient: state.lights.ambient ? state.lights.ambient.intensity : 0.4,
+                directional: {
+                    left: state.lights.directional ? state.lights.directional.intensity : 0.6,
+                    right: state.lights.directionalRight ? state.lights.directionalRight.intensity : 0.0
+                }
+            },
+            materials: {
+                mode: state.materialMode,
+                color: document.getElementById('materialColor') ? document.getElementById('materialColor').value : '#4CAF50',
+                metalness: parseFloat(document.getElementById('metalness') ? document.getElementById('metalness').value : '0.1'),
+                roughness: parseFloat(document.getElementById('roughness') ? document.getElementById('roughness').value : '0.8'),
+                transparency: parseFloat(document.getElementById('transparency') ? document.getElementById('transparency').value : '1'),
+                transparencyMode: state.transparencyMode
+            },
+            guideLines: state.guideLines.map(line => ({
+                id: line.id,
+                thickness: line.thickness,
+                colour: line.colour,
+                transparency: line.transparency,
+                angle: line.angle,
+                posY: line.posY
+            }))
+        };
+
+        const dataStr = JSON.stringify(sceneState, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `3d-viewer-scene-${new Date().toISOString().split('T')[0]}.3dview`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        console.log('Scene saved successfully');
+    } catch (error) {
+        console.error('Error saving scene:', error);
+        alert('Error saving scene. Please try again.');
+    }
+}
+
+// Load viewer state from JSON file
+function loadViewerState() {
+    try {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.3dview,.json';
+        input.onchange = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const savedState = JSON.parse(e.target.result);
+                    
+                    // Restore camera
+                    if (savedState.camera) {
+                        if (savedState.camera.position) {
+                            state.camera.position.set(
+                                savedState.camera.position.x,
+                                savedState.camera.position.y,
+                                savedState.camera.position.z
+                            );
+                            safeSetValue('posX', savedState.camera.position.x);
+                            safeSetValue('posXNum', savedState.camera.position.x);
+                            safeSetValue('posY', savedState.camera.position.y);
+                            safeSetValue('posYNum', savedState.camera.position.y);
+                            safeSetValue('posZ', savedState.camera.position.z);
+                            safeSetValue('posZNum', savedState.camera.position.z);
+                        }
+                        if (savedState.camera.rotation) {
+                            state.camera.rotation.set(
+                                savedState.camera.rotation.x,
+                                savedState.camera.rotation.y,
+                                savedState.camera.rotation.z
+                            );
+                            safeSetValue('rotX', radToDeg(savedState.camera.rotation.x));
+                            safeSetValue('rotXNum', radToDeg(savedState.camera.rotation.x));
+                            safeSetValue('rotY', radToDeg(savedState.camera.rotation.y));
+                            safeSetValue('rotYNum', radToDeg(savedState.camera.rotation.y));
+                            safeSetValue('rotZ', radToDeg(savedState.camera.rotation.z));
+                            safeSetValue('rotZNum', radToDeg(savedState.camera.rotation.z));
+                        }
+                    }
+
+                    // Restore lighting
+                    if (savedState.lighting) {
+                        if (savedState.lighting.ambient !== undefined) {
+                            state.lights.ambient.intensity = savedState.lighting.ambient;
+                            safeSetValue('ambientLight', savedState.lighting.ambient);
+                            safeSetValue('ambientLightNum', savedState.lighting.ambient);
+                        }
+                        if (savedState.lighting.directional) {
+                            if (savedState.lighting.directional.left !== undefined) {
+                                state.lights.directional.intensity = savedState.lighting.directional.left;
+                                safeSetValue('directionalLight', savedState.lighting.directional.left);
+                                safeSetValue('directionalLightNum', savedState.lighting.directional.left);
+                            }
+                            if (savedState.lighting.directional.right !== undefined) {
+                                state.lights.directionalRight.intensity = savedState.lighting.directional.right;
+                                safeSetValue('directionalLightRight', savedState.lighting.directional.right);
+                                safeSetValue('directionalRightNum', savedState.lighting.directional.right);
+                            }
+                        }
+                    }
+
+                    // Restore materials
+                    if (savedState.materials) {
+                        if (savedState.materials.color) {
+                            safeSetValue('materialColor', savedState.materials.color);
+                            updateMaterialColor(savedState.materials.color);
+                        }
+                        if (savedState.materials.metalness !== undefined) {
+                            safeSetValue('metalness', savedState.materials.metalness);
+                            safeSetValue('metalnessNum', savedState.materials.metalness);
+                            updateMaterialProperty('metalness', savedState.materials.metalness);
+                        }
+                        if (savedState.materials.roughness !== undefined) {
+                            safeSetValue('roughness', savedState.materials.roughness);
+                            safeSetValue('roughnessNum', savedState.materials.roughness);
+                            updateMaterialProperty('roughness', savedState.materials.roughness);
+                        }
+                        if (savedState.materials.transparency !== undefined) {
+                            safeSetValue('transparency', savedState.materials.transparency);
+                            safeSetValue('transparencyNum', savedState.materials.transparency);
+                            updateMaterialTransparency(savedState.materials.transparency);
+                        }
+                        if (savedState.materials.transparencyMode) {
+                            safeSetValue('transparencyMode', savedState.materials.transparencyMode);
+                            state.transparencyMode = savedState.materials.transparencyMode;
+                        }
+                    }
+
+                    // Restore model rotation
+                    if (savedState.model) {
+                        if (savedState.model.rotation && state.model) {
+                            state.model.rotation.set(
+                                savedState.model.rotation.x,
+                                savedState.model.rotation.y,
+                                savedState.model.rotation.z
+                            );
+                            safeSetValue('modelRotX', radToDeg(savedState.model.rotation.x));
+                            safeSetValue('modelRotXNum', radToDeg(savedState.model.rotation.x));
+                            safeSetValue('modelRotY', radToDeg(savedState.model.rotation.y));
+                            safeSetValue('modelRotYNum', radToDeg(savedState.model.rotation.y));
+                            safeSetValue('modelRotZ', radToDeg(savedState.model.rotation.z));
+                            safeSetValue('modelRotZNum', radToDeg(savedState.model.rotation.z));
+                        }
+                        if (savedState.model.yaw !== undefined) {
+                            state.modelYaw = savedState.model.yaw;
+                            safeSetValue('modelYaw', savedState.model.yaw);
+                            safeSetValue('modelYawNum', savedState.model.yaw);
+                        }
+                        if (savedState.model.pitch !== undefined) {
+                            state.modelPitch = savedState.model.pitch;
+                            safeSetValue('modelPitch', savedState.model.pitch);
+                            safeSetValue('modelPitchNum', savedState.model.pitch);
+                        }
+                        if (savedState.model.roll !== undefined) {
+                            state.modelRoll = savedState.model.roll;
+                            safeSetValue('modelRoll', savedState.model.roll);
+                            safeSetValue('modelRollNum', savedState.model.roll);
+                        }
+                    }
+
+                    // Restore guide lines
+                    if (savedState.guideLines && Array.isArray(savedState.guideLines)) {
+                        // Update first guide line
+                        const firstLine = savedState.guideLines[0];
+                        if (firstLine) {
+                            state.guideLines[0] = { ...firstLine };
+                            safeSetValue('lineThickness', firstLine.thickness);
+                            safeSetValue('lineThicknessNum', firstLine.thickness);
+                            safeSetValue('lineColour', firstLine.colour);
+                            safeSetValue('lineTransparency', firstLine.transparency);
+                            safeSetValue('lineTransparencyNum', firstLine.transparency);
+                            safeSetValue('lineAngle', firstLine.angle);
+                            safeSetValue('lineAngleNum', firstLine.angle);
+                            safeSetValue('linePosY', firstLine.posY);
+                            safeSetValue('linePosYNum', firstLine.posY);
+                            updateGuideLine();
+                        }
+                    }
+
+                    updateCameraInfo();
+                    console.log('Scene loaded successfully');
+                    
+                } catch (parseError) {
+                    console.error('Error parsing scene file:', parseError);
+                    alert('Error loading scene file. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    } catch (error) {
+        console.error('Error loading scene:', error);
+        alert('Error loading scene. Please try again.');
     }
 }
 

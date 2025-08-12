@@ -224,6 +224,25 @@ npm run deploy     # Deploy to GitHub Pages
 **External Surface Extraction (v2.10.0)**: Complete hybrid architecture for extracting only external surfaces from high-poly models - Phase 1: Three.js ConvexGeometry for immediate convex hull extraction, Phase 2/3: Prepared integration for WASM alpha shapes and MeshLabJS advanced algorithms. Includes new transparency mode "External Surface Only" and comprehensive UI controls.
 **Unified Surface Transparency (v2.9.5)**: Five transparency modes for high-poly models - Unified Surface (optimized blending for clean high-poly appearance), WBOIT (Alpha Test approach), Advanced (DoubleSide+adaptive blending), Standard, Dithered (Bayer pattern). Resolved transparency range issues for smooth 1.0→0.0 opacity control.
 
+### Comprehensive Save/Load System (v2.10.0+)
+**Save/Load Architecture**: Complete scene state persistence with `.3dview` file format supporting camera position, model transforms, lighting settings, materials, and guide lines. JSON-based structure with version compatibility and error recovery.
+
+**Features**:
+- **SAVE SCENE Button**: Exports complete viewer state to downloadable `.3dview` file with timestamp
+- **LOAD SCENE Button**: Imports viewer state from `.3dview` files with validation and error handling
+- **State Coverage**: Camera position/rotation, model transforms (XYZ + Yaw/Pitch/Roll), lighting modes and positions, material properties, guide line configurations
+- **File Format**: Human-readable JSON with metadata, version tracking, and structured data sections
+- **Model Handling**: Preserves transforms and settings for uploaded models (original file data not embedded)
+- **Integration**: Seamless with existing state management, uses current UI synchronization functions
+- **Error Recovery**: Comprehensive validation, user feedback via upload status system, graceful degradation
+
+**Technical Implementation**:
+- `saveViewerState()`: Serializes complete state object to JSON download
+- `loadViewerState()`: File dialog-based import with state restoration
+- Event handlers on `button1` (save) and `button2` (load) in upload area
+- Compatible with all model formats (.obj, .stl, .gltf, .glb, .dae, .fbx)
+- Maintains existing preset system compatibility
+
 ### Code Impact
 - Functions preserved but commented out with "SUNSET" markers
 - Presets automatically ignore sunset control data
@@ -258,6 +277,9 @@ npm run deploy     # Deploy to GitHub Pages
 ### File Handling (~189-281)
 `validateFile()`, `resetModelControls()`, `resetMaterialControlsToDefault()`, `handleFileUpload()`
 
+### Save/Load System (~3665-3993)
+`saveViewerState()`, `loadViewerState()` - Complete scene state persistence with `.3dview` format
+
 ### Mouse Events (~284-387)
 `handleMouseDown()`, `handleMouseMove()`, `handleMouseUp()`, `handleMouseWheel()`, `handleContextMenu()`
 
@@ -280,8 +302,9 @@ npm run deploy     # Deploy to GitHub Pages
 2. Test material controls on all model types  
 3. Test file uploads (OBJ/STL/GLTF/GLB), drag & drop, edge cases
 4. Verify scaling consistency, guide lines, lighting controls
-5. Test build (`npm run build` → `npm run preview`) and deployment
-6. Check console for errors, verify capture functionality
+5. **Test save/load system**: SAVE SCENE downloads `.3dview` file, LOAD SCENE restores complete state
+6. Test build (`npm run build` → `npm run preview`) and deployment
+7. Check console for errors, verify capture functionality
 
 ### Code Standards
 - **Functions**: Top-level scope, never nested

@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model Viewer</title>
-    <!-- Minimal cache control for development -->
-    <meta http-equiv="Cache-Control" content="no-cache">
-    <link rel="stylesheet" href="style.css">
+    <!-- Strong cache control for development -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="stylesheet" href="style.css?v=1723395020">
 </head>
 <body>
     <div class="container">
@@ -29,15 +31,19 @@
                     <!-- Data columns in the middle -->
                     <div class="data-columns-container">
                         <div class="data-column">
-                            <div class="data-label">Model Rotation:</div>
+                            <div class="data-label">Model Rotation</div>
                             <div class="data-values" id="model-rotation-display">0° 0° 0°</div>
                         </div>
                         <div class="data-column">
-                            <div class="data-label">Camera Position:</div>
+                            <div class="data-label">Model Attitude</div>
+                            <div class="data-values" id="model-attitude-display">0° 0° 0°</div>
+                        </div>
+                        <div class="data-column">
+                            <div class="data-label">Camera Position</div>
                             <div class="data-values" id="camera-position-display">0 0 5</div>
                         </div>
                         <div class="data-column">
-                            <div class="data-label">Camera Rotation:</div>
+                            <div class="data-label">Camera Rotation</div>
                             <div class="data-values" id="camera-rotation-display">0° 0° 0°</div>
                         </div>
                     </div>
@@ -71,77 +77,97 @@
                         <span class="interaction-action">Zoom Camera</span>
                     </div>
                     <div class="interaction-row">
+                        <span class="interaction-label"><b>Alt + Left-drag:</b></span>
+                        <span class="interaction-action">Rotate Camera</span>
+                    </div>
+                    <div class="interaction-row">
                         <span class="interaction-label"><b>F Key:</b></span>
                         <span class="interaction-action">Focus Model on Screen</span>
                     </div>
                 </div>
             </div>
-            <div id="light-controls" class="info-display">
-                <div class="title-container">
-                    <h4>LIGHTING</h4>
-                    <button id="complexModeButton" class="button small">COMPLEX</button>
-                    <button id="basicModeButton" class="button small">BASIC</button>
-                </div>
-                <div class="lighting-controls-container">
-                    <div class="light-slider-container left-slider">
-                        <input type="range" id="directionalLight" class="vertical-slider" min="0" max="2" step="0.1" value="0.6" orient="vertical">
-                    </div>
-                    <div class="light-pad">
-                        <!-- SUNSET: Torch icons replaced with sun emoji and directional arrows -->
-                        <!-- <div id="left-light-icon" class="light-icon">🔦</div> -->
-                        <!-- <div id="right-light-icon" class="light-icon flipped">🔦</div> -->
-                        <div id="left-light-icon" class="light-icon">☀️</div>
-                        <div id="right-light-icon" class="light-icon flipped">☀️</div>
-                        <div id="left-direction-arrow" class="direction-arrow left-arrow">
-                            <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10 2 L18 10 L14 10 L14 18 L6 18 L6 10 L2 10 Z" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
-                            </svg>
+            <!-- MASTER RIGHT-UI GRID CONTAINER -->
+            <div class="right-ui-grid">
+                <!-- LIGHTING GRID AREA -->
+                <div class="lighting-grid-area">
+                    <div class="lighting-section">
+                        <div class="lighting-header">
+                            <div class="lighting-title">LIGHTING</div>
+                            <div class="lighting-buttons">
+                                <button type="button" id="complexModeButton" class="mode-button">COMPLEX</button>
+                                <button type="button" id="basicModeButton" class="mode-button active">BASIC</button>
+                            </div>
                         </div>
-                        <div id="right-direction-arrow" class="direction-arrow right-arrow">
-                            <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10 2 L18 10 L14 10 L14 18 L6 18 L6 10 L2 10 Z" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
-                            </svg>
+                        
+                        <div class="lighting-controls">
+                            <div class="slider-group">
+                                <input type="range" id="directionalLight" min="0" max="2" step="0.1" value="0.6" class="vertical-slider" orient="vertical">
+                                <input type="number" id="directionalLightNum" min="0" max="2" step="0.1" value="0.6" class="slider-value">
+                            </div>
+                            
+                            <div class="sun-control">
+                                <div id="left-light-icon" class="light-icon sun-icon">☀️</div>
+                                <div id="right-light-icon" class="light-icon sun-icon flipped">☀️</div>
+                                <div id="left-direction-arrow" class="direction-arrow left-arrow">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 2 L18 10 L14 10 L14 18 L6 18 L6 10 L2 10 Z" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
+                                    </svg>
+                                </div>
+                                <div id="right-direction-arrow" class="direction-arrow right-arrow">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 2 L18 10 L14 10 L14 18 L6 18 L6 10 L2 10 Z" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
+                                    </svg>
+                                </div>
+                                <label class="corner-label left-label">LEFT</label>
+                                <label class="corner-label right-label">RIGHT</label>
+                            </div>
+                            
+                            <div class="slider-group">
+                                <input type="range" id="directionalLightRight" min="0" max="2" step="0.1" value="0.0" class="vertical-slider" orient="vertical">
+                                <input type="number" id="directionalRightNum" min="0" max="2" step="0.1" value="0.0" class="slider-value">
+                            </div>
                         </div>
-                        <label class="corner-label left-label">LEFT</label>
-                        <label class="corner-label right-label">RIGHT</label>
-                    </div>
-                    <div class="light-slider-container right-slider">
-                        <input type="range" id="directionalLightRight" class="vertical-slider" min="0" max="2" step="0.1" value="0.0" orient="vertical">
+                        
+                        <div class="ambient-label">AMBIENT LIGHT</div>
+                        <div class="ambient-controls">
+                            <input type="range" id="ambientLight" min="0" max="1" step="0.1" value="0.4" class="horizontal-slider">
+                            <input type="number" id="ambientLightNum" min="0" max="2" step="0.1" value="0.4" class="slider-value">
+                        </div>
                     </div>
                 </div>
-                <div class="ambient-light-controls">
-                    <label class="ambient-label">Ambient Light</label>
-                    <div class="ambient-slider-container">
-                        <input type="range" id="ambientLight" class="horizontal-slider" min="0" max="1" step="0.1" value="0.4">
-                        <input type="number" id="ambientLightNum" class="number-input-small" min="0" max="1" step="0.1" value="0.4">
+
+                <!-- UPLOAD GRID AREA -->
+                <div class="upload-grid-area">
+                    <div class="upload-area">
+                        <div id="uploadStatus" class="upload-status"></div>
+                        <div class="model-buttons">
+                            <button id="torusButton" class="button secondary small">TORUS</button>
+                            <button id="libraryButton" class="button secondary small disabled" disabled>LIBRARY</button>
+                        </div>
+                        <div class="file-input">
+                            <div id="dropZone" class="drop-zone">
+                                <div class="drop-zone-content">
+                                    <div class="drop-icon">📁</div>
+                                    <div class="drop-text">
+                                        <div><em>Drag-and-drop</em><br>your 3D model here</div>
+                                        <div class="drop-subtext">or click to browse</div>
+                                    </div>
+                                    <div class="supported-formats">
+                                        Supports: .obj, .stl, .gltf, .glb, .dae
+                                    </div>
+                                </div>
+                                <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae,.fbx" style="display: none;" />
+                            </div>
+                        </div>
+                        <div class="model-buttons-bottom">
+                            <button id="saveSceneButton" class="button secondary small">SAVE SCENE</button>
+                            <button id="loadSceneButton" class="button secondary small">LOAD SCENE</button>
+                        </div>
                     </div>
                 </div>
             </div>
+            
         <div id="guideLineOverlay" class="guide-line-overlay">
-        </div>
-        
-        <!-- Bottom-right upload area -->
-        <div class="upload-area">
-            <div id="uploadStatus" class="upload-status"></div>
-            <div class="model-buttons">
-                <button id="torusButton" class="button secondary small">TORUS</button>
-                <button id="libraryButton" class="button secondary small disabled" disabled>LIBRARY</button>
-            </div>
-            <div class="file-input">
-                <div id="dropZone" class="drop-zone">
-                    <div class="drop-zone-content">
-                        <div class="drop-icon">📁</div>
-                        <div class="drop-text">
-                            <div><em>Drag-and-drop</em><br>your 3D model here</div>
-                            <div class="drop-subtext">or click to browse</div>
-                        </div>
-                        <div class="supported-formats">
-                            Supports: .obj, .stl, .gltf, .glb, .dae
-                        </div>
-                    </div>
-                    <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae" style="display: none;" />
-                </div>
-            </div>
         </div>
         </div>
         
@@ -287,30 +313,27 @@
                             <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
                         </div>
                     </div>
-                    <!-- SUNSET: Camera Rotation Controls - Removed from UI but functions preserved -->
-                    <!-- 
                     <div class="control-group">
                         <label>Rotation X</label>
                         <div class="slider-container">
-                            <input type="range" id="rotX" class="slider-input" min="-180" max="180" step="1" value="0">
-                            <input type="number" id="rotXNum" class="number-input" min="-180" max="180" step="1" value="0">
+                            <input type="range" id="rotX" class="slider-input" min="-360" max="360" step="1" value="0">
+                            <input type="number" id="rotXNum" class="number-input" min="-360" max="360" step="1" value="0">
                         </div>
                     </div>
                     <div class="control-group">
                         <label>Rotation Y</label>
                         <div class="slider-container">
-                            <input type="range" id="rotY" class="slider-input" min="-180" max="180" step="1" value="0">
-                            <input type="number" id="rotYNum" class="number-input" min="-180" max="180" step="1" value="0">
+                            <input type="range" id="rotY" class="slider-input" min="-360" max="360" step="1" value="0">
+                            <input type="number" id="rotYNum" class="number-input" min="-360" max="360" step="1" value="0">
                         </div>
                     </div>
                     <div class="control-group">
                         <label>Rotation Z</label>
                         <div class="slider-container">
-                            <input type="range" id="rotZ" class="slider-input" min="-180" max="180" step="1" value="0">
-                            <input type="number" id="rotZNum" class="number-input" min="-180" max="180" step="1" value="0">
+                            <input type="range" id="rotZ" class="slider-input" min="-360" max="360" step="1" value="0">
+                            <input type="number" id="rotZNum" class="number-input" min="-360" max="360" step="1" value="0">
                         </div>
                     </div>
-                    -->
                     <button id="resetCamera" class="button">Reset Camera View</button>
                 </div>
             </div>
