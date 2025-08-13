@@ -1634,13 +1634,29 @@ function initOrientationWidget() {
         // Create dedicated scene for widget
         widget.scene = new THREE.Scene();
         
-        // Create axes helper
-        const axesHelper = new THREE.AxesHelper(2);
+        // Create axes helper with shorter lines (2/3 of original length)
+        const axesHelper = new THREE.AxesHelper(1.33); // Shortened from 2 to 1.33 (2/3)
+        
+        // Make axes lines much thicker
+        if (axesHelper.material) {
+            axesHelper.material.linewidth = 8; // Even thicker for better visibility
+        }
+        
         widget.scene.add(axesHelper);
         widget.axesHelper = axesHelper;
         
+        // Create group for labels that will rotate with axes
+        widget.labelGroup = new THREE.Group();
+        widget.scene.add(widget.labelGroup);
+        
+        // Add axis labels (X, Y, Z) that stay upright
+        createAxisLabels(widget);
+        
         // Create compass
         createOrientationCompass();
+        
+        // Add mouse interaction to widget
+        setupWidgetInteraction(widget, canvas);
         
         console.log('Orientation widget initialized successfully, scene children:', widget.scene.children.length);
     } catch (error) {
@@ -1668,6 +1684,57 @@ function createOrientationCompass() {
     widget.compass = compass;
 }
 
+function createAxisLabels(widget) {
+    const labels = ['X', 'Y', 'Z'];
+    const colors = ['#ff0000', '#00ff00', '#0000ff']; // Red, Green, Blue (matching Three.js AxesHelper)
+    const positions = [
+        new THREE.Vector3(1.7, 0, 0), // X axis end (just beyond axis with small gap) - RED
+        new THREE.Vector3(0, 1.7, 0), // Y axis end (just beyond axis with small gap) - GREEN
+        new THREE.Vector3(0, 0, 1.7)  // Z axis end (just beyond axis with small gap) - BLUE
+    ];
+    
+    widget.axisLabels = [];
+    
+    labels.forEach((label, index) => {
+        // Create separate canvas for each label
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 64;
+        canvas.height = 64;
+        
+        // Clear canvas and draw this specific label
+        context.clearRect(0, 0, 64, 64);
+        context.fillStyle = colors[index];
+        context.font = 'bold 48px Arial'; // Same size for all labels
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(label, 32, 32);
+        
+        // Create texture from this label's canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        
+        // Create sprite material that stays upright
+        const spriteMaterial = new THREE.SpriteMaterial({ 
+            map: texture,
+            transparent: true,
+            alphaTest: 0.1
+        });
+        
+        // Create sprite
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.position.copy(positions[index]);
+        sprite.scale.set(0.5, 0.5, 1); // Back to original scale
+        
+        // Debug: Add name to identify labels
+        sprite.name = `${label}_label`;
+        console.log(`Created ${label} label at position:`, positions[index].clone());
+        
+        widget.labelGroup.add(sprite);
+        widget.axisLabels.push(sprite);
+    });
+}
+
 function updateOrientationWidget() {
     if (!state.model || !state.orientationWidget.enabled) return;
     
@@ -1684,6 +1751,16 @@ function updateOrientationWidget() {
         // Mirror model rotation in widget (opposite to show relative orientation)
         widget.axesHelper.rotation.copy(modelRotation);
         
+        // Also rotate the label group to keep labels at axis ends
+        if (widget.labelGroup) {
+            widget.labelGroup.rotation.copy(modelRotation);
+        }
+        
+        // Update axis label visibility based on orientation
+        if (widget.axisLabels && widget.camera) {
+            updateAxisLabelVisibility(widget);
+        }
+        
         // Update last rotation for comparison
         widget.lastModelRotation = {
             x: modelRotation.x,
@@ -1691,6 +1768,133 @@ function updateOrientationWidget() {
             z: modelRotation.z
         };
     }
+}
+
+function updateAxisLabelVisibility(widget) {
+    if (!widget.axisLabels || !widget.camera) return;
+    
+    // Get camera direction (looking towards negative Z in widget camera)
+    const cameraDirection = new THREE.Vector3(0, 0, -1);
+    cameraDirection.applyQuaternion(widget.camera.quaternion);
+    
+    // Define axis directions in world space after rotation
+    const axisDirections = [
+        new THREE.Vector3(1, 0, 0), // X axis
+        new THREE.Vector3(0, 1, 0), // Y axis  
+        new THREE.Vector3(0, 0, 1)  // Z axis
+    ];
+    
+    // Apply the same rotation as the axes helper
+    axisDirections.forEach(dir => {
+        dir.applyEuler(widget.axesHelper.rotation);
+    });
+    
+    // Only hide labels when axis is nearly parallel to camera direction (pointing directly at or away from camera)
+    widget.axisLabels.forEach((label, index) => {
+        const dotProduct = Math.abs(axisDirections[index].dot(cameraDirection));
+        
+        // Hide only when axis is nearly parallel to camera view (within 5 degrees of pointing directly towards/away)
+        const parallelThreshold = 0.996; // cos(5°) ≈ 0.996
+        label.visible = dotProduct < parallelThreshold;
+    });
+}
+
+function setupWidgetInteraction(widget, canvas) {
+    let isDragging = false;
+    let previousMouse = { x: 0, y: 0 };
+    let rotationSpeed = 0.01;
+    
+    // Double-click to reset model rotation
+    canvas.addEventListener('dblclick', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (state.model) {
+            // Reset model rotation to (0, 0, 0)
+            state.model.rotation.set(0, 0, 0);
+            
+            // Update UI controls to match
+            safeSetValue('modelRotX', 0);
+            safeSetValue('modelRotXNum', 0);
+            safeSetValue('modelRotY', 0);
+            safeSetValue('modelRotYNum', 0);
+            safeSetValue('modelRotZ', 0);
+            safeSetValue('modelRotZNum', 0);
+            
+            // Update camera info display
+            updateCameraInfo();
+            
+            console.log('Model rotation reset to (0, 0, 0)');
+        }
+    });
+    
+    // Mouse down - start dragging
+    canvas.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        isDragging = true;
+        const rect = canvas.getBoundingClientRect();
+        previousMouse = {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+        
+        canvas.style.cursor = 'grabbing';
+    });
+    
+    // Mouse move - rotate model
+    canvas.addEventListener('mousemove', (event) => {
+        if (!isDragging || !state.model) return;
+        
+        event.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const currentMouse = {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+        
+        // Calculate mouse delta
+        const deltaX = currentMouse.x - previousMouse.x;
+        const deltaY = currentMouse.y - previousMouse.y;
+        
+        // Convert to rotation (trackball style)
+        const rotationY = deltaX * rotationSpeed; // Horizontal movement = Y rotation
+        const rotationX = deltaY * rotationSpeed; // Vertical movement = X rotation
+        
+        // Apply rotation to model
+        state.model.rotation.y += rotationY;
+        state.model.rotation.x += rotationX;
+        
+        // Update UI controls to match
+        const rotX = state.model.rotation.x * 180 / Math.PI;
+        const rotY = state.model.rotation.y * 180 / Math.PI;
+        const rotZ = state.model.rotation.z * 180 / Math.PI;
+        
+        safeSetValue('modelRotX', Math.round(rotX));
+        safeSetValue('modelRotXNum', Math.round(rotX));
+        safeSetValue('modelRotY', Math.round(rotY));
+        safeSetValue('modelRotYNum', Math.round(rotY));
+        safeSetValue('modelRotZ', Math.round(rotZ));
+        safeSetValue('modelRotZNum', Math.round(rotZ));
+        
+        // Update camera info display
+        updateCameraInfo();
+        
+        previousMouse = currentMouse;
+    });
+    
+    // Mouse up - stop dragging
+    const stopDragging = () => {
+        isDragging = false;
+        canvas.style.cursor = 'grab';
+    };
+    
+    canvas.addEventListener('mouseup', stopDragging);
+    canvas.addEventListener('mouseleave', stopDragging);
+    
+    // Set initial cursor
+    canvas.style.cursor = 'grab';
 }
 
 function renderOrientationWidget() {
@@ -2936,6 +3140,31 @@ function loadCollapsedStates() {
     }
 }
 
+function setupInstructionsToggle() {
+    const instructionsPanel = document.getElementById('instructions');
+    const titleHint = instructionsPanel.querySelector('.title-hint');
+    
+    if (!instructionsPanel || !titleHint) return;
+    
+    // Double-click to toggle
+    instructionsPanel.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isCollapsed = instructionsPanel.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            instructionsPanel.classList.remove('collapsed');
+            titleHint.textContent = '(Double-click to hide)';
+        } else {
+            // Collapse
+            instructionsPanel.classList.add('collapsed');
+            titleHint.textContent = '(Double-click to open)';
+        }
+    });
+}
+
 function setupLightControls() {
     const lightPad = document.querySelector('.sun-control');
     const leftLightIcon = document.getElementById('left-light-icon');
@@ -3466,6 +3695,7 @@ async function initializeViewer() {
         setupLightControls();
         setupGuideLineControls(); // Set up guide line controls after DOM is ready
         setupCollapsibleSections(); // FIXED: Initialize collapsible sections functionality
+        setupInstructionsToggle(); // Initialize instructions panel toggle
         loadPresetsList();
         updateLightingModeButtons(); // Initialize button states
         setupMouseControls(); // Call here after DOM is ready

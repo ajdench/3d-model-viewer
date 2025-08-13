@@ -562,6 +562,7 @@
             border-radius: 8px; /* Same as coordinate boxes */
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Same shadow as coordinate boxes */
             margin-left: 15px; /* Match title alignment */
+            margin-top: 7px; /* Align top with coordinate boxes (adjusted by 5px) */
         }
         
         /* Canvas styling within the box */
@@ -569,19 +570,19 @@
             border-radius: 4px; /* Slightly smaller radius for canvas inside box */
         }
 
-        /* Data columns styling - restored to original */
+        /* Data columns styling with proper grouping */
         .data-columns-container {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            column-gap: 5px; /* Default gap between columns */
+            grid-template-columns: 1fr 5px 1fr 10px 1fr 5px 1fr;
             align-items: start;
             margin-top: 4px; /* Match VIEW title position to align with LIGHTING baseline */
         }
         
-        /* Create larger gap between Model and Camera sections */
-        .data-columns-container .data-column:nth-child(3) {
-            margin-left: 15px; /* Additional 15px gap (total 20px with 5px column-gap) */
-        }
+        /* Position columns in the grid with proper spacing */
+        .data-columns-container .data-column:nth-child(1) { grid-column: 1; } /* Model Rotation */
+        .data-columns-container .data-column:nth-child(2) { grid-column: 3; } /* Model Attitude */  
+        .data-columns-container .data-column:nth-child(3) { grid-column: 5; } /* Camera Position */
+        .data-columns-container .data-column:nth-child(4) { grid-column: 7; } /* Camera Rotation */
 
         .data-column {
             display: flex;
@@ -596,10 +597,11 @@
             text-transform: uppercase;
             font-weight: bold;
             letter-spacing: 0.5px;
-            margin-bottom: 4px;
-            margin-top: 4px; /* Reverted - keep original position */
+            margin-bottom: 9.5px; /* Compensated to keep boxes in same position */
+            margin-top: -1.5px; /* Move titles down 2.5px from previous position */
             padding-top: 3px; /* Subtle adjustment to align text baseline with VIEW/LIGHTING titles */
             font-family: 'Arial', sans-serif;
+            /* TODO: Formalize these hardcoded spacing adjustments into calculated values */
         }
 
         .data-values {
@@ -613,7 +615,7 @@
 
         /* Coordinate value boxes - fixed size matching widget box */
         .coordinate-value-box {
-            font-size: 12px;
+            font-size: 11px; /* Smaller to fit -180° -180° -180° */
             color: #333;
             font-weight: normal;
             font-family: 'Arial', sans-serif; /* Match rest of tool font */
@@ -621,7 +623,7 @@
             border: none; /* Borderless design matching LIGHTING */
             border-radius: 8px; /* Same as sun-control */
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Same shadow as LIGHTING boxes */
-            padding: 6px; /* Reduced padding for compact design */
+            padding: 6px; /* Equal padding */
             text-align: center;
             height: 32px; /* Fixed height for consistency */
             width: 120px; /* Fixed width matching widget box */
@@ -659,7 +661,7 @@
         }
 
         #instructions {
-            width: 315px; /* Adjusted to match #info width */
+            width: 300px; /* Wide enough for "F Key: Focus Model on Screen" without wrapping */
         }
 
         .info-display h4 {
@@ -1056,6 +1058,7 @@
             height: 100%;
             overflow: hidden;
             pointer-events: none; /* Allow clicks to pass through to the canvas */
+            z-index: 1; /* Behind UI elements (z-index: 10) but above canvas */
         }
 
         .guide-line {
@@ -1066,14 +1069,75 @@
             height: 5px; /* Default thickness */
             background-color: #FFFF00; /* Default yellow color - will be overridden by JS */
             transform-origin: 50% 50%; /* Always rotate from the true center of the element */
+            z-index: 1; /* Behind UI elements (z-index: 10) but above canvas */
         }
 
+        /* Collapsible instructions panel */
         .instructions-display {
             position: absolute;
             bottom: 10px;
             left: 10px;
-            width: 280px;
+            width: 180px; /* Much smaller to test if changes are applying */
             z-index: 10;
+            background: rgba(250, 250, 250, 0.5); /* Transparent background like other panels */
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+            padding: 0;
+        }
+        
+        .instructions-display.collapsed {
+            height: 32px; /* Compact collapsed height with equal padding */
+        }
+        
+        .instructions-display.collapsed .instructions-title {
+            display: flex;
+            align-items: center; /* Center text vertically when collapsed */
+            height: 32px;
+            padding: 0 10px; /* No vertical padding when using flexbox centering */
+        }
+        
+        .instructions-display:not(.collapsed) {
+            max-height: 300px; /* Enough for all instructions */
+        }
+        
+        .instructions-display.collapsed .interaction-table {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .instructions-display:not(.collapsed) .interaction-table {
+            opacity: 1;
+            padding: 0 10px 2px 10px; /* Minimal bottom padding for tight spacing */
+        }
+        
+        .instructions-title {
+            margin: 0;
+            padding: 8px 10px; /* Reduced vertical padding for compact collapsed state */
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2; /* Tighter line height */
+            position: relative;
+        }
+        
+        .title-main {
+            font-weight: bold;
+        }
+        
+        .title-hint {
+            font-weight: normal;
+            color: #999;
+            text-transform: none; /* Override uppercase from parent */
+            position: absolute;
+            left: 159px; /* Adjusted to better align with action text column */
+            top: 50%;
+            transform: translateY(-50%); /* Center vertically */
         }
         
         .instructions-display p {
@@ -1112,7 +1176,7 @@
         /* Responsive positioning for different screen sizes */
         @media (max-width: 1200px) {
             .instructions-display {
-                width: 250px;
+                width: 170px; /* Much smaller to test */
                 font-size: 11px;
             }
             
@@ -1126,7 +1190,7 @@
             .instructions-display {
                 bottom: 10px;
                 left: 10px;
-                width: 220px;
+                width: 160px; /* Much smaller to test */
                 font-size: 10px;
                 padding: 10px;
             }
