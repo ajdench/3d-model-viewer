@@ -825,22 +825,16 @@ function updateLightingModeButtons() {
     
     if (basicButton && complexButton) {
         if (state.lightingMode === 'basic') {
-            // BASIC selected - green
-            basicButton.style.opacity = '1';
-            basicButton.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
-            // COMPLEX unselected - grey
-            complexButton.style.opacity = '0.6';
-            complexButton.style.background = 'linear-gradient(45deg, #ccc, #999)';
+            // BASIC selected - use CSS active class
+            basicButton.classList.add('active');
+            complexButton.classList.remove('active');
             // Hide direction arrows in BASIC mode
             if (leftArrow) leftArrow.style.display = 'none';
             if (rightArrow) rightArrow.style.display = 'none';
         } else {
-            // COMPLEX selected - red
-            complexButton.style.opacity = '1';
-            complexButton.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5a24)';
-            // BASIC unselected - grey
-            basicButton.style.opacity = '0.6';
-            basicButton.style.background = 'linear-gradient(45deg, #ccc, #999)';
+            // COMPLEX selected - use CSS active class  
+            complexButton.classList.add('active');
+            basicButton.classList.remove('active');
             
             // Show direction arrows in COMPLEX mode (positioned dynamically by drag handler)
             if (leftArrow && rightArrow) {
@@ -1455,6 +1449,15 @@ function updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, 
     const cameraRotationDisplay = document.getElementById('camera-rotation-display');
     if (cameraRotationDisplay) {
         cameraRotationDisplay.textContent = `${Math.round(camRotXDeg)}° ${Math.round(camRotYDeg)}° ${Math.round(camRotZDeg)}°`;
+    }
+    
+    // Update Model Attitude display (Yaw/Pitch/Roll)
+    const modelAttitudeDisplay = document.getElementById('model-attitude-display');
+    if (modelAttitudeDisplay) {
+        const yaw = state.yaw || 0;
+        const pitch = state.pitch || 0;
+        const roll = state.roll || 0;
+        modelAttitudeDisplay.textContent = `${Math.round(yaw)}° ${Math.round(pitch)}° ${Math.round(roll)}°`;
     }
     
     // SUNSET: Model Name display removed
@@ -2521,6 +2524,11 @@ function setupControls() {
     syncSliderNumber('raycastSamples', 'raycastSamplesNum');
     syncSliderNumber('visibilityThreshold', 'visibilityThresholdNum');
 
+    // Lighting Controls Synchronization (MISSING - CRITICAL FIX)
+    syncSliderNumber('directionalLight', 'directionalLightNum');
+    syncSliderNumber('directionalLightRight', 'directionalRightNum'); 
+    syncSliderNumber('ambientLight', 'ambientLightNum');
+
     // Camera Position Controls Event Listeners
     safeAddEventListener('posX', 'input', (e) => {
         if (state.camera) {
@@ -2853,7 +2861,7 @@ function loadCollapsedStates() {
 }
 
 function setupLightControls() {
-    const lightPad = document.querySelector('.light-pad');
+    const lightPad = document.querySelector('.sun-control');
     const leftLightIcon = document.getElementById('left-light-icon');
     const rightLightIcon = document.getElementById('right-light-icon');
 
@@ -2980,7 +2988,7 @@ function updateArrowPosition() {
     const rightIcon = document.getElementById('right-light-icon');
     const leftArrow = document.getElementById('left-direction-arrow');
     const rightArrow = document.getElementById('right-direction-arrow');
-    const lightPad = document.querySelector('.light-pad');
+    const lightPad = document.querySelector('.sun-control');
 
     if (!leftIcon || !rightIcon || !leftArrow || !rightArrow || !lightPad) return;
 
@@ -3490,11 +3498,22 @@ function loadViewerState() {
     try {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.3dview,.json';
+        input.accept = '.3dview,.json,application/json,text/plain';
         input.onchange = function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
+            // Validate file extension
+            const fileName = file.name.toLowerCase();
+            const validExtensions = ['.3dview', '.json'];
+            const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+            
+            if (!hasValidExtension) {
+                alert('Please select a .3dview or .json file.');
+                return;
+            }
+
+            console.log('Loading scene file:', file.name, 'Size:', file.size, 'bytes');
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -3555,7 +3574,7 @@ function loadViewerState() {
                     if (savedState.materials) {
                         if (savedState.materials.color) {
                             safeSetValue('materialColor', savedState.materials.color);
-                            updateMaterialColor(savedState.materials.color);
+                            updateMaterialColour(savedState.materials.color);
                         }
                         if (savedState.materials.metalness !== undefined) {
                             safeSetValue('metalness', savedState.materials.metalness);
@@ -3612,29 +3631,52 @@ function loadViewerState() {
 
                     // Restore guide lines
                     if (savedState.guideLines && Array.isArray(savedState.guideLines)) {
-                        // Update first guide line
-                        const firstLine = savedState.guideLines[0];
-                        if (firstLine) {
-                            state.guideLines[0] = { ...firstLine };
-                            safeSetValue('lineThickness', firstLine.thickness);
-                            safeSetValue('lineThicknessNum', firstLine.thickness);
-                            safeSetValue('lineColour', firstLine.colour);
-                            safeSetValue('lineTransparency', firstLine.transparency);
-                            safeSetValue('lineTransparencyNum', firstLine.transparency);
-                            safeSetValue('lineAngle', firstLine.angle);
-                            safeSetValue('lineAngleNum', firstLine.angle);
-                            safeSetValue('linePosY', firstLine.posY);
-                            safeSetValue('linePosYNum', firstLine.posY);
-                            updateGuideLine();
-                        }
+                        // Clear existing guide lines except the first one (keep it for controls)
+                        const currentFirstLine = state.guideLines[0];
+                        
+                        // Clear all additional guide line controls
+                        const additionalControls = document.querySelectorAll('.control-section[data-guideline-id]');
+                        additionalControls.forEach(control => control.remove());
+                        
+                        // Reset guide lines array to empty
+                        state.guideLines = [];
+                        
+                        // Restore all guide lines from saved data
+                        savedState.guideLines.forEach((savedLine, index) => {
+                            // Add line to state
+                            const restoredLine = { ...savedLine };
+                            state.guideLines.push(restoredLine);
+                            
+                            if (index === 0) {
+                                // Update first guide line controls (main controls)
+                                safeSetValue('lineThickness', savedLine.thickness);
+                                safeSetValue('lineThicknessNum', savedLine.thickness);
+                                safeSetValue('lineColour', savedLine.colour);
+                                safeSetValue('lineTransparency', savedLine.transparency);
+                                safeSetValue('lineTransparencyNum', savedLine.transparency);
+                                safeSetValue('lineAngle', savedLine.angle);
+                                safeSetValue('lineAngleNum', savedLine.angle);
+                                safeSetValue('linePosY', savedLine.posY);
+                                safeSetValue('linePosYNum', savedLine.posY);
+                            } else {
+                                // Create additional guide line controls for extra lines
+                                window.addGuideLineControl(restoredLine);
+                            }
+                        });
+                        
+                        // Update guide line titles and render
+                        window.updateGuideLineTitles();
+                        updateGuideLine();
                     }
 
                     updateCameraInfo();
-                    console.log('Scene loaded successfully');
+                    console.log('Scene loaded successfully from:', file.name);
+                    alert('Scene loaded successfully!');
                     
                 } catch (parseError) {
                     console.error('Error parsing scene file:', parseError);
-                    alert('Error loading scene file. Please check the file format.');
+                    console.error('File content preview:', e.target.result?.substring(0, 200));
+                    alert(`Error loading scene file: ${parseError.message}\n\nPlease ensure the file is a valid .3dview or JSON file created by the Save Scene function.`);
                 }
             };
             reader.readAsText(file);
