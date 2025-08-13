@@ -1449,7 +1449,7 @@ function updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, 
     // Update Camera Rotation display (restored from SUNSET)
     const cameraRotationDisplay = document.getElementById('camera-rotation-display');
     if (cameraRotationDisplay) {
-        cameraRotationDisplay.textContent = `${Math.round(rotXDeg)}° ${Math.round(rotYDeg)}° ${Math.round(rotZDeg)}°`;
+        cameraRotationDisplay.textContent = `${Math.round(camRotXDeg)}° ${Math.round(camRotYDeg)}° ${Math.round(camRotZDeg)}°`;
     }
     
     // Update Model Attitude display (Yaw/Pitch/Roll)
@@ -3449,8 +3449,14 @@ function initThreeJS() {
     // Start render loop
     animate();
     
-    // Hide loading
-    document.getElementById('loading').style.display = 'none';
+    // Hide loading screen
+    const loadingEl = document.getElementById('loading');
+    if (loadingEl) {
+        loadingEl.style.display = 'none';
+        console.log('✅ Loading screen hidden successfully');
+    } else {
+        console.warn('⚠️ Loading element not found');
+    }
 }
 
 async function initializeViewer() {

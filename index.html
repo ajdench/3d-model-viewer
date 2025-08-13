@@ -20,12 +20,11 @@
             <div class="info-panel">
                 <!-- Horizontal VIEW layout with 3D widget and data columns -->
                 <div id="horizontal-view-container" class="horizontal-view-container">
-                    <!-- VIEW section with 3D Orientation Widget (rendered as overlay) -->
+                    <!-- VIEW section with 3D Orientation Widget on the left -->
                     <div class="orientation-widget-section">
                         <h4>VIEW</h4>
-                        <div class="orientation-widget-placeholder">
-                            <!-- ViewHelper renders as overlay on main scene -->
-                            <div class="orientation-widget-info">3D Orientation Widget Active</div>
+                        <div class="orientation-widget-box">
+                            <canvas id="orientationWidget" class="orientation-widget-canvas" data-engine="three.js r179" width="120" height="120" style="width: 120px; height: 120px;"></canvas>
                         </div>
                         <!-- SUNSET: Model name removed for now -->
                         <!-- <div class="model-info">Model: Default Torus Knot</div> -->

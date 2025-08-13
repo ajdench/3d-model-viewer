@@ -157,3 +157,12 @@
 - **User Experience Transformation**: All controls now immediately update VIEW display, value boxes, and 3D models
 - **Architectural Pattern Established**: All user controls require updateCameraInfo() calls for proper synchronization
 - **ViewHelper Documentation**: Comprehensive analysis created for future Three.js ViewHelper implementation
+
+### Update: 2025-08-13 CRITICAL ARCHITECTURAL ISSUE IDENTIFIED ⚠️
+- **ROOT CAUSE DISCOVERED**: Quaternion vs Euler rotation system conflict causing Model Attitude control failures
+- **Technical Analysis**: Mouse drag (quaternion) and UI controls (Euler) competing for model rotation control
+- **Evidence**: state.modelYaw/Pitch/Roll becomes stale after mouse interactions, breaking VIEW display sync
+- **Solution Recommended**: Hybrid system with quaternion-to-Euler bidirectional synchronization
+- **Architecture Strategy**: Quaternion as ground truth, Euler as UI projection with automatic sync
+- **Implementation Plan**: 3-phase approach (Core Sync → UI Sync → Testing) estimated 35 minutes total
+- **Quality Impact**: Will restore Model Attitude controls and maintain smooth mouse interaction quality
