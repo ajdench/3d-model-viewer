@@ -1,0 +1,13 @@
+name: Minimal Test
+
+on:
+  push:
+    branches:
+      - Dev-Git-Action
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo Test
+        run: echo "Hello from GitHub Actions!"
