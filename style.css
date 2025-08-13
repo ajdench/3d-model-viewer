@@ -549,12 +549,25 @@
             margin-left: 15px; /* Match INTERACTION's left padding (15px) */
         }
 
-        .orientation-widget-canvas {
-            width: 80px;
-            height: 80px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            background: transparent;
+        .orientation-widget-placeholder {
+            width: 120px;
+            height: 120px;
+            background: rgba(250, 250, 250, 0.5); /* Same as coordinate boxes */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none; /* Borderless design matching coordinate boxes */
+            border-radius: 8px; /* Same as coordinate boxes */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Same shadow as coordinate boxes */
+        }
+        
+        .orientation-widget-info {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            border: none; /* Borderless design matching coordinate boxes */
+            border-radius: 8px; /* Same as coordinate boxes */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Same shadow as coordinate boxes */
         }
 
         /* Data columns styling - white text on transparent background */
@@ -604,15 +617,19 @@
             border: none; /* Borderless design matching LIGHTING */
             border-radius: 8px; /* Same as sun-control */
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Same shadow as LIGHTING boxes */
-            padding: 8px 12px;
+            padding: 12px 16px; /* Increased padding for better spacing */
             text-align: center;
-            min-height: 20px; /* Match LIGHTING value box height */
+            min-height: 24px; /* Increased height for better text positioning */
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 4px; /* Small gap below the title */
-            width: 100%; /* Take full width of the column, which is determined by the title */
+            margin-top: 6px; /* Slightly larger gap below the title */
+            width: 160px; /* Increased width to accommodate better spacing and longer values */
             box-sizing: border-box; /* Include padding in width calculation */
+            margin-left: auto; /* Center the box under the title */
+            margin-right: auto; /* Center the box under the title */
+            letter-spacing: 0.5px; /* Improve readability with slight letter spacing */
+            line-height: 1.2; /* Better line height for vertical centering */
         }
         
         .info-panel > * {

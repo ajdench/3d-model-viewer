@@ -4,6 +4,8 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
+// Temporarily disable ViewHelper import to fix initialization
+// import { ViewHelper } from 'three/examples/jsm/helpers/ViewHelper.js';
 
 // Global state
 let state = {
@@ -1373,14 +1375,13 @@ function updateCameraInfo() {
         const rotYDeg = radToDeg(rot.y);
         const rotZDeg = radToDeg(rot.z);
         
-        /*
+        // Update camera rotation controls
         safeSetValue('rotX', Math.round(rotXDeg));
         safeSetValue('rotY', Math.round(rotYDeg));
         safeSetValue('rotZ', Math.round(rotZDeg));
         safeSetValue('rotXNum', Math.round(rotXDeg));
         safeSetValue('rotYNum', Math.round(rotYDeg));
         safeSetValue('rotZNum', Math.round(rotZDeg));
-        */
         
         // Update model rotation controls
         const modelRotXDeg = radToDeg(modelRot.x);
@@ -1448,15 +1449,15 @@ function updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, 
     // Update Camera Rotation display (restored from SUNSET)
     const cameraRotationDisplay = document.getElementById('camera-rotation-display');
     if (cameraRotationDisplay) {
-        cameraRotationDisplay.textContent = `${Math.round(camRotXDeg)}° ${Math.round(camRotYDeg)}° ${Math.round(camRotZDeg)}°`;
+        cameraRotationDisplay.textContent = `${Math.round(rotXDeg)}° ${Math.round(rotYDeg)}° ${Math.round(rotZDeg)}°`;
     }
     
     // Update Model Attitude display (Yaw/Pitch/Roll)
     const modelAttitudeDisplay = document.getElementById('model-attitude-display');
     if (modelAttitudeDisplay) {
-        const yaw = state.yaw || 0;
-        const pitch = state.pitch || 0;
-        const roll = state.roll || 0;
+        const yaw = state.modelYaw || 0;
+        const pitch = state.modelPitch || 0;
+        const roll = state.modelRoll || 0;
         modelAttitudeDisplay.textContent = `${Math.round(yaw)}° ${Math.round(pitch)}° ${Math.round(roll)}°`;
     }
     
@@ -1619,34 +1620,26 @@ function initOrientationWidget() {
         // Create dedicated renderer for widget
         widget.renderer = new THREE.WebGLRenderer({ 
             canvas: canvas,
-            antialias: true,
             alpha: true,
+            antialias: true,
             preserveDrawingBuffer: false
         });
-        widget.renderer.setSize(80, 80);
+        widget.renderer.setSize(120, 120);
         widget.renderer.setClearColor(0x000000, 0);
         
-        // Create separate scene for widget
+        // Create dedicated camera for widget
+        widget.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+        widget.camera.position.set(0, 0, 5);
+        
+        // Create dedicated scene for widget
         widget.scene = new THREE.Scene();
         
-        // Create orthographic camera for consistent widget appearance
-        const aspect = 1; // Square canvas
-        widget.camera = new THREE.OrthographicCamera(-2 * aspect, 2 * aspect, 2, -2, 0.1, 10);
-        widget.camera.position.set(2, 2, 2);
-        widget.camera.lookAt(0, 0, 0);
+        // Create axes helper
+        const axesHelper = new THREE.AxesHelper(2);
+        widget.scene.add(axesHelper);
+        widget.axesHelper = axesHelper;
         
-        console.log('Widget camera created:', widget.camera);
-
-        // Add axes helper for orientation visualization
-        widget.axesHelper = new THREE.AxesHelper(1.5);
-        widget.scene.add(widget.axesHelper);
-        console.log('Axes helper added');
-        
-        // Add subtle lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        widget.scene.add(ambientLight);
-        
-        // Add compass/orientation indicator
+        // Create compass
         createOrientationCompass();
         
         console.log('Orientation widget initialized successfully, scene children:', widget.scene.children.length);
@@ -1656,6 +1649,7 @@ function initOrientationWidget() {
     }
 }
 
+
 function createOrientationCompass() {
     const widget = state.orientationWidget;
     
@@ -1663,10 +1657,10 @@ function createOrientationCompass() {
     const compassGeometry = new THREE.RingGeometry(1.2, 1.4, 16);
     const compassMaterial = new THREE.MeshBasicMaterial({ 
         color: 0x666666, 
-        transparent: true, 
-        opacity: 0.7 
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide 
     });
-    
     const compass = new THREE.Mesh(compassGeometry, compassMaterial);
     compass.rotation.x = -Math.PI / 2; // Lay flat
     
@@ -1686,17 +1680,11 @@ function updateOrientationWidget() {
         Math.abs(modelRotation.y - widget.lastModelRotation.y) > 0.01 ||
         Math.abs(modelRotation.z - widget.lastModelRotation.z) > 0.01;
     
-    if (rotChanged) {
-        // Sync axes helper rotation with main model
+    if (rotChanged && widget.axesHelper) {
+        // Mirror model rotation in widget (opposite to show relative orientation)
         widget.axesHelper.rotation.copy(modelRotation);
         
-        // Update compass rotation
-        if (widget.compass) {
-            widget.compass.rotation.x = -Math.PI / 2; // Keep compass flat
-            widget.compass.rotation.z = modelRotation.y; // Rotate with Y-axis
-        }
-        
-        // Store current rotation
+        // Update last rotation for comparison
         widget.lastModelRotation = {
             x: modelRotation.x,
             y: modelRotation.y,
@@ -2396,6 +2384,12 @@ function setupControls() {
             state.lights.ambient.intensity = parseFloat(e.target.value);
         }
     });
+
+    safeAddEventListener('ambientLightNum', 'input', (e) => {
+        if (state.lights.ambient) {
+            state.lights.ambient.intensity = parseFloat(e.target.value);
+        }
+    });
     
     safeAddEventListener('directionalLight', 'input', (e) => {
         if (state.lights.directionalRight) {
@@ -2403,7 +2397,19 @@ function setupControls() {
         }
     });
 
+    safeAddEventListener('directionalLightNum', 'input', (e) => {
+        if (state.lights.directionalRight) {
+            state.lights.directionalRight.intensity = parseFloat(e.target.value);
+        }
+    });
+
     safeAddEventListener('directionalLightRight', 'input', (e) => {
+        if (state.lights.directional) {
+            state.lights.directional.intensity = parseFloat(e.target.value);
+        }
+    });
+
+    safeAddEventListener('directionalRightNum', 'input', (e) => {
         if (state.lights.directional) {
             state.lights.directional.intensity = parseFloat(e.target.value);
         }
@@ -2499,7 +2505,10 @@ function setupControls() {
     syncSliderNumber('posY', 'posYNum'); 
     syncSliderNumber('posZ', 'posZNum');
     
-    // Camera Rotation Controls Synchronization - REMOVED (Elements commented out in HTML by Gemini)
+    // Camera Rotation Controls Synchronization
+    syncSliderNumber('rotX', 'rotXNum');
+    syncSliderNumber('rotY', 'rotYNum');
+    syncSliderNumber('rotZ', 'rotZNum');
     
     // Model Rotation Controls Synchronization
     syncSliderNumber('modelRotX', 'modelRotXNum');
@@ -2533,35 +2542,59 @@ function setupControls() {
     safeAddEventListener('posX', 'input', (e) => {
         if (state.camera) {
             state.camera.position.x = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('posY', 'input', (e) => {
         if (state.camera) {
             state.camera.position.y = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('posZ', 'input', (e) => {
         if (state.camera) {
             state.camera.position.z = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
 
-    // Camera Rotation Controls Event Listeners - REMOVED (Elements commented out in HTML by Gemini)
+    // Camera Rotation Controls Event Listeners
+    safeAddEventListener('rotX', 'input', (e) => {
+        if (state.camera) {
+            state.camera.rotation.x = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
+        }
+    });
+    safeAddEventListener('rotY', 'input', (e) => {
+        if (state.camera) {
+            state.camera.rotation.y = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
+        }
+    });
+    safeAddEventListener('rotZ', 'input', (e) => {
+        if (state.camera) {
+            state.camera.rotation.z = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
+        }
+    });
 
     // Model Rotation Controls Event Listeners
     safeAddEventListener('modelRotX', 'input', (e) => {
         if (state.model) {
             state.model.rotation.x = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotY', 'input', (e) => {
         if (state.model) {
             state.model.rotation.y = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotZ', 'input', (e) => {
         if (state.model) {
             state.model.rotation.z = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
         }
     });
 
@@ -2573,6 +2606,8 @@ function setupControls() {
             const roll = state.model.rotation.z;
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
+            state.modelYaw = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelPitch', 'input', (e) => {
@@ -2582,6 +2617,8 @@ function setupControls() {
             const roll = state.model.rotation.z;
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
+            state.modelPitch = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelRoll', 'input', (e) => {
@@ -2591,6 +2628,8 @@ function setupControls() {
             const roll = degToRad(parseFloat(e.target.value));
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
+            state.modelRoll = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
 
@@ -2631,51 +2670,82 @@ function setupControls() {
     safeAddEventListener('posXNum', 'input', (e) => {
         if (state.camera) {
             state.camera.position.x = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('posYNum', 'input', (e) => {
         if (state.camera) {
             state.camera.position.y = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('posZNum', 'input', (e) => {
         if (state.camera) {
             state.camera.position.z = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
 
-    // Camera Rotation NUMBER INPUT Event Listeners - REMOVED (Elements commented out in HTML by Gemini)
+    // Camera Rotation NUMBER INPUT Event Listeners
+    safeAddEventListener('rotXNum', 'input', (e) => {
+        if (state.camera) {
+            state.camera.rotation.x = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
+        }
+    });
+    safeAddEventListener('rotYNum', 'input', (e) => {
+        if (state.camera) {
+            state.camera.rotation.y = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
+        }
+    });
+    safeAddEventListener('rotZNum', 'input', (e) => {
+        if (state.camera) {
+            state.camera.rotation.z = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
+        }
+    });
 
     // Reset Camera Button
     safeAddEventListener('resetCamera', 'click', () => {
         if (state.camera) {
-            // Reset to default camera position
+            // Reset to default camera position and rotation
             state.camera.position.set(0, 0, 5);
             state.camera.rotation.set(0, 0, 0);
-            // Update UI to reflect reset values (position only - rotation controls removed by Gemini)
+            // Update UI to reflect reset values
             safeSetValue('posX', 0);
             safeSetValue('posXNum', 0);
             safeSetValue('posY', 0);
             safeSetValue('posYNum', 0);
             safeSetValue('posZ', 5);
             safeSetValue('posZNum', 5);
+            safeSetValue('rotX', 0);
+            safeSetValue('rotXNum', 0);
+            safeSetValue('rotY', 0);
+            safeSetValue('rotYNum', 0);
+            safeSetValue('rotZ', 0);
+            safeSetValue('rotZNum', 0);
+            updateCameraInfo();
         }
     });
 
-    // Model Rotation NUMBER INPUT Event Listeners (MISSING!)
+    // Model Rotation NUMBER INPUT Event Listeners
     safeAddEventListener('modelRotXNum', 'input', (e) => {
         if (state.model) {
             state.model.rotation.x = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotYNum', 'input', (e) => {
         if (state.model) {
             state.model.rotation.y = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotZNum', 'input', (e) => {
         if (state.model) {
             state.model.rotation.z = degToRad(parseFloat(e.target.value));
+            updateCameraInfo();
         }
     });
 
@@ -2688,6 +2758,7 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelYaw = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelPitchNum', 'input', (e) => {
@@ -2698,6 +2769,7 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelPitch = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
     safeAddEventListener('modelRollNum', 'input', (e) => {
@@ -2708,6 +2780,7 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelRoll = parseFloat(e.target.value);
+            updateCameraInfo();
         }
     });
 
@@ -2739,6 +2812,9 @@ function setupControls() {
             safeSetValue('modelRollNum', 0);
             safeSetValue('modelZoom', 1);
             safeSetValue('modelZoomNum', 1);
+            
+            // Update display
+            updateCameraInfo();
         }
     });
 
