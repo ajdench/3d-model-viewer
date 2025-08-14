@@ -144,8 +144,8 @@ When asked to "Update Git", I will follow this process:
 4.  **Update README:** Update `README.md` with any relevant changes.
 5.  **Git Status:** Run `git status` to review all changes.
 6.  **Commit:** Create a commit message, get user approval, and then run `git add .` and `git commit`.
-7.  **Push to Dev:** Push the changes to the `Dev-Git-Action-Pages` branch with `git push origin Dev-Git-Action-Pages`.
-8.  **Deploy to Staging:** Deploy the `Dev-Git-Action-Pages` branch to the `gh-pages-dev-action` branch.
+7.  **Push to Dev:** Push the changes to the `Dev-Git-Action` branch with `git push origin Dev-Git-Action`.
+8.  **Automated Deployment:** A GitHub Action will automatically deploy the `Dev-Git-Action` branch to the `gh-pages-dev-action` branch.
 9.  **Confirmation:** Announce when the process is complete.
 
 
