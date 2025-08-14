@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Right UI Grid - Simplified</title>
+    <style>
+        /* Simplified CSS Variables */
+        :root {
+            --grid-width: 260px;
+            --spacing: 15px;
+            --small-spacing: 8px;
+            --button-height: 37px;
+            --slider-width: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: white;
+            padding: 20px;
+        }
+
+        /* Main Container - Flexbox instead of CSS Grid */
+        .right-ui-container {
+            width: var(--grid-width);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Lighting Section */
+        .lighting-section {
+            background: rgba(0, 0, 0, 0.02);
+            padding: var(--spacing);
+            border-radius: 8px;
+        }
+
+        .lighting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing);
+        }
+
+        .lighting-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .lighting-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mode-button {
+            height: 18px;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: #9e9e9e;
+            color: white;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .mode-button.active {
+            background: #4CAF50;
+        }
+
+        /* Lighting Controls - Simplified Flexbox Layout */
+        .lighting-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing);
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .vertical-slider {
+            width: var(--slider-width);
+            height: 120px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            writing-mode: vertical-lr;
+            direction: rtl;
+        }
+
+        .slider-value {
+            width: 45px;
+            margin-top: var(--small-spacing);
+            padding: 4px;
+            text-align: center;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        /* Sun Control - Simplified */
+        .sun-control {
+            width: 100px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .sun-icon {
+            font-size: 24px;
+            margin: 0 10px;
+        }
+
+        /* Ambient Light */
+        .ambient-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--small-spacing);
+        }
+
+        .ambient-label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .horizontal-slider {
+            flex: 1;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: rgba(240, 248, 255, 0.3);
+            padding: var(--spacing);
+            border-radius: 8px;
+        }
+
+        .model-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: var(--spacing);
+        }
+
+        .model-button {
+            flex: 1;
+            height: var(--button-height);
+            border: none;
+            border-radius: 6px;
+            background: #4CAF50;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .model-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: rgba(240, 248, 255, 0.5);
+            cursor: pointer;
+        }
+
+        .drop-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.6;
+        }
+
+        .drop-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .drop-subtext {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .supported-formats {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Simplified Right UI Container -->
+    <div class="right-ui-container">
+        
+        <!-- Lighting Section -->
+        <div class="lighting-section">
+            <div class="lighting-header">
+                <div class="lighting-title">Lighting</div>
+                <div class="lighting-buttons">
+                    <button class="mode-button">Complex</button>
+                    <button class="mode-button active">Basic</button>
+                </div>
+            </div>
+            
+            <div class="lighting-controls">
+                <div class="slider-group">
+                    <input type="range" class="vertical-slider" min="0" max="2" step="0.1" value="0.6">
+                    <input type="number" class="slider-value" min="0" max="2" step="0.1" value="0.6">
+                </div>
+                
+                <div class="sun-control">
+                    <div class="sun-icon">☀️</div>
+                    <div class="sun-icon">☀️</div>
+                </div>
+                
+                <div class="slider-group">
+                    <input type="range" class="vertical-slider" min="0" max="2" step="0.1" value="0.0">
+                    <input type="number" class="slider-value" min="0" max="2" step="0.1" value="0.0">
+                </div>
+            </div>
+            
+            <div class="ambient-controls">
+                <div class="ambient-label">Ambient Light</div>
+                <input type="range" class="horizontal-slider" min="0" max="1" step="0.1" value="0.4">
+                <input type="number" class="slider-value" min="0" max="2" step="0.1" value="0.4">
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="model-buttons">
+                <button class="model-button">Torus</button>
+                <button class="model-button" disabled>Library</button>
+            </div>
+            
+            <div class="drop-zone">
+                <div class="drop-icon">📁</div>
+                <div class="drop-text">
+                    <div><em>Drag-and-drop</em><br>your 3D model here</div>
+                    <div class="drop-subtext">or click to browse</div>
+                </div>
+                <div class="supported-formats">
+                    Supports: .obj, .stl, .gltf, .glb, .dae
+                </div>
+                <input type="file" class="file-input" accept=".obj,.stl,.gltf,.glb,.dae,.fbx">
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

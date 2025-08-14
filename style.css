@@ -408,7 +408,7 @@
         }
 
         .file-input {
-            margin: 10px 0;
+            margin: 10px 0; /* Reduced to minimize internal spacing */
         }
 
         .file-input input[type="file"] {
@@ -427,7 +427,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             background: rgba(250, 250, 250, 0.5); /* Even lighter grey for upload area */
-            margin: var(--ui-padding-small) 0;
+            margin: calc(var(--ui-padding-small) + 2px) 0 var(--ui-padding-small) 0;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Gentle shadow for definition */
         }
 
@@ -662,6 +662,69 @@
 
         #instructions {
             width: 300px; /* Wide enough for "F Key: Focus Model on Screen" without wrapping */
+        }
+
+        /* Load and Save Panel Styling - matches instructions panel */
+        .load-save-display {
+            background: rgba(250, 250, 250, 0.5); /* Match instructions panel semi-transparent background */
+            border: none; /* Remove border as requested */
+            border-radius: 8px; /* Match instructions panel radius */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Match instructions panel shadow */
+            color: #333;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            width: calc(var(--right-ui-width) + 20px); /* Expand by 10px on each side */
+            margin-left: -10px; /* Shift 10px to the left to keep centered */
+            padding: 10px; /* Override info-display padding to be consistent 10px on all sides */
+        }
+
+        .load-save-display.collapsed {
+            height: 32px; /* Same compact height as instructions */
+            position: relative; /* Enable absolute positioning for title */
+        }
+
+        .load-save-display.collapsed .load-save-content {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .load-save-display:not(.collapsed) .load-save-content {
+            opacity: 1;
+            padding: 0; /* No padding - content touches panel edges to match external gap spacing */
+        }
+
+        .load-save-display.collapsed .load-save-title {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            right: 10px;
+            transform: translateY(-50%);
+            margin: 0 !important;
+            line-height: 1 !important;
+            display: block;
+        }
+
+        .load-save-title {
+            margin: 0;
+            padding: 0; /* No padding - content touches panel edges */
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            position: relative;
+        }
+
+        .load-save-title .title-hint {
+            font-weight: normal;
+            color: #999;
+            text-transform: none;
+            position: absolute;
+            left: 132px; /* Moved forward 1px (131px + 1px) */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 150px; /* Wider to prevent wrapping */
         }
 
         .info-display h4 {
@@ -1247,7 +1310,7 @@
             width: 100%; /* Fill grid area */
             background: transparent; /* Boxless design */
             color: #333;
-            padding: var(--ui-padding-medium) var(--ui-padding-medium) var(--ui-padding-tiny) var(--ui-padding-medium); /* Use consistent padding variables */
+            padding: 0; /* Remove padding since now handled by collapsible panel */
             border-radius: 10px;
             font-family: 'Arial', sans-serif;
             font-size: 12px;
@@ -1255,21 +1318,23 @@
             box-shadow: none; /* Boxless design */
         }
 
-        .model-buttons {
+        /* SUNSET: Model buttons CSS (TORUS and LIBRARY buttons removed) */
+        /* .model-buttons {
             display: flex;
-            gap: var(--button-row-gap); /* FIXED: Use parameterized button gap */
-            margin-bottom: var(--control-group-spacing);
+            gap: var(--button-row-gap);
+            margin-bottom: 10px;
         }
 
         .model-buttons .button {
             flex: 1;
-        }
+        } */
 
         /* Bottom buttons - mirror top buttons with equivalent gap above */
         .model-buttons-bottom {
             display: flex;
             gap: var(--button-row-gap); /* Same gap as top buttons */
-            margin-top: 20px; /* Larger gap above to match visual spacing */
+            margin-top: 10px; /* Reduced to minimize internal spacing */
+            margin-bottom: 0; /* Remove bottom margin */
         }
 
         .model-buttons-bottom .button {
@@ -1549,6 +1614,20 @@
             transform: translateY(-2px);
         }
 
+        /* Remove hover glow effects from all buttons in the main pane */
+        .upload-area .button:hover,
+        .upload-area .button.secondary:hover,
+        .upload-area .button.button-danger:hover {
+            box-shadow: none !important;
+            /* Keep the translateY effect but remove glow */
+            transform: translateY(-2px);
+        }
+
+        /* Remove bottom margin from all buttons in the LOAD AND SAVE panel */
+        .upload-area .button {
+            margin-bottom: 0 !important;
+        }
+
         /* =====================================================================================
          * COORDINATED PADDING SYSTEM - VISUAL BALANCE FOR ALL CONTROL PANES
          * =====================================================================================
@@ -1687,7 +1766,7 @@
         .right-ui-grid {
             position: absolute;
             top: 10px;
-            right: 23px; /* Moved left by 13px for proper margin matching bottom */
+            right: 21px; /* Moved back another 1px for better gap alignment */
             bottom: 10px;
             width: var(--right-ui-width);
             display: grid;
@@ -1714,7 +1793,7 @@
             grid-area: upload;
             pointer-events: auto;
             padding: 0; /* Pure content positioning */
-            margin-right: -15px; /* Move upload area 15px to the right */
+            margin-right: 0; /* Remove right margin to align with grid positioning */
         }
 
         /* =============================================================================

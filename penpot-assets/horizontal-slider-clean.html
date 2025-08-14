@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizontal Slider</title>
+    <style>
+        body { margin: 0; padding: 0; }
+        .horizontal-slider {
+            width: 150px;
+            height: 20px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            border: none;
+        }
+        .horizontal-slider:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <input type="range" class="horizontal-slider" min="0" max="1" step="0.1" value="0.4">
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Right UI Grid Component</title>
+    <style>
+        /* CSS Variables for the right-ui-grid system */
+        :root {
+            /* Universal spacing - padding only, no margins/borders */
+            --ui-padding-large: 20px;   
+            --ui-padding-medium: 15px;  
+            --ui-padding-small: 10px;   
+            --ui-padding-tiny: 5px;     
+            
+            /* Right UI grid dimensions */
+            --right-ui-width: 260px;    
+            --right-ui-gap: 0px;        
+            
+            /* Lighting panel grid system */
+            --lighting-panel-width: var(--right-ui-width); 
+            --lighting-panel-padding: var(--ui-padding-medium); 
+            --lighting-content-width: calc(var(--lighting-panel-width) - (var(--lighting-panel-padding) * 2));
+            
+            /* Grid measurements */
+            --slider-width: 20px;
+            --value-box-width: 45px;
+            --sun-control-width: 128px;
+            --outer-margin: 15px; 
+            --button-gap: 7.5px; 
+            
+            /* Button dimensions */
+            --basic-button-width: 58px;
+            --complex-button-width: 68px;
+            
+            /* Button row alignment */
+            --button-row-gap: 5px; 
+            
+            /* Control element spacing */
+            --control-group-spacing: 15px; 
+        }
+
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            padding: 20px;
+        }
+
+        /* Master Right-UI Grid Container */
+        .right-ui-grid {
+            position: relative;
+            width: var(--right-ui-width);
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "lighting"
+                "spacer"
+                "upload";
+            gap: var(--right-ui-gap);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Grid area wrappers */
+        .lighting-grid-area {
+            grid-area: lighting;
+            pointer-events: auto;
+            padding: 0 0 var(--ui-padding-large) 0;
+        }
+
+        .upload-grid-area {
+            grid-area: upload;
+            pointer-events: auto;
+            padding: 0;
+        }
+
+        /* Lighting Grid Container */
+        .lighting-grid-container {
+            display: grid;
+            width: 100%;
+            grid-template-columns: 
+                [panel-start] var(--outer-margin)
+                [title-start left-value-start] var(--value-box-width)
+                [left-value-end left-gap-start] 1fr
+                [left-gap-end sun-start] var(--sun-control-width)
+                [sun-end right-gap-start] 1fr  
+                [right-gap-end right-value-start] var(--value-box-width)
+                [right-value-end] 1fr 
+                [basic-button-end panel-end];
+            grid-template-rows: 
+                [title-row] auto
+                [controls-row] auto
+                [ambient-row] auto;
+            gap: 10px 0;
+            position: relative;
+        }
+
+        /* Title row styling */
+        .lighting-title-row {
+            grid-column: panel-start / panel-end;
+            grid-row: title-row;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .lighting-title {
+            margin: 0;
+            font-size: 12px;
+            color: #555;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .lighting-buttons-container {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: var(--button-gap);
+            align-items: center;
+            line-height: 1;
+        }
+
+        /* Main controls row */
+        .lighting-controls-row {
+            grid-column: panel-start / panel-end;
+            grid-row: controls-row;
+            display: contents;
+        }
+
+        /* Left slider */
+        .lighting-left-slider {
+            grid-column: left-value-start / left-value-end;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-self: start;
+        }
+
+        /* Sun control center */
+        .lighting-sun-control {
+            grid-column: sun-start / sun-end;
+            justify-self: center;
+            align-self: start;
+            position: relative;
+            width: var(--sun-control-width);
+            height: 150px;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Right slider */
+        .lighting-right-slider {
+            grid-column: right-value-start / right-value-end;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-self: end;
+            padding: var(--ui-padding-tiny);
+        }
+
+        /* Ambient row */
+        .lighting-ambient-row {
+            grid-column: left-value-start / right-value-end;
+            grid-row: ambient-row;
+            margin-top: 15px;
+            padding-top: 15px;
+        }
+
+        .lighting-ambient-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .lighting-ambient-label {
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        .lighting-ambient-slider {
+            flex: 1;
+        }
+
+        /* Light icons and arrows */
+        .light-icon {
+            position: absolute;
+            cursor: grab;
+            font-size: 20px;
+            user-select: none;
+            transform: translate(-50%, -50%);
+        }
+
+        .light-icon:active {
+            cursor: grabbing;
+        }
+
+        .light-icon.flipped {
+            transform: translate(-50%, -50%) scaleX(-1);
+        }
+
+        .direction-arrow {
+            position: absolute;
+            user-select: none;
+            pointer-events: none;
+            display: none;
+            width: 20px;
+            height: 20px;
+        }
+
+        .direction-arrow svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .direction-arrow.left-arrow,
+        .direction-arrow.right-arrow {
+            transform: translate(-50%, -50%);
+        }
+
+        .corner-label {
+            position: absolute;
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            bottom: 10px;
+        }
+
+        .left-label {
+            left: 10px;
+        }
+
+        .right-label {
+            right: 10px;
+        }
+
+        /* Vertical slider styling */
+        .grid-vertical-slider {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            width: var(--slider-width);
+            height: 150px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            border-radius: 10px;
+        }
+
+        .grid-vertical-slider:hover {
+            opacity: 1;
+        }
+
+        .grid-vertical-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+        }
+
+        .grid-vertical-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Value box styling */
+        .grid-value-box {
+            width: var(--value-box-width);
+            margin-top: 8px;
+            padding: var(--ui-padding-tiny);
+            text-align: center;
+            font-size: 11px;
+            border: none;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Mode button styling */
+        .grid-mode-button {
+            height: 18px;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #9e9e9e, #757575);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .grid-mode-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(158, 158, 158, 0.4);
+        }
+
+        .grid-mode-button.state-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .grid-mode-button.state-primary:hover {
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        /* Horizontal slider styling */
+        .grid-horizontal-slider {
+            width: 100%;
+            height: 20px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .grid-horizontal-slider:hover {
+            opacity: 1;
+        }
+
+        /* Upload area styling */
+        .upload-area {
+            position: relative;
+            width: 100%;
+            background: transparent;
+            color: #333;
+            padding: var(--ui-padding-medium) var(--ui-padding-medium) var(--ui-padding-tiny) var(--ui-padding-medium);
+            border-radius: 10px;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            border: none;
+            box-shadow: none;
+        }
+
+        .upload-status {
+            font-size: 12px;
+            margin-bottom: 20px;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .model-buttons {
+            display: flex;
+            gap: var(--button-row-gap);
+            margin-bottom: var(--control-group-spacing);
+        }
+
+        .model-buttons .button {
+            flex: 1;
+            width: 100%;
+            height: 37px;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-sizing: border-box;
+        }
+
+        .model-buttons .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .model-buttons .button.small {
+            padding: 6px 10px;
+            font-size: 10px;
+        }
+
+        .model-buttons .button[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #cccccc !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        /* Drop zone styling */
+        .drop-zone {
+            border: none;
+            border-radius: 8px;
+            padding: var(--ui-padding-large);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(240, 248, 255, 0.7);
+            margin: var(--ui-padding-small) 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .drop-zone:hover {
+            background: rgba(0, 123, 255, 0.15);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .drop-zone.dragover {
+            background: rgba(0, 123, 255, 0.2);
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.2);
+        }
+
+        .drop-zone-content {
+            pointer-events: none;
+        }
+
+        .drop-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.6;
+        }
+
+        .drop-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .drop-subtext {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .supported-formats {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- MASTER RIGHT-UI GRID CONTAINER -->
+    <div class="right-ui-grid">
+        <!-- LIGHTING GRID AREA -->
+        <div class="lighting-grid-area">
+            <div id="light-controls" class="info-display">
+                <div class="lighting-grid-container">
+                    <div class="lighting-title-row">
+                        <h4 class="lighting-title">LIGHTING</h4>
+                        <div class="lighting-buttons-container">
+                            <button id="complexModeButton" class="grid-mode-button">COMPLEX</button>
+                            <button id="basicModeButton" class="grid-mode-button state-primary">BASIC</button>
+                        </div>
+                    </div>
+                    
+                    <div class="lighting-controls-row">
+                        <div class="lighting-left-slider">
+                            <input type="range" id="directionalLight" class="grid-vertical-slider" min="0" max="2" step="0.1" value="0.6" orient="vertical">
+                            <input type="number" id="directionalLightNum" class="grid-value-box" min="0" max="2" step="0.1" value="0.6">
+                        </div>
+                        
+                        <div class="lighting-sun-control grid-sun-control">
+                            <div id="left-light-icon" class="light-icon">☀️</div>
+                            <div id="right-light-icon" class="light-icon flipped">☀️</div>
+                            <div id="left-direction-arrow" class="direction-arrow left-arrow">
+                                <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 2 L18 10 L14 10 L14 18 L6 18 L6 10 L2 10 Z" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
+                                </svg>
+                            </div>
+                            <div id="right-direction-arrow" class="direction-arrow right-arrow">
+                                <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 2 L18 10 L14 10 L14 18 L6 18 L6 10 L2 10 Z" fill="#FFD700" stroke="#FFA500" stroke-width="0.5"/>
+                                </svg>
+                            </div>
+                            <label class="corner-label left-label">LEFT</label>
+                            <label class="corner-label right-label">RIGHT</label>
+                        </div>
+                        
+                        <div class="lighting-right-slider">
+                            <input type="range" id="directionalLightRight" class="grid-vertical-slider" min="0" max="2" step="0.1" value="0.0" orient="vertical">
+                            <input type="number" id="directionalRightNum" class="grid-value-box" min="0" max="2" step="0.1" value="0.0">
+                        </div>
+                    </div>
+                    
+                    <div class="lighting-ambient-row">
+                        <div class="lighting-ambient-controls">
+                            <label class="lighting-ambient-label">AMBIENT LIGHT</label>
+                            <input type="range" id="ambientLight" class="grid-horizontal-slider lighting-ambient-slider" min="0" max="1" step="0.1" value="0.4">
+                            <input type="number" id="ambientLightNum" class="grid-value-box" min="0" max="2" step="0.1" value="0.4">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UPLOAD GRID AREA -->
+        <div class="upload-grid-area">
+            <div class="upload-area">
+                <div id="uploadStatus" class="upload-status"></div>
+                <div class="model-buttons">
+                    <button id="torusButton" class="button secondary small">TORUS</button>
+                    <button id="libraryButton" class="button secondary small disabled" disabled>LIBRARY</button>
+                </div>
+                <div class="file-input">
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="drop-icon">📁</div>
+                            <div class="drop-text">
+                                <div><em>Drag-and-drop</em><br>your 3D model here</div>
+                                <div class="drop-subtext">or click to browse</div>
+                            </div>
+                            <div class="supported-formats">
+                                Supports: .obj, .stl, .gltf, .glb, .dae
+                            </div>
+                        </div>
+                        <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae,.fbx" style="display: none;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,115 +1,194 @@
-# 3D Model Viewer v2.12.0+
+This project is a self-contained 3D model viewer that has been refactored to run in an offline environment. It uses Vite for development and bundling.
 
-A professional, interactive 3D model viewer built with **Three.js r179** and **Vite**. Features advanced controls, multiple file format support, and a comprehensive UI with collapsible panels.
+### Core Technologies
+- **JavaScript Framework**: None (Vanilla JS)
+- **3D Library**: Three.js (managed as an npm dependency)
+- **Build Tool**: Vite
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success?style=flat-square)](https://ajdench.github.io/3d-model-viewer/)
-[![Build Status](https://img.shields.io/badge/build-passing-success?style=flat-square)](#)
-[![Three.js](https://img.shields.io/badge/Three.js-r179-blue?style=flat-square)](#)
+### Development Commands
+- **Run Development Server**: `npm run dev`
+- **Create Production Build**: `npm run build`
+- **Preview Production Build**: `npm run preview`
+- **Deploy to GitHub Pages**: `npm run deploy`
+- **Deploy to Staging**: `npm run deploy-dev`
+- **Run Development Server and Open Browser**: `./start-dev.sh`
 
-## ✨ Key Features
+### Branching Strategy
+- **`main`**: The primary branch for production-ready code.
+- **`gh-pages`**: The branch for production deployments via GitHub Pages.
+- **`Dev-Git-Action-Pages`**: The primary development branch for new features and bug fixes.
+- **`gh-pages-dev-action`**: The branch for development deployments, allowing for a separate, live staging environment.
 
-**Model Support**: `.obj`, `.stl`, `.gltf`, `.glb`, `.dae` | **Controls**: Camera, lighting, materials, guide lines | **UI**: Collapsible panels, 3D orientation widget | **I/O**: Preset management, scene capture, save/load
+### Git Workflow
+When asked to "Update Git", I will follow this process:
+1.  **Review Code:** Analyze the codebase for the latest changes.
+2.  **Update Gemini Files:** Update `GEMINI.md` and `gemini-code-changes.md` with any new information or changes.
+3.  **Read Claude Files:** Read `CLAUDE.md` and `claude-code-changes.md` for context and understanding, but do not modify them.
+4.  **Update README:** Update `README.md` with any relevant changes.
+5.  **Git Status:** Run `git status` to review all changes.
+6.  **Commit:** Create a commit message, get user approval, and then run `git add .` and `git commit`.
+7.  **Push to Dev:** Push the changes to the `Dev-Git-Action-Pages` branch with `git push origin Dev-Git-Action-Pages`.
+8.  **Deploy to Staging:** Deploy the `Dev-Git-Action-Pages` branch to the `gh-pages-dev-action` branch.
+9.  **Confirmation:** Announce when the process is complete.
 
-### Latest Additions
-- **Collapsible Instructions Panel**: Double-click toggle with perfect text alignment
-- **3D Orientation Widget**: Real-time model attitude display with interactive controls  
-- **Master Grid UI Architecture**: Professional layout with responsive positioning
-- **Complete Controller Sync**: All controls synchronized with VIEW display
 
-## 🚀 Quick Start
+### Key Architectural Points
+- The application is built into a `dist` directory for production deployment.
+- All dependencies, including Three.js and its loaders, are bundled. There are no external CDN calls.
+- The code is structured with ES6 modules (`import`/`export`).
+- Main application logic is in `main.js`.
+- Styles are in `style.css`.
+- The `index.html` file is the main entry point.
 
-```bash
-npm install          # Install dependencies
-npm run dev         # Development server
-npm run build       # Production build
-npm run deploy      # Deploy to GitHub Pages
-```
+### Project Documentation
+This project maintains a detailed history of changes and development decisions in the following files:
 
-**Requirements**: Node.js 20.19.0+, npm 8.0.0+
+*   **`claude-code-changes.md`**: A log of manual code modifications.
+*   **`gemini-code-changes.md`**: A log of changes made by the Gemini assistant.
+*   **`CLAUDE.md` & `GEMINI.md`**: Comprehensive internal documentation and development guidelines.
+*   **`audit.md`**: A comprehensive review of the project's code maturity, architecture, security, and dependencies.
+*   **`install.md`**: Instructions for deploying the application on a private, offline web server.
 
-## 🏗️ Architecture
+### Features
+- **Model Loading**: Supports `.obj`, `.stl`, `.gltf`, `.glb`, and `.dae` file formats. Models can be loaded via a file input or drag-and-drop.
+- **Camera Controls**: Sliders and number inputs for adjusting the camera's position (X, Y, Z) and rotation (X, Y, Z).
+- **Model Controls**: Sliders and number inputs for adjusting the model's rotation (X, Y, Z) and advanced aircraft-style controls for Yaw, Pitch, and Roll.
+- **Material Properties**: Controls for adjusting the model's material, including color, metalness, roughness, and transparency.
+- **Lighting**: 
+  - Sliders to control the intensity of ambient and directional lights.
+  - An interactive 2D control pad to visually adjust the X/Y position of the directional lights.
+- **Multiple Guide Lines**: Users can now add and remove multiple, independent guide lines. Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
+- **Presets**: Users can save and load their own presets for camera, model, material, and lighting settings.
+- **Reset Functionality**: Buttons to reset the camera and model to their default states.
+- **Responsive Viewer**: The 3D viewer resizes to fit its container.
+- **Image Capture**: Save a 2D PNG image of the current model view to a file with a transparent background. (Clipboard functionality is currently disabled due to technical issues.)
+- **Enhanced VIEW Panel**: Redesigned with a horizontal layout, including a 3D orientation widget and dedicated data columns for model rotation, camera position, and camera rotation.
+- **Comprehensive Save/Load System**: Complete scene state persistence with `.3dview` file format supporting camera position, model transforms, lighting settings, materials, and guide lines. JSON-based structure with version compatibility and error recovery.
 
-**Stack**: Vanilla JavaScript, Three.js r179, Vite 7.0.6, ES6 modules
-**Structure**: Monolithic `main.js` (2,499 lines, 66 functions) with clean HTML/CSS separation
-**Deployment**: Self-contained `dist/` directory, no external CDN dependencies
+### UI/UX Enhancements
+- **VIEW Panel Redesign**: The main "VIEW" panel has been redesigned into a horizontal layout, featuring a 3D orientation widget and dedicated data columns for Model Rotation, Model Attitude (Yaw, Pitch, Roll), Camera Position, and Camera Rotation.
+- **Coordinated Padding System**: A new CSS variable-based system (`--coordinated-bottom-margin`) ensures visually balanced and consistent spacing across all control panes.
+- **Button Standardization**: All buttons now use standardized height, padding, and font size variables for a uniform appearance.
+- **Lighting Grid Layout**: The lighting control panel has been refactored to use a precise CSS Grid layout for better alignment and maintainability.
+- **Sunset of Hover Glow**: The glow effect on button hovers in the main controls panel has been removed for a cleaner look.
 
-### Development Quality
-- **Evidence-Based Debugging**: Runtime verification over theoretical analysis
-- **Memory Management**: Claude-dementia v3.0 system (10k token budget)
-- **Quality Gates**: Comprehensive error handling, file validation, timeout management
+### Sunset Features
+- **Zoom Control**: The dedicated "Zoom" slider and its corresponding display in the "VIEWER STATS" panel have been removed. The camera's Z-position, controlled by the mouse wheel, now serves as the primary zooming mechanism.
+- **Control Scheme**: The legacy "Model-centric" control scheme has been removed to simplify the user experience. The application now exclusively uses the "Standard (Camera-centric)" control scheme.
 
-## 📁 Project Organization
+### Known Issues
+- **Recurring Build Failures**: Persistent `TypeError: Identifier "..." has already been declared` errors during `npm run build` due to duplicate function definitions in `main.js`. This is currently being addressed programmatically.
 
-```
-├── main.js              # Core application logic (2,499 lines)
-├── style.css            # Complete styling system
-├── index.html           # Entry point
-├── memory/              # Claude-dementia memory system
-├── scripts/             # Python automation tools
-└── dist/               # Production build output
-```
+## Major Changes (v2.4+)
 
-## 🎯 User Interface
+### Multiple Guide Lines (v2.10.1)
+- **Dynamic Guide Lines**: Users can now add and remove multiple, independent guide lines.
+- **Independent Controls**: Each guide line has its own collapsible control pane with independent settings for color, thickness, transparency, angle, and position.
+- **Dynamic UI**: The UI dynamically adds and removes control panes as lines are created or deleted, with titles that update automatically.
 
-### Control Panels (All Collapsible)
-- **Capture**: PNG export with transparent backgrounds
-- **Guide Line**: Multiple dynamic guide lines with full customization
-- **Camera**: Position/rotation controls with precise adjustment
-- **Model**: Rotation controls (X/Y/Z + Yaw/Pitch/Roll)
-- **Material**: PBR materials with 5 transparency modes
-- **Presets**: Save/load complete scene configurations
+### Control Synchronization (v2.11.0)
+- **`ControlSync` Class**: A new modular and robust system for synchronizing UI controls (e.g., sliders and number inputs).
+- **Centralized Management**: Replaces scattered `addEventListener` calls with a centralized registry, improving maintainability and reducing errors.
+- **Advanced Features**: Supports bidirectional synchronization, value validation, and custom callbacks.
 
-### Interaction Controls
-- **Left-drag**: Rotate model | **Right-drag**: Pan camera | **Scroll**: Zoom
-- **Alt+drag**: Rotate camera | **F key**: Focus model | **Widget**: Direct model control
+### UI Refinements (v2.7+)
+- **Boxless Design**: Removed backgrounds, borders, and shadows from VIEW, LIGHTING, and INTERACTION panels for cleaner appearance.
+- **Text Standardization**: Unified all panel text to 12px for consistent typography across interface.
+- **Spacing Optimization**: Standardized all control panel positioning to 10px from model pane edges, refined CONTROLS title spacing to 19px.
+- **Layout Precision**: LIGHTING panel positioned at 16px from right edge for optimal visual balance.
+- **Control Panel Padding**: Adjusted bottom padding of control sections to ensure consistent 15px spacing from the last element to the pane border.
+- **Material Panel Alignment**: Aligned the 'Complex' button and color picker in the Material panel to match the precise styling and spacing of the Guide Line panel.
 
-## 🔧 Development Status
+### Unified Surface Transparency (v2.9.5)
+- **Five Transparency Modes**: Implemented a comprehensive transparency system with five distinct modes to handle various rendering requirements, especially for high-poly models.
+- **Modes**: Unified Surface (default, optimized for clean blending), WBOIT (alpha testing), Advanced (double-sided with adaptive blending), Standard, and Dithered.
+- **Opacity Control**: Corrected the transparency slider to provide a smooth and accurate 1.0 to 0.0 opacity range.
 
-**Current Version**: v2.12.0+ (Phase 1: Critical Stabilization COMPLETE)
-**Stability**: All core functionality working, comprehensive controller synchronization
-**Architecture Target**: Modular refactoring (StateManager, EventManager, ResourceManager)
+### Dependency Updates (v2.9.2)
+- **Three.js**: Upgraded from r178 to r179.
+- **Vite**: Upgraded from 7.0.5 to 7.0.6.
+- **Resolved Deprecation**: Fixed `punycode` module deprecation warning.
 
-### Recent Achievements
-- ✅ **Complete Controller Restoration**: 23 synchronization fixes applied
-- ✅ **Evidence-Based Debugging Protocol**: Runtime verification methodology
-- ✅ **Professional UI**: Collapsible panels, perfect alignment, responsive design
-- ✅ **Memory System**: Full claude-dementia v3.0 integration
+## Strategic Development Roadmap
+- **`claude-todo.md`**: A new file outlining the strategic roadmap for the project.
+- **Modularization**: The primary focus is on refactoring the monolithic `main.js` into smaller, reusable modules.
+- **Core Architecture**: The next phase involves creating `StateManager`, `EventManager`, and `ResourceManager` classes to form a solid architectural foundation.
 
-### Roadmap (Phases 2-4)
-1. **Quality Foundation**: Testing infrastructure, automated validation
-2. **Core Architecture**: Modular refactoring, 300% maintainability improvement
-3. **Performance & Optimization**: Code splitting, advanced surface extraction
+## Evidence-Based Debugging Protocol
 
-## 📊 Technical Metrics
+A fundamental shift in development methodology, prompted by the "syncSliderNumber Crisis," where a critical runtime error was missed during theoretical code analysis.
 
-**Code Quality**: 66 global functions, robust error handling, ES6 modules
-**Performance**: 50MB file limit, requestAnimationFrame optimization
-**Browser Support**: Chrome 88+, Firefox 84+, Safari 14+ (WebGL + ES6)
-**Memory Usage**: 4,338/10,000 tokens (claude-dementia system)
+**Core Principle**: Prioritize real-time, observable evidence (browser console errors) over assumptions about code behavior.
 
-## 📚 Documentation
+### The Protocol
+1.  **🚨 Runtime Verification First**: Always test the application's actual behavior in a browser before analyzing code structure. A successful build does not equal a functional application.
+2.  **🔍 Browser Console Priority**: User-reported error messages and live console output are the most valuable sources of debugging information.
+3.  **⚡ Function Accessibility Checks**: Before debugging complex logic, verify that the functions involved are accessible in the global scope and have not been inadvertently nested or duplicated.
+4.  **🎯 Initialization Check**: Confirm that the application initializes completely without errors before investigating issues in specific features.
+5.  **📊 Evidence Over Theory**: What the application *is actually doing* is more important than what the code *should be doing*.
 
-- **[CLAUDE.md](./CLAUDE.md)**: Claude Code development guidelines
-- **[memory/](./memory/)**: Session tracking, patterns, architectural decisions
-- **[audit.md](./audit.md)**: Security audit and code maturity analysis
-- **[install.md](./install.md)**: Offline deployment instructions
+## Current Status (August 11, 2025): Codebase Review Complete
 
-## 🌟 Advanced Features
+A full codebase review has been completed. The project is stable, with significant recent enhancements to the UI, feature set, and underlying architecture. The next phase of development will focus on implementing a testing framework and refactoring the codebase into a more modular architecture, as outlined in the project's strategic roadmap (`claude-todo.md`).
 
-**Surface Extraction**: Hybrid Three.js ConvexGeometry + planned WASM/MeshLabJS integration
-**Transparency Modes**: 5 modes including "Unified Surface" for high-poly models
-**Scene Management**: Complete `.3dview` file format with state persistence
-**Professional Lighting**: Basic/Complex modes with dual directional controls
+## Comprehensive Remediation Plan (2025-08-07)
 
-## 🛡️ Quality Assurance
+### Executive Summary
+Based on comprehensive analysis of 24 distinct issues from memory files, codebase structure, and GitHub repository. **Phase 1 Complete**: Critical stabilization achieved with v2.9.3-stable baseline and full controller system restoration.
 
-**Evidence-Based Debugging**: Prioritizes runtime behavior over theoretical analysis
-**Comprehensive Testing**: End-to-end user workflow validation
-**Error Handling**: Graceful fallbacks, timeout management, file validation
-**Performance**: Optimized render loop, responsive controls, memory management
+### Critical Findings
+- **Current System**: FULLY STABLE (Phase 1 complete, ready for Phase 2)
+- **Primary Baseline**: v2.9.3-stable (complete controller system restoration)
+- **High-Impact Technical Debt**: 3652-line main.js with 66 global functions.
 
----
+### Four-Phase Remediation Strategy
 
-**Live Demo**: [ajdench.github.io/3d-model-viewer](https://ajdench.github.io/3d-model-viewer/)
-**Architecture**: Professional single-page application ready for modular refactoring
-**Status**: Fully functional with ongoing architectural improvements
+#### **PHASE 1: Critical Stabilization** - ✅ **COMPLETED** (v2.9.3-stable)
+1. ✅ **System Verification**: Complete functional testing completed - all controls working
+2. ✅ **Controller Restoration**: 20+ missing event listeners added systematically  
+3. ✅ **Baseline Protection**: v2.9.3-stable tag created for stable rollback point
+4. ✅ **Evidence-Based Debugging**: Runtime verification methodology established
+
+#### **PHASE 2: Quality Foundation** (3-4 weeks) - HIGH Priority  
+4. **Testing Infrastructure**: Implement Jest/Vitest with browser console error detection
+5. **Evidence-Based Debugging**: Mandate runtime verification over theoretical code analysis
+6. **Function Boundary Audit**: Systematic review of all global functions for proper placement
+
+#### **PHASE 3: Core Architecture** (4-5 weeks) - MEDIUM Priority
+7. **Modularization**: Break monolithic main.js into feature modules (StateManager, EventManager, ResourceManager)
+8. **State Management**: Replace global state object with proper bounded state system
+9. **Event System**: Implement event bus to reduce direct function call coupling
+
+#### **PHASE 4: Performance & Optimization** (2-3 weeks) - LOW Priority
+10. **Performance Optimization**: Code splitting, lazy loading, Web Workers for surface extraction
+11. **Quality Gates**: Automated testing pipelines, performance monitoring, release validation  
+12. **Documentation System**: Architectural patterns library and comprehensive developer guides
+
+## Recent Major Achievements (2025-08-11)
+
+### UI Overhaul and .DAE Integration ✅
+**Session Summary**: A significant UI overhaul for the VIEW panel was implemented and .DAE file support was fully integrated.
+
+#### Key Changes:
+1. **VIEW Panel Redesign**: Introduced a new horizontal layout with a 3D orientation widget and dedicated data columns for model rotation, camera position, and camera rotation. This also restored the camera rotation display.
+2. **.DAE File Support**: Full integration of .DAE file format loading, including updates to `index.html`, `main.js` (validation, handling, and loader integration), and `style.css`.
+3. **Multiple Guide Lines**: The guide line system was enhanced to support adding and controlling multiple, independent guide lines.
+4. **`ControlSync` Class**: A new, robust class for synchronizing UI controls was implemented, improving architectural quality.
+5. **CSS Refinements**: Implemented a coordinated padding system and standardized button styles for a cleaner, more consistent UI.
+
+## Recent Major Achievements (2025-08-14)
+
+### GitHub Actions & UI Refinements ✅
+**Session Summary**: This session focused on implementing a GitHub Actions workflow for automated deployment and further refining the user interface.
+
+#### Key Changes:
+1. **GitHub Actions Deployment**: A new workflow (`.github/workflows/deploy.yml`) was created to automatically build and deploy the application to GitHub Pages.
+2. **UI Enhancements**: 
+    - Restored and improved the camera rotation controls.
+    - Fixed a bug preventing the ambient light slider from updating correctly.
+    - Resolved a conflict between quaternion and euler rotations.
+    - Addressed an issue with loading material colors from saved states.
+3. **Bug Fixes**:
+    - Fixed a critical issue where the model viewer would not load.
+    - Corrected a problem with saving and loading guide lines.
+    - Resolved an import failure related to the `ViewHelper`.

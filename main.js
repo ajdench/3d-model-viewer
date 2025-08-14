@@ -2675,10 +2675,10 @@ function setupControls() {
         });
     }
 
-    // TORUS Button Event Listener (MISSING EVENT LISTENER FIXED)  
-    safeAddEventListener('torusButton', 'click', () => {
-        createModel('default');
-    });
+    // SUNSET: TORUS Button Event Listener (removed from UI)  
+    // safeAddEventListener('torusButton', 'click', () => {
+    //     createModel('default');
+    // });
 
     // CAPTURE FILE Button Event Listener (MISSING EVENT LISTENER FIXED)
     safeAddEventListener('saveToFile', 'click', () => {
@@ -3160,6 +3160,31 @@ function setupInstructionsToggle() {
         } else {
             // Collapse
             instructionsPanel.classList.add('collapsed');
+            titleHint.textContent = '(Double-click to open)';
+        }
+    });
+}
+
+function setupLoadSaveToggle() {
+    const loadSavePanel = document.getElementById('loadSavePanel');
+    const titleHint = loadSavePanel.querySelector('.title-hint');
+    
+    if (!loadSavePanel || !titleHint) return;
+    
+    // Double-click to toggle
+    loadSavePanel.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isCollapsed = loadSavePanel.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            loadSavePanel.classList.remove('collapsed');
+            titleHint.textContent = '(Double-click to hide)';
+        } else {
+            // Collapse
+            loadSavePanel.classList.add('collapsed');
             titleHint.textContent = '(Double-click to open)';
         }
     });
@@ -3696,6 +3721,7 @@ async function initializeViewer() {
         setupGuideLineControls(); // Set up guide line controls after DOM is ready
         setupCollapsibleSections(); // FIXED: Initialize collapsible sections functionality
         setupInstructionsToggle(); // Initialize instructions panel toggle
+        setupLoadSaveToggle(); // Initialize load and save panel toggle
         loadPresetsList();
         updateLightingModeButtons(); // Initialize button states
         setupMouseControls(); // Call here after DOM is ready
