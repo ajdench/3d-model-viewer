@@ -8,8 +8,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-  <script type="module" crossorigin src="/3d-model-viewer/assets/index-CGV3bYs3.js"></script>
-  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-CS7Ggir4.css">
+  <script type="module" crossorigin src="/3d-model-viewer/assets/index-lxTEtTmd.js"></script>
+  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-C83GPRBN.css">
 </head>
 <body>
     <div class="container">
@@ -152,30 +152,35 @@
 
                 <!-- UPLOAD GRID AREA -->
                 <div class="upload-grid-area">
-                    <div class="upload-area">
-                        <div id="uploadStatus" class="upload-status"></div>
-                        <div class="model-buttons">
-                            <button id="torusButton" class="button secondary small">TORUS</button>
-                            <button id="libraryButton" class="button secondary small disabled" disabled>LIBRARY</button>
-                        </div>
-                        <div class="file-input">
-                            <div id="dropZone" class="drop-zone">
-                                <div class="drop-zone-content">
-                                    <div class="drop-icon">📁</div>
-                                    <div class="drop-text">
-                                        <div><em>Drag-and-drop</em><br>your 3D model here</div>
-                                        <div class="drop-subtext">or click to browse</div>
-                                    </div>
-                                    <div class="supported-formats">
-                                        Supports: .obj, .stl, .gltf, .glb, .dae
+                    <div id="uploadStatus" class="upload-status"></div>
+                    <div id="loadSavePanel" class="info-display load-save-display collapsed">
+                        <h4 class="load-save-title">
+                            <span class="title-main">LOAD AND SAVE</span>
+                            <span class="title-hint">(Double-click to open)</span>
+                        </h4>
+                        <div class="load-save-content">
+                            <div class="upload-area">
+                                <!-- SUNSET: TORUS and LIBRARY buttons removed -->
+                                <div class="file-input">
+                                    <div id="dropZone" class="drop-zone">
+                                        <div class="drop-zone-content">
+                                            <div class="drop-icon">📁</div>
+                                            <div class="drop-text">
+                                                <div><em>Drag-and-drop</em><br>your 3D model here</div>
+                                                <div class="drop-subtext">or click to browse</div>
+                                            </div>
+                                            <div class="supported-formats">
+                                                Supports: .obj, .stl, .gltf, .glb, .dae
+                                            </div>
+                                        </div>
+                                        <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae,.fbx" style="display: none;" />
                                     </div>
                                 </div>
-                                <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae,.fbx" style="display: none;" />
+                                <div class="model-buttons-bottom">
+                                    <button id="saveSceneButton" class="button secondary small">SAVE SCENE</button>
+                                    <button id="loadSceneButton" class="button secondary small">LOAD SCENE</button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="model-buttons-bottom">
-                            <button id="saveSceneButton" class="button secondary small">SAVE SCENE</button>
-                            <button id="loadSceneButton" class="button secondary small">LOAD SCENE</button>
                         </div>
                     </div>
                 </div>
