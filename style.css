@@ -1146,24 +1146,25 @@
 
          .guide-line-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            top: 10px; /* 10px margin from top */
+            left: 10px; /* 10px margin from left */
+            width: calc(100% - 20px); /* 10px margin on both sides */
+            height: calc(100% - 20px); /* 10px margin on top and bottom */
+            overflow: hidden; /* Clip lines at edges */
             pointer-events: none; /* Allow clicks to pass through to the canvas */
-            z-index: 1; /* Behind UI elements (z-index: 10) but above canvas */
+            z-index: 5; /* In front of model (z-index: 1) but behind UI elements (z-index: 10) */
         }
 
         .guide-line {
             position: absolute;
             top: 0; /* Controlled by JS */
-            left: 0;
-            width: 100%;
+            left: 0; /* Controlled by JS for dynamic positioning */
+            width: 100%; /* Default - will be overridden by JS for dynamic sizing */
             height: 5px; /* Default thickness */
             background-color: #FFFF00; /* Default yellow color - will be overridden by JS */
             transform-origin: 50% 50%; /* Always rotate from the true center of the element */
-            z-index: 1; /* Behind UI elements (z-index: 10) but above canvas */
+            z-index: 5; /* In front of model but behind UI elements */
+            border-radius: 2.5px; /* Default rounded ends - will be overridden by JS based on thickness */
         }
 
         /* Collapsible instructions panel */

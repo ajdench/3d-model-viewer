@@ -7,7 +7,7 @@
 
 ## What is this?
 
-The **3D Model Viewer** is a professional web application that lets you view, interact with, and customize 3D models directly in your browser. Think of it as a powerful, easy-to-use tool for exploring 3D files without needing expensive software.
+The **3D Model Viewer** is a professional, interactive 3D model viewer built with Three.js, designed to be completely self-contained for offline use. It provides intuitive model manipulation, camera positioning, and material properties control directly in your browser. This powerful tool eliminates the need for expensive desktop software while offering enterprise-level features for exploring and customizing 3D files.
 
 ## What can you do with it?
 
@@ -17,6 +17,8 @@ The **3D Model Viewer** is a professional web application that lets you view, in
 - **No file size limits** for most typical models
 - **Instant loading** with visual feedback
 
+Simply drag your 3D model files from your computer directly into the viewer window. The application automatically detects the file type and loads your model with real-time progress indicators. Works completely offline once loaded, making it perfect for secure environments or locations without internet access.
+
 ### 🎮 **Interactive Controls**
 - **Rotate models** by clicking and dragging
 - **Zoom in/out** with your mouse wheel
@@ -24,23 +26,31 @@ The **3D Model Viewer** is a professional web application that lets you view, in
 - **Focus on models** with the F key
 - **Reset views** with double-click actions
 
+Navigate your 3D models with intuitive mouse and keyboard controls that feel natural and responsive. The viewer includes an orientation widget that shows your current viewing angle in real-time. Advanced users can access precise camera positioning controls for exact viewpoint requirements.
+
 ### 🎨 **Customize Appearance**
 - **Change colors** with easy color pickers
 - **Adjust materials** - make things shiny, rough, or transparent
 - **Control lighting** - position light sources for the perfect view
-- **Add guide lines** to measure or reference parts of your model
+- **Add professional guide lines** to measure or reference parts of your model
+
+Transform the look of your models with professional-grade material controls including metalness, roughness, and multiple transparency modes. The advanced lighting system lets you position directional light sources with visual indicators, while the dynamic guide line system provides edge-to-edge lines at any angle with perpendicular positioning and customizable appearance. All changes update in real-time for immediate feedback.
 
 ### 💾 **Save Your Work**
 - **Save scenes** with all your customizations
 - **Load previous setups** instantly
 - **Create presets** for common configurations
-- **Capture screenshots** of your models
+- **Professional model capture** with high-quality rendering
+
+Never lose your customizations with comprehensive save and load functionality. Create named presets for different viewing configurations and share them with team members. The advanced capture system renders high-resolution images (2K-4K) with optimal model framing, 10px transparent borders, and native OS file dialogs for professional output ready for presentations or documentation.
 
 ### 🔧 **Professional Features**
 - **Multiple transparency modes** for complex models
 - **Advanced lighting controls** with directional indicators
 - **Real-time orientation widget** showing model position
 - **Responsive interface** that works on any screen size
+
+Built for professional workflows with enterprise-grade features like external surface extraction for high-polygon models and advanced transparency rendering modes. The interface adapts to any screen size while maintaining full functionality, making it suitable for everything from mobile devices to large displays. All processing happens locally in your browser for maximum security and performance.
 
 ## Who is this for?
 
@@ -125,12 +135,18 @@ Requires modern browser with WebGL support and ES6 module capabilities.
 - **Files**: 50MB upload limit, supports .obj/.stl/.gltf/.glb/.dae
 - **Performance**: requestAnimationFrame, preserveDrawingBuffer for capture
 
-### Recent Updates (v2.9.3+)
+### Recent Updates (v3.0+)
 
-#### UI Excellence (Latest Session)
+#### Professional Capture & Guide Line System (v3.0 - Latest)
+- **High-Quality Capture**: 2K-4K adaptive rendering with model-focused framing and 10px transparent borders
+- **OS-Level File Dialogs**: Native file system integration with three-tier fallback (OS dialog → prompt → download)
+- **Dynamic Guide Lines**: Edge-to-edge extension at all angles (-90° to +90°) with perpendicular positioning mathematics
+- **Advanced Controls**: Decimal precision positioning (±360 range), container clipping with 10px margins
+
+#### UI Excellence (Previous Sessions)
 - **Borderless Design**: Applied comprehensive borderless aesthetic to all panels while preserving backgrounds and corner radii
-- **Instructions Optimization**: Perfect width tuning (386px) with proper text alignment 
-- **Lighting Controls**: Fixed click vs drag detection, corrected COMPLEX mode directional logic (in/out vs up/down)
+- **Instructions Optimization**: Perfect width tuning (386px) with proper text alignment and collapsible functionality
+- **Lighting Controls**: Fixed click vs drag detection, corrected COMPLEX mode directional logic with visual arrow indicators
 - **Visual Consistency**: Unified design language across viewer container, controls panel, and all input elements
 
 #### Major Features (v2.8-2.9)

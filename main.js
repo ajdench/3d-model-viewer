@@ -1556,6 +1556,195 @@ function focusModelOnScreen() {
     updateCameraInfo();
 }
 
+function promptForFilename(defaultName, extension = '') {
+    const filename = prompt(`Enter filename (without extension):`, defaultName);
+    if (filename === null) return null; // User cancelled
+    if (filename.trim() === '') return defaultName + extension;
+    return filename.trim() + extension;
+}
+
+async function saveFileWithDialog(blob, defaultFilename, mimeType) {
+    console.log('saveFileWithDialog called with:', { defaultFilename, mimeType });
+    console.log('File System Access API available:', 'showSaveFilePicker' in window);
+    
+    // Try File System Access API first (Chrome 86+, Edge 86+)
+    if ('showSaveFilePicker' in window) {
+        try {
+            console.log('Attempting to use File System Access API...');
+            
+            // Configure file picker options
+            const filePickerOptions = {
+                suggestedName: defaultFilename,
+                types: [{
+                    description: mimeType === 'image/png' ? 'PNG Image' : 'JSON File',
+                    accept: mimeType === 'image/png' ? 
+                        { 'image/png': ['.png'] } : 
+                        { 'application/json': ['.json'] }
+                }]
+            };
+            
+            // Show save file picker
+            const fileHandle = await window.showSaveFilePicker(filePickerOptions);
+            
+            // Create writable stream and write the blob
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            
+            console.log('File saved successfully using File System Access API');
+            return; // Success - exit early
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('User cancelled the save operation');
+                return;
+            }
+            console.error('File System Access API failed:', error);
+            // Continue to fallback methods
+        }
+    }
+    
+    // Fallback 1: Prompt for filename (better UX than direct download)
+    console.log('Falling back to filename prompt...');
+    try {
+        const extension = defaultFilename.includes('.') ? '.' + defaultFilename.split('.').pop() : '';
+        const baseName = defaultFilename.replace(extension, '');
+        const userFilename = promptForFilename(baseName, extension);
+        
+        if (userFilename === null) {
+            console.log('User cancelled filename prompt');
+            return;
+        }
+        
+        // Use user's chosen filename
+        fallbackDownload(blob, userFilename);
+    } catch (error) {
+        console.error('Filename prompt failed:', error);
+        // Final fallback: direct download
+        console.log('Using direct download fallback');
+        fallbackDownload(blob, defaultFilename);
+    }
+}
+
+function fallbackDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function captureHighQualityFrame(callback) {
+    try {
+        console.log('Starting high-quality capture...');
+        
+        // Hide guide lines for clean capture
+        const guideLineOverlay = document.getElementById('guideLineOverlay');
+        if (guideLineOverlay) {
+            guideLineOverlay.style.display = 'none';
+        }
+
+        // Calculate model bounding box to determine optimal capture size
+        if (!state.model) {
+            console.error('No model to capture');
+            if (guideLineOverlay) guideLineOverlay.style.display = 'block';
+            return;
+        }
+
+    // Get model bounding box
+    const boundingBox = new THREE.Box3().setFromObject(state.model);
+    const boundingBoxSize = boundingBox.getSize(new THREE.Vector3());
+    const boundingBoxCenter = boundingBox.getCenter(new THREE.Vector3());
+
+    // Calculate optimal camera distance and frame size
+    const maxDimension = Math.max(boundingBoxSize.x, boundingBoxSize.y, boundingBoxSize.z);
+    
+    // Create high-quality render dimensions (4K quality)
+    const baseSize = Math.max(2048, maxDimension * 200); // Minimum 2K, scale with model
+    const renderWidth = Math.min(baseSize, 4096); // Cap at 4K to avoid memory issues
+    const renderHeight = Math.min(baseSize, 4096);
+    
+    // Create temporary high-resolution renderer
+    const tempRenderer = new THREE.WebGLRenderer({ 
+        alpha: true, 
+        antialias: true, 
+        preserveDrawingBuffer: true 
+    });
+    tempRenderer.setSize(renderWidth, renderHeight);
+    tempRenderer.setClearColor(0x000000, 0); // Transparent background
+    
+    // Create temporary camera positioned to optimally frame the model
+    const tempCamera = state.camera.clone();
+    tempCamera.aspect = renderWidth / renderHeight;
+    
+    // Calculate optimal camera position to fill the frame with the model
+    const fov = tempCamera.fov * (Math.PI / 180);
+    
+    // Calculate distance needed to fill the frame, accounting for aspect ratio
+    const horizontalFOV = 2 * Math.atan(Math.tan(fov / 2) * tempCamera.aspect);
+    const distanceForVertical = (maxDimension / 2) / Math.tan(fov / 2);
+    const distanceForHorizontal = (maxDimension / 2) / Math.tan(horizontalFOV / 2);
+    const cameraDistance = Math.max(distanceForVertical, distanceForHorizontal) * 1.2; // 20% padding
+    
+    // Position camera to maintain current viewing angle but at optimal distance
+    // Get the current camera direction vector
+    const cameraDirection = new THREE.Vector3();
+    state.camera.getWorldDirection(cameraDirection);
+    
+    // Position camera at optimal distance from model center in current viewing direction
+    tempCamera.position.copy(boundingBoxCenter);
+    tempCamera.position.addScaledVector(cameraDirection, -cameraDistance);
+    tempCamera.lookAt(boundingBoxCenter);
+    tempCamera.updateProjectionMatrix();
+    
+    // Render at high quality with optimal framing
+    tempRenderer.render(state.scene, tempCamera);
+    
+    // Convert to blob with 20px transparent border
+    const canvas = tempRenderer.domElement;
+    const ctx = canvas.getContext('2d');
+    
+    // Create final canvas with 10px border
+    const finalCanvas = document.createElement('canvas');
+    const borderSize = 10;
+    finalCanvas.width = renderWidth + (borderSize * 2);
+    finalCanvas.height = renderHeight + (borderSize * 2);
+    const finalCtx = finalCanvas.getContext('2d');
+    
+    // Draw original render with 10px offset
+    finalCtx.drawImage(canvas, borderSize, borderSize);
+    
+        // Convert final canvas to blob
+        finalCanvas.toBlob((blob) => {
+            callback(blob);
+            
+            // Restore guide lines
+            if (guideLineOverlay) {
+                guideLineOverlay.style.display = 'block';
+            }
+            
+            // Cleanup
+            tempRenderer.dispose();
+            console.log('High-quality capture completed successfully');
+        }, 'image/png');
+        
+    } catch (error) {
+        console.error('Error in captureHighQualityFrame:', error);
+        
+        // Restore guide lines on error
+        const guideLineOverlay = document.getElementById('guideLineOverlay');
+        if (guideLineOverlay) {
+            guideLineOverlay.style.display = 'block';
+        }
+        
+        // Fallback to regular capture
+        console.log('Falling back to regular capture...');
+        captureFrame(callback);
+    }
+}
+
 function captureFrame(callback) {
     const guideLineOverlay = document.getElementById('guideLineOverlay');
     if (guideLineOverlay) {
@@ -1920,26 +2109,73 @@ function updateGuideLine() {
         overlay.removeChild(overlay.firstChild);
     }
 
+    // Get overlay container dimensions (which already accounts for 10px margins)
+    const overlayRect = overlay.getBoundingClientRect();
+    const viewerWidth = overlayRect.width;
+    const viewerHeight = overlayRect.height;
+
     // Re-create all guide lines from state
     state.guideLines.forEach(lineState => {
         const guideLine = document.createElement('div');
         guideLine.className = 'guide-line';
         guideLine.dataset.id = lineState.id;
 
+        // Create a very long line that extends far beyond the clipped overlay area
+        const absAngle = Math.abs(lineState.angle);
+        
+        // Calculate the maximum possible line length needed for any viewport size and angle
+        // Use a generous multiplier to ensure the line extends well beyond the overlay area
+        const maxViewportDiagonal = Math.sqrt(viewerWidth * viewerWidth + viewerHeight * viewerHeight);
+        const dynamicWidth = maxViewportDiagonal * 4; // Very long line that extends far beyond overlay
+
         // EMERGENCY FIX: Add debug logging and ensure proper color
         const thickness = `${lineState.thickness / 1000 * 100}vh`;
         const color = lineState.colour || '#FFFF00'; // Default to yellow if no color
         const opacity = lineState.transparency || 0.5;
-        const topPos = `${50 - lineState.posY}%`;
-        const transform = `translateY(-50%) rotate(${lineState.angle}deg)`;
+        
+        // Advanced positioning system - position moves the line perpendicular to its angle
+        const angleRad = (lineState.angle * Math.PI) / 180;
+        const cosAngle = Math.cos(angleRad);
+        const sinAngle = Math.sin(angleRad);
+        
+        // Calculate the perpendicular direction to the line
+        // For a line at angle θ, the perpendicular direction is at angle (θ + 90°)
+        const perpCos = -sinAngle; // cos(θ + 90°) = -sin(θ)
+        const perpSin = cosAngle;  // sin(θ + 90°) = cos(θ)
+        
+        // Scale position value to use full screen dimension
+        // Use the diagonal to allow full traversal across the entire screen at any angle
+        const diagonal = Math.sqrt(viewerWidth * viewerWidth + viewerHeight * viewerHeight);
+        const positionScale = lineState.posY / 360; // Normalize -360 to +360 to -1 to +1
+        const positionOffset = positionScale * (diagonal * 0.8); // Scale to 80% of diagonal for true edge-to-edge coverage
+        
+        // Calculate position by moving perpendicular to the line direction
+        const centerX = viewerWidth / 2;
+        const centerY = viewerHeight / 2;
+        
+        const offsetX = perpCos * positionOffset;
+        const offsetY = perpSin * positionOffset;
+        
+        const leftPixels = centerX + offsetX;
+        const topPixels = centerY + offsetY;
+        
+        // Convert to percentages relative to the overlay container
+        const leftPos = `${(leftPixels / viewerWidth) * 100}%`;
+        const topPos = `${(topPixels / viewerHeight) * 100}%`;
+        
+        const transform = `translate(-50%, -50%) rotate(${lineState.angle}deg)`;
 
+        // Apply dynamic sizing and rounded caps
+        guideLine.style.width = `${dynamicWidth}px`;
         guideLine.style.height = thickness;
         guideLine.style.backgroundColor = color;
         guideLine.style.opacity = opacity;
         guideLine.style.top = topPos;
+        guideLine.style.left = leftPos;
         guideLine.style.transform = transform;
+        guideLine.style.borderRadius = `${lineState.thickness / 2}px`; // Rounded ends based on thickness
 
-        console.log(`Creating guide line ${lineState.id}: color=${color}, thickness=${thickness}, opacity=${opacity}`);
+        console.log(`Creating guide line ${lineState.id}: angle=${lineState.angle}°, width=${dynamicWidth.toFixed(1)}px, top=${topPos}, left=${leftPos}`);
 
         overlay.appendChild(guideLine);
     });
@@ -1964,6 +2200,8 @@ function toggleGuideLineVisibility(lineId = null) {
             button.textContent = 'HIDE';
             button.classList.remove('button-danger');
             button.classList.add('secondary');
+            // CRITICAL FIX: Restore all guide line properties after unhiding
+            updateGuideLine();
         } else {
             defaultLineElement.style.display = 'none';
             button.textContent = 'UNHIDE';
@@ -1986,6 +2224,8 @@ function toggleGuideLineVisibility(lineId = null) {
             button.textContent = 'HIDE';
             button.classList.remove('button-danger');
             button.classList.add('secondary');
+            // CRITICAL FIX: Restore all guide line properties after unhiding
+            updateGuideLine();
         } else {
             lineElement.style.display = 'none';
             button.textContent = 'UNHIDE';
@@ -2701,22 +2941,47 @@ function setupControls() {
     // });
 
     // CAPTURE FILE Button Event Listener (MISSING EVENT LISTENER FIXED)
-    safeAddEventListener('saveToFile', 'click', () => {
-        captureFrame((blob) => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = '3d-model-capture.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+    safeAddEventListener('saveToFile', 'click', async () => {
+        console.log('Starting capture process...');
+        
+        // Generate default filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const defaultFilename = `3d-model-capture-${timestamp}.png`;
+        
+        // Add timeout safety mechanism
+        let captureComplete = false;
+        setTimeout(() => {
+            if (!captureComplete) {
+                console.error('Capture timed out, falling back to regular capture');
+                captureFrame((blob) => {
+                    saveFileWithDialog(blob, defaultFilename, 'image/png');
+                });
+            }
+        }, 10000); // 10 second timeout
+        
+        captureHighQualityFrame((blob) => {
+            captureComplete = true;
+            saveFileWithDialog(blob, defaultFilename, 'image/png');
         });
     });
 
     // SAVE SCENE Button Event Listener
-    safeAddEventListener('saveSceneButton', 'click', () => {
-        saveViewerState();
+    safeAddEventListener('saveSceneButton', 'click', async () => {
+        // Generate default filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const defaultFilename = `3d-model-scene-${timestamp}.json`;
+        
+        try {
+            const sceneState = createSceneState();
+            const jsonString = JSON.stringify(sceneState, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            
+            await saveFileWithDialog(blob, defaultFilename, 'application/json');
+        } catch (error) {
+            console.error('Error saving scene:', error);
+            // Fallback to old method
+            saveViewerState(defaultFilename);
+        }
     });
 
     // LOAD SCENE Button Event Listener
@@ -3949,6 +4214,9 @@ function handleResize() {
         state.camera.updateProjectionMatrix();
 
         state.renderer.setSize(width, height);
+        
+        // Update guide lines to match new window dimensions
+        updateGuideLine();
     }
 }
 
@@ -4105,8 +4373,71 @@ function showLoadingError(message) {
     }
 }
 
+function createSceneState() {
+    return {
+        version: "2.0",
+        timestamp: new Date().toISOString(),
+        camera: {
+            position: {
+                x: state.camera.position.x,
+                y: state.camera.position.y,
+                z: state.camera.position.z
+            },
+            rotation: {
+                x: state.camera.rotation.x,
+                y: state.camera.rotation.y,
+                z: state.camera.rotation.z
+            }
+        },
+        model: {
+            type: state.currentModelType,
+            rotation: {
+                x: state.model ? state.model.rotation.x : 0,
+                y: state.model ? state.model.rotation.y : 0,
+                z: state.model ? state.model.rotation.z : 0
+            },
+            yaw: state.modelYaw,
+            pitch: state.modelPitch,
+            roll: state.modelRoll
+        },
+        lighting: {
+            mode: state.lightingMode,
+            ambient: state.lights.ambient ? state.lights.ambient.intensity : 0.4,
+            directional: {
+                left: state.lights.directional ? state.lights.directional.intensity : 0.6,
+                right: state.lights.directionalRight ? state.lights.directionalRight.intensity : 0.0
+            }
+        },
+        materials: {
+            mode: state.materialMode,
+            color: document.getElementById('materialColor') ? document.getElementById('materialColor').value : '#4CAF50',
+            metalness: parseFloat(document.getElementById('metalness') ? document.getElementById('metalness').value : '0.1'),
+            roughness: parseFloat(document.getElementById('roughness') ? document.getElementById('roughness').value : '0.8'),
+            transparency: parseFloat(document.getElementById('transparency') ? document.getElementById('transparency').value : '1'),
+            transparencyMode: state.transparencyMode
+        },
+        guideLines: state.guideLines.map(line => {
+            // Check current visibility state of each guide line
+            const lineElement = document.querySelector(`[data-id="${line.id}"]`);
+            const isVisible = lineElement && 
+                            lineElement.style.display !== 'none' && 
+                            getComputedStyle(lineElement).display !== 'none';
+            
+            return {
+                id: line.id,
+                thickness: line.thickness,
+                colour: line.colour,
+                transparency: line.transparency,
+                angle: line.angle,
+                posY: line.posY,
+                visible: isVisible
+            };
+        })
+    };
+}
+
 // Save viewer state to JSON file
-function saveViewerState() {
+function saveViewerState(filename = null) {
     try {
         const sceneState = {
             version: "2.0",
@@ -4169,20 +4500,25 @@ function saveViewerState() {
             })
         };
 
-        // Prompt user for filename
-        const defaultFileName = `3d-viewer-scene-${new Date().toISOString().split('T')[0]}`;
-        const userFileName = prompt('Enter filename for your scene:', defaultFileName);
-        
-        // If user cancels, don't save
-        if (userFileName === null) {
-            console.log('Save cancelled by user');
-            return;
-        }
-        
-        // Sanitize filename and ensure .3dview extension
-        let finalFileName = userFileName.trim();
-        if (!finalFileName) {
-            finalFileName = defaultFileName; // Use default if empty
+        // Use provided filename or prompt user
+        let finalFileName;
+        if (filename) {
+            finalFileName = filename;
+        } else {
+            // Prompt user for filename
+            const defaultFileName = `3d-viewer-scene-${new Date().toISOString().split('T')[0]}`;
+            const userFileName = prompt('Enter filename for your scene:', defaultFileName);
+            
+            // If user cancels, don't save
+            if (userFileName === null) {
+                console.log('Save cancelled by user');
+                return;
+            }
+            
+            finalFileName = userFileName.trim();
+            if (!finalFileName) {
+                finalFileName = defaultFileName; // Use default if empty
+            }
         }
         
         // Add .3dview extension if not present
