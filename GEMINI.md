@@ -196,6 +196,9 @@ This project maintains a detailed history of changes and development decisions i
 ### Known Issues
 - **Recurring Build Failures**: Persistent `TypeError: Identifier "..." has already been declared` errors during `npm run build` due to duplicate function definitions in `main.js`. This is currently being addressed programmatically.
 
+### Security
+- **CVE Scanning**: The project's dependencies are regularly scanned for vulnerabilities using `npm audit`, `Snyk`, and `audit-ci`. As of the latest scan, there are no known vulnerabilities.
+
 ## Major Changes (v2.4+)
 
 ### Multiple Guide Lines (v2.10.1)

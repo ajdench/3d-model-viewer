@@ -4,10 +4,13 @@
 [![Vite](https://img.shields.io/badge/Vite-7.1.2-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-222222?style=for-the-badge&logo=github)](https://ajdench.github.io/3d-model-viewer/)
+[![npm audit](https://img.shields.io/badge/npm%20audit-0%20vulnerabilities-brightgreen)](https://www.npmjs.com/package/npm-audit)
+[![Snyk](https://img.shields.io/badge/Snyk-0%20vulnerabilities-brightgreen)](https://snyk.io/)
+[![audit-ci](https://img.shields.io/badge/audit--ci-0%20vulnerabilities-brightgreen)](https://github.com/IBM/audit-ci)
 
 ## What is this?
 
-**3D Model Viewer** is a professional, interactive 3D model viewer built with Three.js, designed to be completely self-contained for offline use. It provides intuitive model manipulation, camera positioning, and material properties controls directly in the browser, offering enterprise-level features for viewing, orienting and reclouring 3D files, creating 2D images of 3D models for use with a variety of applications.
+**3D Model Viewer** is a professional, interactive 3D model viewer built with Three.js, a cross-browser JavaScript library and application programming interface (API) used to create and display animated 3D computer graphics in a web browser. It's designed to be completely self-contained for offline use and provides intuitive model manipulation, camera positioning, and material properties controls directly in your browser, offering enterprise-level features for viewing, orienting and reclouring 3D files, creating 2D images of 3D models for use with a variety of applications.
 
 ## What can you do with it?
 
