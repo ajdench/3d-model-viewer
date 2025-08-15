@@ -54,22 +54,22 @@
 
         .viewer-container {
             flex: 1;
-            background: #ffffff;
-            border-radius: 15px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #ffffff; /* Keep solid white background */
+            border-radius: 15px; /* Match controls pane rounded corners */
+            border: none; /* Boxless design - no border */
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.08); /* Slightly more visible subtle shadow all around */
         }
 
         .controls-panel {
             width: 300px;
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 15px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(0, 0, 0, 0.05); /* Keep current background color */
+            border-radius: 15px; /* Keep current corner radius */
+            border: none; /* Borderless design - remove border */
             padding: 20px;
             overflow-y: auto;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: none; /* Borderless design - remove shadow */
         }
 
         .panel-title {
@@ -84,9 +84,9 @@
             margin-bottom: 25px;
             padding: var(--section-content-padding);
             padding-bottom: var(--section-content-padding-bottom);
-            background: rgba(0, 0, 0, 0.03);
-            border-radius: 10px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(0, 0, 0, 0.03); /* Keep current background color */
+            border-radius: 10px; /* Keep current corner radius */
+            border: none; /* Borderless design - remove border */
         }
 
         /* Legacy h3 styling for non-collapsible sections */
@@ -288,9 +288,9 @@
         .control-input, .slider-input {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: white;
+            border: none; /* Borderless design - remove border */
+            border-radius: 6px; /* Keep current corner radius */
+            background: white; /* Keep current background color */
             color: #333;
             font-size: 14px;
         }
@@ -302,9 +302,9 @@
         .number-input {
             width: 80px;
             padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: white;
+            border: none; /* Borderless design - remove border */
+            border-radius: 6px; /* Keep current corner radius */
+            background: white; /* Keep current background color */
             color: #333;
             font-size: 14px;
             text-align: center;
@@ -400,9 +400,9 @@
         .preset-name {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: white;
+            border: none; /* Borderless design - remove border */
+            border-radius: 6px; /* Keep current corner radius */
+            background: white; /* Keep current background color */
             color: #333;
             font-size: 12px;
         }
@@ -515,7 +515,7 @@
 
         .info-panel {
             position: absolute;
-            top: 10px;
+            top: 9px; /* Moved up 1px */
             left: 10px;
             display: flex;
             gap: 10px;
@@ -613,9 +613,9 @@
             padding: 0;
         }
 
-        /* Coordinate value boxes - fixed size matching widget box */
+        /* Coordinate value boxes - three-column layout for X Y Z values */
         .coordinate-value-box {
-            font-size: 11px; /* Smaller to fit -180° -180° -180° */
+            font-size: 12px; /* Slightly larger text for better readability */
             color: #333;
             font-weight: normal;
             font-family: 'Arial', sans-serif; /* Match rest of tool font */
@@ -623,22 +623,27 @@
             border: none; /* Borderless design matching LIGHTING */
             border-radius: 8px; /* Same as sun-control */
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Same shadow as LIGHTING boxes */
-            padding: 6px; /* Equal padding */
-            text-align: center;
+            padding: 5px; /* Reduced padding to compensate for larger text */
             height: 32px; /* Fixed height for consistency */
-            width: 120px; /* Fixed width matching widget box */
-            display: flex;
+            width: 120px; /* Original width maintained */
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* Three equal columns for X Y Z */
             align-items: center; /* Center text vertically */
-            justify-content: center; /* Center text horizontally */
-            margin-top: 6px; /* Gap below the title */
-            box-sizing: border-box; /* Include padding in width calculation */
+            gap: 2px; /* Small gap between columns */
+            box-sizing: border-box; /* Ensure padding doesn't increase box size */
+        }
+
+        /* Style for individual coordinate values within the three-column grid */
+        .coordinate-value-box span {
+            text-align: center; /* Center each coordinate value in its column */
+            display: block;
+        }
+
+        /* Position coordinate boxes properly below titles */
+        .coordinate-value-box {
+            margin-top: 6px; /* Gap below the title - restore original positioning */
             margin-left: auto; /* Center the box under the title */
             margin-right: auto; /* Center the box under the title */
-            letter-spacing: 0.1px; /* Tight letter spacing for -180° -180° -180° */
-            line-height: 1.1; /* Tight line height for centering */
-            white-space: nowrap; /* Prevent wrapping of coordinate values */
-            overflow: hidden; /* Handle any overflow gracefully */
-            font-size: 11px; /* Slightly smaller to fit -180° -180° -180° comfortably */
         }
         
         .info-panel > * {
@@ -882,6 +887,32 @@
             transform: translate(-50%, -50%);
         }
 
+        /* Light fan styles - larger and more prominent than arrows (64px), centered behind emojis */
+        .light-fan {
+            position: absolute;
+            user-select: none;
+            pointer-events: none;
+            display: none; /* Hidden by default */
+            width: 80px;
+            height: 80px;
+            z-index: -1; /* Behind emoji */
+        }
+
+        .light-fan svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .light-fan.left-fan {
+            /* Position centered behind left sun icon */
+            transform: translate(-50%, -50%);
+        }
+
+        .light-fan.right-fan {
+            /* Position centered behind right sun icon */
+            transform: translate(-50%, -50%);
+        }
+
         /* SUNSET: Greyed out controls styling */
         .sunset-controls {
             opacity: 0.4;
@@ -1069,9 +1100,9 @@
         .number-input-small {
             width: 50px;
             padding: 4px 6px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: white;
+            border: none; /* Borderless design - remove border */
+            border-radius: 4px; /* Keep current corner radius */
+            background: white; /* Keep current background color */
             color: #333;
             font-size: 10px;
             text-align: center;
@@ -1140,7 +1171,7 @@
             position: absolute;
             bottom: 10px;
             left: 10px;
-            width: 180px; /* Much smaller to test if changes are applying */
+            width: 386px !important; /* Final optimized width */
             z-index: 10;
             background: rgba(250, 250, 250, 0.5); /* Transparent background like other panels */
             border: none;
@@ -1198,7 +1229,7 @@
             color: #999;
             text-transform: none; /* Override uppercase from parent */
             position: absolute;
-            left: 159px; /* Adjusted to better align with action text column */
+            left: 199px; /* Positioned to align with action text: 180px + 9px + 10px offset for better visual alignment */
             top: 50%;
             transform: translateY(-50%); /* Center vertically */
         }
@@ -1237,9 +1268,9 @@
         }
 
         /* Responsive positioning for different screen sizes */
-        @media (max-width: 1200px) {
+        @media (max-width: 992px) {
             .instructions-display {
-                width: 170px; /* Much smaller to test */
+                width: 680px; /* Increased for medium screens to prevent wrapping */
                 font-size: 11px;
             }
             
@@ -1253,7 +1284,7 @@
             .instructions-display {
                 bottom: 10px;
                 left: 10px;
-                width: 160px; /* Much smaller to test */
+                width: 660px; /* Increased for small screens to prevent wrapping */
                 font-size: 10px;
                 padding: 10px;
             }
@@ -1274,7 +1305,7 @@
         @media (max-width: 480px) {
             .instructions-display {
                 width: calc(100vw - 300px - 40px); /* Account for controls panel width */
-                min-width: 180px;
+                min-width: 640px; /* Increased minimum width to prevent wrapping of longest action text */
             }
             
             #light-controls {
@@ -1287,14 +1318,14 @@
             position: absolute;
             bottom: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(0, 0, 0, 0.05); /* Keep current background color */
             color: #333;
             padding: 15px 15px 7px 15px;
-            border-radius: 10px;
+            border-radius: 10px; /* Keep current corner radius */
             font-family: 'Arial', sans-serif;
             font-size: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border: none; /* Borderless design - remove border */
+            box-shadow: none; /* Borderless design - remove shadow */
             width: 250px;
         }
 
@@ -1388,7 +1419,7 @@
 
         .interaction-label {
             display: inline-block;
-            width: 140px; /* Fixed width for labels to align with "Right-click and Drag:" */
+            width: 180px; /* Increased width to accommodate longer labels like "Double-click Lighting Pane:" */
             flex-shrink: 0; /* Prevent shrinking */
             font-size: 12px; /* Ensure consistent text size */
         }
@@ -1419,8 +1450,8 @@
         [data-section*="guideline"] .color-input {
             width: 100%;
             height: 37px; /* Match MATERIALS height */
-            border: 1px solid #ddd; /* Match MATERIALS border */
-            border-radius: 6px;
+            border: none; /* Borderless design - remove border */
+            border-radius: 6px; /* Keep current corner radius */
             cursor: pointer;
             padding: 0;
             box-sizing: border-box;
@@ -1510,7 +1541,7 @@
         /* MATERIAL SECTION: Simplified - Universal System handles layout */
         [data-section="material"] .color-input {
             height: 37px;
-            border: 1px solid #ddd;
+            border: none; /* Borderless design - remove border */
             padding: 0;
             box-sizing: border-box;
             margin-bottom: 5px;
@@ -1592,9 +1623,9 @@
         /* MATERIAL SECTION: Now using Universal Control Row System */
         /* All button sizing and layout handled by .control-row-color-button and .universal-toggle-button classes */
 
-        /* Add bottom border to all control sections */
+        /* Borderless design - remove bottom border from all control sections */
         .control-section {
-            border-bottom: 2px solid rgba(0, 0, 0, 0.1) !important;
+            border-bottom: none !important; /* Borderless design */
         }
 
         /* SUNSET: Disable all button hover glow effects in CONTROLS */

@@ -48,7 +48,12 @@ let state = {
         axesHelper: null,
         compass: null,
         lastModelRotation: { x: 0, y: 0, z: 0 }
-    }
+    },
+    // Light display mode: 'arrows' or 'fans'
+    lightDisplayMode: 'arrows',
+    // Light direction state for each light (true = inward, false = outward)
+    leftLightDirectionIn: true,
+    rightLightDirectionIn: true
 };
 
 let mouseControls = {
@@ -830,21 +835,14 @@ function updateLightingModeButtons() {
             // BASIC selected - use CSS active class
             basicButton.classList.add('active');
             complexButton.classList.remove('active');
-            // Hide direction arrows in BASIC mode
-            if (leftArrow) leftArrow.style.display = 'none';
-            if (rightArrow) rightArrow.style.display = 'none';
         } else {
             // COMPLEX selected - use CSS active class  
             complexButton.classList.add('active');
             basicButton.classList.remove('active');
-            
-            // Show direction arrows in COMPLEX mode (positioned dynamically by drag handler)
-            if (leftArrow && rightArrow) {
-                leftArrow.style.display = 'block';
-                rightArrow.style.display = 'block';
-                // Position and rotation will be set by updateArrowPosition function
-            }
         }
+        
+        // Update light display elements based on current display mode (arrows vs fans)
+        updateLightDisplayElements();
     }
 }
 
@@ -1434,31 +1432,31 @@ function updateCameraInfo() {
 }
 
 function updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, modelRotZDeg, camRot, camRotXDeg, camRotYDeg, camRotZDeg) {
-    // Update Model Rotation display
+    // Update Model Rotation display with three-column layout
     const modelRotationDisplay = document.getElementById('model-rotation-display');
     if (modelRotationDisplay) {
-        modelRotationDisplay.textContent = `${Math.round(modelRotXDeg)}° ${Math.round(modelRotYDeg)}° ${Math.round(modelRotZDeg)}°`;
+        modelRotationDisplay.innerHTML = `<span>${Math.round(modelRotXDeg)}°</span><span>${Math.round(modelRotYDeg)}°</span><span>${Math.round(modelRotZDeg)}°</span>`;
     }
     
-    // Update Camera Position display
+    // Update Camera Position display with three-column layout
     const cameraPositionDisplay = document.getElementById('camera-position-display');
     if (cameraPositionDisplay) {
-        cameraPositionDisplay.textContent = `${Math.round(pos.x)} ${Math.round(pos.y)} ${Math.round(pos.z)}`;
+        cameraPositionDisplay.innerHTML = `<span>${Math.round(pos.x)}</span><span>${Math.round(pos.y)}</span><span>${Math.round(pos.z)}</span>`;
     }
     
-    // Update Camera Rotation display (restored from SUNSET)
+    // Update Camera Rotation display with three-column layout (restored from SUNSET)
     const cameraRotationDisplay = document.getElementById('camera-rotation-display');
     if (cameraRotationDisplay) {
-        cameraRotationDisplay.textContent = `${Math.round(camRotXDeg)}° ${Math.round(camRotYDeg)}° ${Math.round(camRotZDeg)}°`;
+        cameraRotationDisplay.innerHTML = `<span>${Math.round(camRotXDeg)}°</span><span>${Math.round(camRotYDeg)}°</span><span>${Math.round(camRotZDeg)}°</span>`;
     }
     
-    // Update Model Attitude display (Yaw/Pitch/Roll)
+    // Update Model Attitude display with three-column layout (Yaw/Pitch/Roll)
     const modelAttitudeDisplay = document.getElementById('model-attitude-display');
     if (modelAttitudeDisplay) {
         const yaw = state.modelYaw || 0;
         const pitch = state.modelPitch || 0;
         const roll = state.modelRoll || 0;
-        modelAttitudeDisplay.textContent = `${Math.round(yaw)}° ${Math.round(pitch)}° ${Math.round(roll)}°`;
+        modelAttitudeDisplay.innerHTML = `<span>${Math.round(yaw)}°</span><span>${Math.round(pitch)}°</span><span>${Math.round(roll)}°</span>`;
     }
     
     // SUNSET: Model Name display removed
@@ -2628,15 +2626,37 @@ function setupControls() {
         const rightLightIcon = document.getElementById('right-light-icon');
         leftLightIcon.style.transform = 'translate(-50%, -50%)';
         rightLightIcon.style.transform = 'translate(-50%, -50%) scaleX(-1)';
+        
+        // Position icons horizontally in BASIC mode
+        const lightPad = document.querySelector('.sun-control');
+        if (lightPad) {
+            const padRect = lightPad.getBoundingClientRect();
+            const centerY = padRect.height / 2;
+            const leftX = padRect.width * 0.25;  // 25% from left
+            const rightX = padRect.width * 0.75; // 75% from left
+            
+            leftLightIcon.style.left = `${leftX}px`;
+            leftLightIcon.style.top = `${centerY}px`;
+            rightLightIcon.style.left = `${rightX}px`;
+            rightLightIcon.style.top = `${centerY}px`;
+            
+            // Update 3D light positions to horizontal
+            state.lights.directional.position.x = -5;
+            state.lights.directional.position.y = 0;
+            state.lights.directionalRight.position.x = 5;
+            state.lights.directionalRight.position.y = 0;
+        }
+        
         state.lights.directional.target.position.set(0, 0, 0);
         state.lights.directionalRight.target.position.set(0, 0, 0);
+        updateLightDisplayElements(); // Update display elements when switching to basic mode
     });
 
     // Complex mode button (MISSING EVENT LISTENER FIXED)
     safeAddEventListener('complexModeButton', 'click', () => {
         state.lightingMode = 'complex';
         updateLightingModeButtons();
-        updateArrowPosition(); // Position arrows when switching to complex mode
+        updateLightDisplayElements(); // Update display elements when switching to complex mode
     });
 
     const dropZone = document.getElementById('dropZone');
@@ -3233,14 +3253,28 @@ function setupLightControls() {
 
     function makeDraggable(icon, light, otherIcon, iconSide) {
         let isDragging = false;
+        let mouseStartPos = { x: 0, y: 0 };
+        let hasMovedMouse = false;
+        const dragThreshold = 5; // pixels
 
         icon.addEventListener('mousedown', (e) => {
             isDragging = true;
+            hasMovedMouse = false;
+            mouseStartPos = { x: e.clientX, y: e.clientY };
             icon.style.cursor = 'grabbing';
         });
 
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
+
+            // Check if mouse has moved beyond threshold
+            const mouseDelta = Math.sqrt(
+                Math.pow(e.clientX - mouseStartPos.x, 2) + 
+                Math.pow(e.clientY - mouseStartPos.y, 2)
+            );
+            if (mouseDelta > dragThreshold) {
+                hasMovedMouse = true;
+            }
 
             const lightPadRect = getLightPadRect();
             let x = e.clientX - lightPadRect.left;
@@ -3272,12 +3306,22 @@ function setupLightControls() {
 
             setIconPosition(icon, { x, y });
 
-            // Arrows remain at fixed positions - no longer follow sun icons
-
+            // Update 3D light position based on drag coordinates
             const worldX = (x / lightPadRect.width) * 20 - 10;
             const worldY = (1 - (y / lightPadRect.height)) * 20 - 10;
             light.position.x = worldX;
             light.position.y = worldY;
+
+            // Update light direction based on new position
+            updateLightDirection(light, iconSide);
+
+            // Always update arrow positions to follow sun icons (both BASIC and COMPLEX modes)
+            updateArrowPosition();
+            
+            // Also update fan positions if in fan mode
+            if (state.lightDisplayMode === 'fans') {
+                updateFanPosition();
+            }
 
             if (state.lightingMode === 'complex') {
                 const verticalPercent = y / lightPadRect.height;
@@ -3287,12 +3331,10 @@ function setupLightControls() {
 
                 icon.style.transform = `translate(-50%, -50%) ${icon.classList.contains('flipped') ? 'scaleX(-1)' : ''}`;
 
-                // Update arrow positions to follow sun icons
-                updateArrowPosition();
-
                 const targetY = (0.5 - verticalPercent) * 10;
                 light.target.position.y = targetY;
             } else {
+                // BASIC mode: keep standard icon transforms and reset light targets
                 icon.style.transform = `translate(-50%, -50%) ${icon.classList.contains('flipped') ? 'scaleX(-1)' : ''}`;
                 light.target.position.set(0, 0, 0);
             }
@@ -3307,12 +3349,146 @@ function setupLightControls() {
     makeDraggable(leftLightIcon, state.lights.directional, rightLightIcon, 'left');
     makeDraggable(rightLightIcon, state.lights.directionalRight, leftLightIcon, 'right');
 
-    // Initialize arrow positions
-    updateArrowPosition();
+    // Add specific click and double-click handlers to sun emojis to prevent bubbling
+    function addEmojiClickHandlers(icon, iconSide) {
+        if (!icon) return;
+        
+        let mouseDownPos = null;
+        let hasDragged = false;
+        const dragThreshold = 5; // pixels
+        
+        // Mouse down - record position
+        icon.addEventListener('mousedown', (e) => {
+            mouseDownPos = { x: e.clientX, y: e.clientY };
+            hasDragged = false;
+        });
+        
+        // Mouse move - detect drag
+        icon.addEventListener('mousemove', (e) => {
+            if (mouseDownPos) {
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - mouseDownPos.x, 2) + 
+                    Math.pow(e.clientY - mouseDownPos.y, 2)
+                );
+                if (distance > dragThreshold) {
+                    hasDragged = true;
+                }
+            }
+        });
+        
+        // Mouse up - reset tracking
+        icon.addEventListener('mouseup', (e) => {
+            mouseDownPos = null;
+        });
+        
+        // Click handler - only toggle direction if no drag occurred
+        icon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Only toggle direction if this was a true click (no drag)
+            if (!hasDragged) {
+                // Toggle light direction
+                if (iconSide === 'left') {
+                    state.leftLightDirectionIn = !state.leftLightDirectionIn;
+                } else {
+                    state.rightLightDirectionIn = !state.rightLightDirectionIn;
+                }
+                
+                // Update visual indicators immediately
+                updateArrowPosition();
+                if (state.lightDisplayMode === 'fans') {
+                    updateFanPosition();
+                }
+                
+                // Update Three.js light direction
+                const light = (iconSide === 'left') ? state.lights.directional : state.lights.directionalRight;
+                updateLightDirection(light, iconSide);
+                
+                console.log(`${iconSide} light direction clicked (no drag):`, iconSide === 'left' ? state.leftLightDirectionIn : state.rightLightDirectionIn);
+            } else {
+                console.log(`${iconSide} icon drag detected - maintaining current direction`);
+            }
+            
+            // Reset drag flag
+            hasDragged = false;
+        });
+        
+        // Double-click handler - prevent bubbling to avoid triggering arrow/fan toggle
+        icon.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Only toggle if no drag (same logic as single click)
+            if (!hasDragged) {
+                // Toggle light direction (same as single click for consistency)
+                if (iconSide === 'left') {
+                    state.leftLightDirectionIn = !state.leftLightDirectionIn;
+                } else {
+                    state.rightLightDirectionIn = !state.rightLightDirectionIn;
+                }
+                
+                // Update visual indicators immediately
+                updateArrowPosition();
+                if (state.lightDisplayMode === 'fans') {
+                    updateFanPosition();
+                }
+                
+                // Update Three.js light direction
+                const light = (iconSide === 'left') ? state.lights.directional : state.lights.directionalRight;
+                updateLightDirection(light, iconSide);
+                
+                console.log(`${iconSide} light direction double-clicked (no drag):`, iconSide === 'left' ? state.leftLightDirectionIn : state.rightLightDirectionIn);
+            }
+        });
+    }
+    
+    // Add emoji click handlers to both sun icons
+    addEmojiClickHandlers(leftLightIcon, 'left');
+    addEmojiClickHandlers(rightLightIcon, 'right');
+
+    // Add double-click event listeners to sun control area for light display toggle
+    const sunControl = document.querySelector('.sun-control');
+    if (sunControl) {
+        sunControl.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleLightDisplayMode();
+        });
+    }
+
+    // Initialize display mode and positions
+    updateLightDisplayElements();
+    
+    // Initialize light directions based on default state
+    updateLightDirection(state.lights.directional, 'left');
+    updateLightDirection(state.lights.directionalRight, 'right');
+}
+
+function updateLightDirection(light, iconSide) {
+    // Update Three.js light direction based on toggle state
+    // This function updates the actual 3D light behavior
+    const isDirectionIn = (iconSide === 'left') ? state.leftLightDirectionIn : state.rightLightDirectionIn;
+    
+    if (isDirectionIn) {
+        // Light points toward model center (default behavior)
+        light.target.position.set(0, 0, 0);
+    } else {
+        // Light points away from model center (reverse direction)
+        const lightPos = light.position;
+        // Calculate outward direction - opposite of light position
+        const outwardTarget = new THREE.Vector3(
+            -lightPos.x * 2,
+            -lightPos.y * 2,
+            -lightPos.z * 2
+        );
+        light.target.position.copy(outwardTarget);
+    }
 }
 
 function updateArrowPosition() {
-    if (state.lightingMode !== 'complex') return;
+    // Position directional arrows relative to sun icons in both BASIC and COMPLEX modes
+    // Arrows point based on direction state (inward or outward)
 
     const leftIcon = document.getElementById('left-light-icon');
     const rightIcon = document.getElementById('right-light-icon');
@@ -3367,9 +3543,27 @@ function updateArrowPosition() {
         }
     }
 
-    // Calculate arrow positions and rotations (swap logic to point inward)
-    const leftRotation = getClockRotation(leftVerticalPercent, false);  // Left arrow uses right logic to point inward
-    const rightRotation = getClockRotation(rightVerticalPercent, true); // Right arrow uses left logic to point inward
+    // Calculate arrow rotations based on lighting mode and direction state
+    let leftRotation, rightRotation;
+    
+    if (state.lightingMode === 'basic') {
+        // BASIC mode: arrows point horizontally based on direction state
+        leftRotation = state.leftLightDirectionIn ? 90 : 270;   // Inward: right, Outward: left
+        rightRotation = state.rightLightDirectionIn ? 270 : 90; // Inward: left, Outward: right
+    } else {
+        // COMPLEX mode: arrows point based on position and direction state
+        if (state.leftLightDirectionIn) {
+            leftRotation = getClockRotation(leftVerticalPercent, true);  // Point inward (corrected)
+        } else {
+            leftRotation = getClockRotation(leftVerticalPercent, true) + 180;  // Point outward (flip 180°)
+        }
+        
+        if (state.rightLightDirectionIn) {
+            rightRotation = getClockRotation(rightVerticalPercent, false);  // Point inward (corrected)
+        } else {
+            rightRotation = getClockRotation(rightVerticalPercent, false) + 180;  // Point outward (flip 180°)
+        }
+    }
 
     // Convert rotation to radians for position calculation
     const leftRadians = (leftRotation - 90) * Math.PI / 180; // -90 to point from center outward
@@ -3389,6 +3583,118 @@ function updateArrowPosition() {
     rightArrow.style.left = `${rightArrowX}px`;
     rightArrow.style.top = `${rightArrowY}px`;
     rightArrow.style.transform = `translate(-50%, -50%) rotate(${rightRotation}deg)`;
+}
+
+function toggleLightDisplayMode() {
+    state.lightDisplayMode = (state.lightDisplayMode === 'arrows') ? 'fans' : 'arrows';
+    updateLightDisplayElements();
+}
+
+function updateLightDisplayElements() {
+    const leftArrow = document.getElementById('left-direction-arrow');
+    const rightArrow = document.getElementById('right-direction-arrow');
+    const leftFan = document.getElementById('left-light-fan');
+    const rightFan = document.getElementById('right-light-fan');
+
+    if (state.lightDisplayMode === 'arrows') {
+        // Show arrows, hide fans
+        if (leftArrow) leftArrow.style.display = 'block';
+        if (rightArrow) rightArrow.style.display = 'block';
+        if (leftFan) leftFan.style.display = 'none';
+        if (rightFan) rightFan.style.display = 'none';
+        // Update arrow positions
+        updateArrowPosition();
+    } else {
+        // Show fans, hide arrows
+        if (leftArrow) leftArrow.style.display = 'none';
+        if (rightArrow) rightArrow.style.display = 'none';
+        if (leftFan) leftFan.style.display = 'block';
+        if (rightFan) rightFan.style.display = 'block';
+        // Update fan positions
+        updateFanPosition();
+    }
+}
+
+function updateFanPosition() {
+    const leftIcon = document.getElementById('left-light-icon');
+    const rightIcon = document.getElementById('right-light-icon');
+    const leftFan = document.getElementById('left-light-fan');
+    const rightFan = document.getElementById('right-light-fan');
+    const lightPad = document.querySelector('.sun-control');
+
+    if (!leftIcon || !rightIcon || !leftFan || !rightFan || !lightPad) return;
+
+    // Get sun icon positions
+    const leftIconRect = leftIcon.getBoundingClientRect();
+    const rightIconRect = rightIcon.getBoundingClientRect();
+    const padRect = lightPad.getBoundingClientRect();
+
+    // Get icon centers relative to lightPad
+    const leftIconCenterX = leftIconRect.left + leftIconRect.width/2 - padRect.left;
+    const leftIconCenterY = leftIconRect.top + leftIconRect.height/2 - padRect.top;
+    const rightIconCenterX = rightIconRect.left + rightIconRect.width/2 - padRect.left;
+    const rightIconCenterY = rightIconRect.top + rightIconRect.height/2 - padRect.top;
+
+    // Calculate vertical positions as percentages (0 = top, 1 = bottom)
+    const leftVerticalPercent = leftIconCenterY / padRect.height;
+    const rightVerticalPercent = rightIconCenterY / padRect.height;
+
+    // Use same clock-based rotation system as arrows
+    function getClockRotation(verticalPercent, isLeft) {
+        if (isLeft) {
+            // Left fans: Top=4:30 (135°), Middle=3:00 (90°), Bottom=1:30 (45°)
+            if (verticalPercent <= 0.5) {
+                // Top to middle: 4:30 to 3:00 (135° to 90°)
+                return 135 - (verticalPercent * 2) * 45; // 135° to 90°
+            } else {
+                // Middle to bottom: 3:00 to 1:30 (90° to 45°)
+                const progress = (verticalPercent - 0.5) * 2; // 0 to 1
+                return 90 - progress * 45; // 90° to 45°
+            }
+        } else {
+            // Right fans: Top=7:30 (225°), Middle=9:00 (270°), Bottom=10:30 (315°)
+            if (verticalPercent <= 0.5) {
+                // Top to middle: 7:30 to 9:00 (225° to 270°)
+                return 225 + (verticalPercent * 2) * 45; // 225° to 270°
+            } else {
+                // Middle to bottom: 9:00 to 10:30 (270° to 315°)
+                const progress = (verticalPercent - 0.5) * 2; // 0 to 1
+                return 270 + progress * 45; // 270° to 315°
+            }
+        }
+    }
+
+    // Calculate fan rotations based on lighting mode and direction state (same as arrows)
+    let leftRotation, rightRotation;
+    
+    if (state.lightingMode === 'basic') {
+        // BASIC mode: fans point horizontally based on direction state
+        leftRotation = state.leftLightDirectionIn ? 90 : 270;   // Inward: right, Outward: left
+        rightRotation = state.rightLightDirectionIn ? 270 : 90; // Inward: left, Outward: right
+    } else {
+        // COMPLEX mode: fans point based on position and direction state
+        if (state.leftLightDirectionIn) {
+            leftRotation = getClockRotation(leftVerticalPercent, true);  // Point inward (corrected)
+        } else {
+            leftRotation = getClockRotation(leftVerticalPercent, true) + 180;  // Point outward (flip 180°)
+        }
+        
+        if (state.rightLightDirectionIn) {
+            rightRotation = getClockRotation(rightVerticalPercent, false);  // Point inward (corrected)
+        } else {
+            rightRotation = getClockRotation(rightVerticalPercent, false) + 180;  // Point outward (flip 180°)
+        }
+    }
+
+    // Position fans so apex (center of SVG) is at sun emoji center  
+    // The triangle apex is at (40,40) in the 80x80 SVG, so translate(-50%, -50%) centers it
+    leftFan.style.left = `${leftIconCenterX}px`;
+    leftFan.style.top = `${leftIconCenterY}px`;
+    leftFan.style.transform = `translate(-50%, -50%) rotate(${leftRotation}deg)`;
+
+    rightFan.style.left = `${rightIconCenterX}px`;
+    rightFan.style.top = `${rightIconCenterY}px`;
+    rightFan.style.transform = `translate(-50%, -50%) rotate(${rightRotation}deg)`;
 }
 
 // ----------------------------------------------------------------
@@ -3712,12 +4018,53 @@ function initThreeJS() {
         console.warn('⚠️ Loading element not found');
     }
 }
+function initializeBasicModePositioning() {
+    // Initialize light icons in horizontal BASIC mode positions
+    const leftLightIcon = document.getElementById('left-light-icon');
+    const rightLightIcon = document.getElementById('right-light-icon');
+    const lightPad = document.querySelector('.sun-control');
+    
+    if (leftLightIcon && rightLightIcon && lightPad) {
+        const padRect = lightPad.getBoundingClientRect();
+        const centerY = padRect.height / 2;
+        const leftX = padRect.width * 0.25;  // 25% from left
+        const rightX = padRect.width * 0.75; // 75% from left
+        
+        leftLightIcon.style.left = `${leftX}px`;
+        leftLightIcon.style.top = `${centerY}px`;
+        rightLightIcon.style.left = `${rightX}px`;
+        rightLightIcon.style.top = `${centerY}px`;
+        
+        // Initialize transforms
+        leftLightIcon.style.transform = 'translate(-50%, -50%)';
+        rightLightIcon.style.transform = 'translate(-50%, -50%) scaleX(-1)';
+        
+        // Update 3D light positions to horizontal
+        if (state.lights.directional && state.lights.directionalRight) {
+            state.lights.directional.position.x = -5;
+            state.lights.directional.position.y = 0;
+            state.lights.directionalRight.position.x = 5;
+            state.lights.directionalRight.position.y = 0;
+            
+            // Set targets to center
+            state.lights.directional.target.position.set(0, 0, 0);
+            state.lights.directionalRight.target.position.set(0, 0, 0);
+        }
+        
+        // Update display elements
+        updateLightDisplayElements();
+    }
+}
 
 async function initializeViewer() {
     try {
         initThreeJS();
         setupControls();
         setupLightControls();
+        
+        // Initialize BASIC mode positioning (since app starts in BASIC mode)
+        initializeBasicModePositioning();
+        
         setupGuideLineControls(); // Set up guide line controls after DOM is ready
         setupCollapsibleSections(); // FIXED: Initialize collapsible sections functionality
         setupInstructionsToggle(); // Initialize instructions panel toggle
@@ -3803,22 +4150,55 @@ function saveViewerState() {
                 transparency: parseFloat(document.getElementById('transparency') ? document.getElementById('transparency').value : '1'),
                 transparencyMode: state.transparencyMode
             },
-            guideLines: state.guideLines.map(line => ({
-                id: line.id,
-                thickness: line.thickness,
-                colour: line.colour,
-                transparency: line.transparency,
-                angle: line.angle,
-                posY: line.posY
-            }))
+            guideLines: state.guideLines.map(line => {
+                // Check current visibility state of each guide line
+                const lineElement = document.querySelector(`[data-id="${line.id}"]`);
+                const isVisible = lineElement && 
+                                lineElement.style.display !== 'none' && 
+                                getComputedStyle(lineElement).display !== 'none';
+                
+                return {
+                    id: line.id,
+                    thickness: line.thickness,
+                    colour: line.colour,
+                    transparency: line.transparency,
+                    angle: line.angle,
+                    posY: line.posY,
+                    visible: isVisible
+                };
+            })
         };
 
+        // Prompt user for filename
+        const defaultFileName = `3d-viewer-scene-${new Date().toISOString().split('T')[0]}`;
+        const userFileName = prompt('Enter filename for your scene:', defaultFileName);
+        
+        // If user cancels, don't save
+        if (userFileName === null) {
+            console.log('Save cancelled by user');
+            return;
+        }
+        
+        // Sanitize filename and ensure .3dview extension
+        let finalFileName = userFileName.trim();
+        if (!finalFileName) {
+            finalFileName = defaultFileName; // Use default if empty
+        }
+        
+        // Add .3dview extension if not present
+        if (!finalFileName.toLowerCase().endsWith('.3dview')) {
+            finalFileName += '.3dview';
+        }
+        
+        // Remove any invalid characters for filenames
+        finalFileName = finalFileName.replace(/[<>:"/\\|?*]/g, '-');
+        
         const dataStr = JSON.stringify(sceneState, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `3d-viewer-scene-${new Date().toISOString().split('T')[0]}.3dview`;
+        link.download = finalFileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -4005,6 +4385,41 @@ function loadViewerState() {
                         // Update guide line titles and render
                         window.updateGuideLineTitles();
                         updateGuideLine();
+                        
+                        // Restore visibility state for all guide lines
+                        savedState.guideLines.forEach((savedLine, index) => {
+                            const lineElement = document.querySelector(`[data-id="${savedLine.id}"]`);
+                            if (lineElement && savedLine.hasOwnProperty('visible')) {
+                                if (savedLine.visible) {
+                                    lineElement.style.display = 'block';
+                                } else {
+                                    lineElement.style.display = 'none';
+                                }
+                                
+                                // Update the corresponding HIDE/UNHIDE button state
+                                let button;
+                                if (index === 0) {
+                                    // Main guide line button
+                                    button = document.getElementById('hideUnhideGuide');
+                                } else {
+                                    // Additional guide line button
+                                    const section = document.querySelector(`[data-guideline-id="${savedLine.id}"]`);
+                                    button = section ? section.querySelector('.hide-unhide-guide') : null;
+                                }
+                                
+                                if (button) {
+                                    if (savedLine.visible) {
+                                        button.textContent = 'HIDE';
+                                        button.classList.remove('button-danger');
+                                        button.classList.add('secondary');
+                                    } else {
+                                        button.textContent = 'UNHIDE';
+                                        button.classList.remove('secondary');
+                                        button.classList.add('button-danger');
+                                    }
+                                }
+                            }
+                        });
                     }
 
                     updateCameraInfo();
