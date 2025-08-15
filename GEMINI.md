@@ -223,7 +223,7 @@ This project maintains a detailed history of changes and development decisions i
 
 ### Dependency Updates (v2.9.2)
 - **Three.js**: Upgraded from r178 to r179.
-- **Vite**: Upgraded from 7.0.5 to 7.0.6.
+- **Vite**: Upgraded from 7.0.6 to 7.1.2.
 - **Resolved Deprecation**: Fixed `punycode` module deprecation warning.
 
 ## Strategic Development Roadmap

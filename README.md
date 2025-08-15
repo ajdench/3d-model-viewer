@@ -1,13 +1,13 @@
 # 3D Model Viewer
 
 [![Three.js](https://img.shields.io/badge/Three.js-r179-black?style=for-the-badge&logo=three.js)](https://threejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.0.6-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.1.2-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-222222?style=for-the-badge&logo=github)](https://ajdench.github.io/3d-model-viewer/)
 
 ## What is this?
 
-The **3D Model Viewer** is a professional, interactive 3D model viewer built with Three.js, designed to be completely self-contained for offline use. It provides intuitive model manipulation, camera positioning, and material properties control directly in your browser. This powerful tool eliminates the need for expensive desktop software while offering enterprise-level features for exploring and customizing 3D files.
+**3D Model Viewer** is a professional, interactive 3D model viewer built with Three.js, designed to be completely self-contained for offline use. It provides intuitive model manipulation, camera positioning, and material properties controls directly in the browser, offering enterprise-level features for viewing, orienting and reclouring 3D files, creating 2D images of 3D models for use with a variety of applications.
 
 ## What can you do with it?
 
@@ -152,7 +152,7 @@ Requires modern browser with WebGL support and ES6 module capabilities.
 #### Major Features (v2.8-2.9)
 - **Collapsible Controls** (v2.8): All 7 sections with smooth CSS animations, persistent state, accessibility
 - **Upload Area Relocation** (v2.9): Moved to bottom-right with streamlined interface
-- **Dependency Updates** (v2.9.2): Three.js r178→r179, Vite 7.0.5→7.0.6
+- **Dependency Updates** (v2.9.2): Three.js r178→r179, Vite 7.0.6→7.1.2
 - **External Surface Extraction** (v2.10.0): Hybrid architecture for high-poly model optimization
 
 ### License
