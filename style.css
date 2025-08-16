@@ -1159,6 +1159,12 @@
             letter-spacing: 0.5px;
         }
 
+        .ambient-controls {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
         .ambient-slider-container {
             display: flex;
             align-items: center;
@@ -2282,6 +2288,10 @@
             background: rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(0, 0, 0, 0.1);
             border-radius: 8px;
+        }
+
+        #ambientLightNum {
+            margin-top: 0;
         }
 
         /* Right slider - PERFECT ALIGNMENT WITH UPLOAD AREA */
