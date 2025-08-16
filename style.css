@@ -349,7 +349,7 @@
             width: 100%;
             height: 37px; /* FIXED: Match button height for consistent alignment */
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
         }
         
@@ -360,7 +360,7 @@
         
         /* Webkit color picker swatch corner rounding to match container */
         .color-input::-webkit-color-swatch {
-            border-radius: 5px !important;
+            border-radius: 4px !important;
             margin: 0 !important;
             padding: 0 !important;
             border: none !important; /* Remove black border in Edge */
@@ -394,8 +394,101 @@
         
         input[type="color"]::-webkit-color-swatch {
             border: none !important;
-            border-radius: 5px !important;
+            border-radius: 4px !important;
             outline: none !important;
+        }
+        
+        /* Aggressive Edge border removal - try all possible properties */
+        .color-input,
+        input[type="color"] {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            border: 0 !important;
+            border-width: 0 !important;
+            border-style: none !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+            outline-width: 0 !important;
+            outline-style: none !important;
+            outline-color: transparent !important;
+        }
+        
+        /* Edge - force white background with padding to simulate container */
+        .color-input::-webkit-color-swatch-wrapper,
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            background: rgba(250, 250, 250, 0.9) !important;
+            border: none !important;
+            border-radius: 6px !important;
+            padding: 4px !important;
+            box-shadow: none !important; /* No shadow in CONTROLS pane */
+        }
+        
+        /* Edge - inner swatch styling */
+        .color-input::-webkit-color-swatch,
+        input[type="color"]::-webkit-color-swatch {
+            border: none !important;
+            border-radius: 4px !important; /* Updated to 4px radius for inner swatch */
+            margin: 0 !important;
+            padding: 0 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none !important;
+        }
+        
+        /* Force immediate application - highest specificity for CSS loading timing fix */
+        html body .color-input,
+        html body input[type="color"] {
+            background: rgba(250, 250, 250, 0.9) !important;
+            border: 0px solid transparent !important;
+            border-radius: 6px !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            outline: none !important;
+        }
+        
+        html body .color-input::-webkit-color-swatch-wrapper,
+        html body input[type="color"]::-webkit-color-swatch-wrapper {
+            background: rgba(250, 250, 250, 0.9) !important;
+            border: 0px solid transparent !important;
+            border-radius: 6px !important;
+            padding: 4px !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+        
+        html body .color-input::-webkit-color-swatch,
+        html body input[type="color"]::-webkit-color-swatch {
+            border: 0px solid transparent !important;
+            border-radius: 4px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none !important;
+        }
+        
+        /* Edge - Force styles with even higher specificity and immediate load */
+        html body div .color-input,
+        html body div input[type="color"] {
+            background: rgba(250, 250, 250, 0.9) !important;
+            border: 0px solid transparent !important;
+            border-radius: 6px !important;
+        }
+        
+        html body div .color-input::-webkit-color-swatch-wrapper,
+        html body div input[type="color"]::-webkit-color-swatch-wrapper {
+            background: rgba(250, 250, 250, 0.9) !important;
+            border: 0px solid transparent !important;
+            border-radius: 6px !important;
+            padding: 4px !important;
+        }
+        
+        html body div .color-input::-webkit-color-swatch,
+        html body div input[type="color"]::-webkit-color-swatch {
+            border: 0px solid transparent !important;
+            border-radius: 4px !important;
         }
 
         .button {
@@ -1579,7 +1672,7 @@
             width: 100%;
             height: 37px; /* Match MATERIALS height */
             border: none; /* Borderless design - remove border */
-            border-radius: 5px; /* Updated to match global 5px radius */
+            border-radius: 6px; /* Updated to match global 6px outer radius */
             cursor: pointer;
             padding: 0;
             box-sizing: border-box;

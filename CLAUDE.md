@@ -240,6 +240,7 @@ npm run dev/build/preview/deploy  # Standard Vite workflow
 - **Upload Area**: Bottom-right positioning with TORUS/LIBRARY buttons  
 - **Save/Load System**: Complete `.3dview` scene state persistence
 - **Transparency Modes**: 5 modes including Unified Surface for high-poly models
+- **Dual Transparency System**: Object + Surface transparency (Material Override approach)
 
 ## Key Functions Reference
 

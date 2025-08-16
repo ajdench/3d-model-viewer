@@ -33,7 +33,7 @@ let state = {
     guideLines: [{
         id: 0,
         thickness: 5,
-        colour: '#FFFF00',
+        colour: '#FFFF66',
         transparency: 0.5,
         angle: 0,
         posY: 0
@@ -2153,7 +2153,7 @@ function updateGuideLine() {
 
         // EMERGENCY FIX: Add debug logging and ensure proper color
         const thickness = `${lineState.thickness / 1000 * 100}vh`;
-        const color = lineState.colour || '#FFFF00'; // Default to yellow if no color
+        const color = lineState.colour || '#FFFF66'; // Default to yellow if no color
         const opacity = lineState.transparency || 0.5;
         
         // Advanced positioning system - position moves the line perpendicular to its angle
@@ -4203,7 +4203,7 @@ function setupGuideLineControls() {
         const newLine = {
             id: newId,
             thickness: 5,
-            colour: '#FFFF00',
+            colour: '#FFFF66',
             transparency: 0.5,
             angle: 0,
             posY: 0
@@ -4257,7 +4257,7 @@ function setupGuideLineControls() {
     setTimeout(() => {
         console.log('Auto-hide timer fired!');
         autoHideDefaultGuideLineOnFirstLoad();
-    }, 2000);
+    }, 1000);
     
     window.addGuideLineControl = function(lineState) {
         const template = document.getElementById('guideline-template');
@@ -4498,6 +4498,75 @@ function initializeBasicModePositioning() {
     }
 }
 
+// Edge-specific color picker styling fix - applied via JavaScript to override timing issues
+function forceColorPickerStyling() {
+    // Apply styles after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        const colorInputs = document.querySelectorAll('.color-input, input[type="color"]');
+        colorInputs.forEach(input => {
+            // Force outer container styling
+            input.style.background = 'rgba(250, 250, 250, 0.9)';
+            input.style.border = '0px solid transparent';
+            input.style.borderRadius = '6px';
+            input.style.outline = 'none';
+            input.style.webkitAppearance = 'none';
+            input.style.appearance = 'none';
+            input.style.boxShadow = 'none';
+        });
+        
+        // Apply pseudo-element styles via injected CSS with highest specificity
+        const edgeStyleSheet = document.createElement('style');
+        edgeStyleSheet.id = 'edge-color-picker-fix';
+        edgeStyleSheet.innerHTML = `
+            /* Edge timing fix - injected via JavaScript */
+            html body input[type="color"]::-webkit-color-swatch-wrapper {
+                background: rgba(250, 250, 250, 0.9) !important;
+                border: 0px solid transparent !important;
+                border-radius: 6px !important;
+                padding: 4px !important;
+                box-shadow: none !important;
+                outline: none !important;
+            }
+            html body input[type="color"]::-webkit-color-swatch {
+                border: 2px solid #FFFF66 !important; /* Yellow border to match default color during flash */
+                border-radius: 4px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                outline: none !important;
+                box-shadow: none !important;
+                -webkit-appearance: none !important;
+                transition: border-color 0.1s ease !important; /* Smooth transition */
+            }
+            /* Hide border after content loads */
+            html body input[type="color"]::-webkit-color-swatch:not(:focus) {
+                border: 0px solid transparent !important;
+            }
+        `;
+        
+        // Remove existing fix if present, then add new one
+        const existingFix = document.getElementById('edge-color-picker-fix');
+        if (existingFix) {
+            existingFix.remove();
+        }
+        document.head.appendChild(edgeStyleSheet);
+        
+        // Apply an immediate secondary fix after a shorter delay
+        setTimeout(() => {
+            const colorSwatches = document.querySelectorAll('input[type="color"]::-webkit-color-swatch');
+            const additionalFix = document.createElement('style');
+            additionalFix.innerHTML = `
+                /* Secondary Edge fix - force transparent border */
+                input[type="color"]::-webkit-color-swatch {
+                    border: 0px solid transparent !important;
+                }
+            `;
+            document.head.appendChild(additionalFix);
+        }, 50); // Even shorter delay for secondary fix
+        
+        console.log('Edge color picker styling fix applied via JavaScript');
+    }, 100); // 100ms delay to ensure DOM elements exist
+}
+
 async function initializeViewer() {
     try {
         initThreeJS();
@@ -4506,6 +4575,9 @@ async function initializeViewer() {
         
         // Initialize BASIC mode positioning (since app starts in BASIC mode)
         initializeBasicModePositioning();
+        
+        // Apply Edge color picker fix
+        forceColorPickerStyling();
         
         setupGuideLineControls(); // Set up guide line controls after DOM is ready
         setupCollapsibleSections(); // FIXED: Initialize collapsible sections functionality

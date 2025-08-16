@@ -8,6 +8,19 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <style>
+        /* Edge color picker immediate fix - loads before external CSS */
+        input[type="color"]::-webkit-color-swatch {
+            border: 0px solid transparent !important;
+            border-radius: 4px !important;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            background: rgba(250, 250, 250, 0.9) !important;
+            border: 0px solid transparent !important;
+            border-radius: 6px !important;
+            padding: 4px !important;
+        }
+    </style>
     <link rel="stylesheet" href="style.css?v=1723395020">
 </head>
 <body>
