@@ -37,83 +37,134 @@ cat memory/active/status.md      # Current status dashboard
 ```
 
 ### Python Automation Suite (`/scripts/`)
+- **session-logger.py**: Auto-generates session summaries (5-10min saved/session)
+- **pattern-detector.py**: Discovers reusable code patterns automatically  
+- **question-tracker.py**: Prevents important questions from being forgotten
+- **memory-search.py**: Fast weighted search across all memory files
+- **memory-assistant.py**: Single interface to all tools
 
-**🏆 Highest ROI**: `session-logger.py` - Auto-generates session summaries from git commits
+### Daily Workflow
 ```bash
-python scripts/session-logger.py  # Creates memory/current-session.md
-# Time saved: 5-10 minutes per session
-```
-
-**Pattern Detection**: `pattern-detector.py` - Discovers reusable code patterns automatically
-```bash
-python scripts/pattern-detector.py  # Finds error handling, validation, API patterns
-# Value: Builds pattern library without manual effort
-```
-
-**Question Management**: `question-tracker.py` - Prevents important questions from being forgotten
-```bash
-python scripts/question-tracker.py  # Reports open questions, reminds about old ones
-# Value: Never lose important clarifications
-```
-
-**Memory Search**: `memory-search.py` - Fast weighted search across all memory files
-```bash
-python scripts/memory-search.py "error handling"
-python scripts/memory-search.py "timeout" --type fix
-# Value: Find previous solutions in seconds
-```
-
-**Central Orchestration**: `memory-assistant.py` - Single interface to all tools
-```bash
-python scripts/memory-assistant.py start  # Session start routine
-python scripts/memory-assistant.py end    # Session end routine
-python scripts/memory-assistant.py search "topic"  # Quick search
-```
-
-### Daily Workflow Integration
-```bash
-# Morning routine
-python scripts/memory-assistant.py start
-# Shows: unanswered questions, last session summary
-
-# During development
-python scripts/memory-search.py "cors error"  # When hitting familiar problems
-
-# End of session
-python scripts/memory-assistant.py end
-# Runs: session logger, pattern detector, question check, index rebuild
+python scripts/memory-assistant.py start   # Morning routine
+python scripts/memory-search.py "topic"    # During development  
+python scripts/memory-assistant.py end     # Session end
 ```
 
 ### Documentation Templates
-**Fix Documentation**: `memory/fixes/YYYY-MM-DD-name.md`
-```markdown
-## Problem: [One line description]
-## Cause: [Root cause analysis]  
-## Fix: [Solution implemented]
-## Prevention: [Test/check added]
+- **Fixes**: `memory/fixes/YYYY-MM-DD-name.md` - Problem/Cause/Fix/Prevention
+- **Questions**: `memory/questions/YYYY-MM-DD-topic.md` - Status/Q/Context/Options/Answer  
+- **Patterns**: `memory/patterns/pattern-name.md` - Use When/Solution/Example/Trade-offs
+
+### ROI: ~30min/week investment saves 5-10min/day + hours/month in context recovery
+
+## Gemini CLI Integration Guide
+
+**For Gemini CLI**: This section provides essential context for understanding the implemented solutions and codebase architecture.
+
+### Current System Status (v3.0 - August 2025)
+- **✅ FULLY OPERATIONAL**: All systems stable, controller synchronization complete
+- **✅ PROFESSIONAL CAPTURE SYSTEM**: High-quality model rendering with OS-level file dialogs
+- **✅ ADVANCED GUIDE LINE SYSTEM**: Edge-to-edge dynamic lines with perpendicular positioning
+- **✅ COMPREHENSIVE UI**: Collapsible panels, responsive design, professional styling
+
+### Key Architectural Solutions Implemented
+
+#### **Professional Guide Line System (v3.0)**
+**Location**: `main.js:updateGuideLine()` function (~line 570)
+- **Dynamic Line Extension**: Lines extend edge-to-edge at all angles (-90° to +90°)
+- **Mathematical Algorithm**: Perpendicular positioning with 80% diagonal scaling
+- **Container Clipping**: 10px margins via CSS overflow:hidden in `.guide-line-overlay`
+- **Advanced Controls**: Decimal precision (±360 range), "Position" labeling
+
+**Key Implementation Pattern**:
+```javascript
+// Perpendicular movement mathematics
+const angleRad = (lineState.angle * Math.PI) / 180;
+const perpCos = -sinAngle; // cos(θ + 90°) = -sin(θ)
+const perpSin = cosAngle;  // sin(θ + 90°) = cos(θ)
+const positionOffset = positionScale * (diagonal * 0.8);
 ```
 
-**Question Tracking**: `memory/questions/YYYY-MM-DD-topic.md`
-```markdown
-## Status: OPEN|ANSWERED
-## Q: [Specific question with context]
-## Context: [Why this question matters]
-## Options: [Considered approaches]
-## Answer: [When received, with rationale]
+#### **High-Quality Capture System (v3.0)**
+**Location**: `main.js:captureHighQualityFrame()` function (~line 600)
+- **Adaptive Resolution**: 2K-4K based on model dimensions
+- **Model-Focused Framing**: Automatic camera positioning using bounding box calculations
+- **Three-Tier Save System**: OS dialog → filename prompt → download fallback
+- **Professional Borders**: 10px transparent spacing around captured models
+
+**File System Integration**:
+```javascript
+// Modern File System Access API with fallbacks
+if ('showSaveFilePicker' in window) {
+    // Native OS dialog (Chrome 86+/Edge 86+)
+} else {
+    // Graceful degradation to filename prompt
+}
 ```
 
-**Pattern Documentation**: `memory/patterns/pattern-name.md`
-```markdown
-## Use When: [Specific scenario]
-## Solution: [Approach and code example]
-## Example: path/to/implementation
-## Trade-offs: [Considerations and alternatives]
+#### **Comprehensive Controller System**
+**Location**: `main.js:setupControls()` function (~line 1100)
+- **ControlSync Architecture**: Bidirectional slider-number input synchronization
+- **Event-Driven Updates**: Real-time 3D scene updates via state management
+- **Cross-System Integration**: Controllers update VIEW display, orientation widget, and scene state
+
+### Critical Problem-Solving Patterns
+
+#### **Evidence-Based Debugging Protocol**
+**When facing issues, prioritize**:
+1. **User-reported browser console errors** over theoretical analysis
+2. **Runtime behavior verification** before code structure analysis
+3. **Function accessibility testing** vs assuming functions exist
+4. **Actual error messages** as primary debugging data
+
+**Anti-Pattern**: Assumption-based debugging leads to elaborate solutions for non-existent problems
+
+#### **Trigonometric Positioning Solutions**
+**Guide Line Challenge**: Lines must extend to viewport edges at any angle
+**Solution**: Perpendicular vector mathematics with diagonal scaling
+- Use perpendicular vectors: `cos(θ+90°) = -sin(θ)`, `sin(θ+90°) = cos(θ)`
+- Scale by viewport diagonal × 0.8 for true edge-to-edge coverage
+- Container clipping provides clean 10px margins
+
+#### **Cross-Browser File System Integration**
+**Challenge**: OS-level file dialogs not universally supported
+**Solution**: Three-tier fallback architecture
+1. **File System Access API** (modern browsers)
+2. **Filename prompt + download** (broad compatibility)
+3. **Direct download** (guaranteed fallback)
+
+### File Structure Guidance for Gemini CLI
+
+#### **Primary Files**
+- **`index.html`**: UI structure, guide line controls (lines 268-280), capture buttons
+- **`main.js`**: Core logic (2,500+ lines), key functions documented in CLAUDE.md
+- **`style.css`**: Styling, guide line container (`.guide-line-overlay`), responsive design
+
+#### **Memory System**
+- **`memory/active/status.md`**: Current session progress and achievements
+- **`memory/active/context.md`**: Task priorities and focus areas
+- **Pattern Files**: Reusable solutions in `memory/patterns/`
+
+#### **Development Commands**
+```bash
+npm run dev        # Development server (Vite)
+npm run build      # Production build
+npm run preview    # Preview build
+npm run deploy     # GitHub Pages deployment
 ```
 
-### ROI Analysis
-**Time Investment**: 5min setup + 2-3min daily + 10min weekly = ~30min/week
-**Time Saved**: 5-10min/day (documentation) + 10-30min/incident (search) + hours/month (patterns)
-**Quality Improvements**: Consistent documentation, growing pattern library, no lost context
+### Gemini CLI Workflow Integration
+1. **Start**: Check `memory/active/status.md` for current session state
+2. **Search**: Use `grep -r "pattern" memory/` for previous solutions
+3. **Implement**: Follow established patterns from `memory/patterns/`
+4. **Update**: Use `./memory/update.sh "changes"` for session tracking
+5. **Quality**: Test with `npm run dev`, verify UI functionality
+
+### Success Metrics Achieved
+- **Guide Lines**: Edge-to-edge extension at all angles with professional margins
+- **Capture System**: High-resolution output with native OS file dialogs
+- **UI Excellence**: Collapsible panels, pixel-perfect alignment, responsive design
+- **Development Velocity**: 5-minute fixes with evidence-based debugging vs hours of theoretical analysis
 
 ## Project Overview
 

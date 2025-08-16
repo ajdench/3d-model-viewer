@@ -88,6 +88,30 @@
             border-radius: 10px; /* Keep current corner radius */
             border: none; /* Borderless design - remove border */
         }
+        
+        /* Remove margin from CAPTURE section specifically */
+        .control-section[data-section="capture"] {
+            margin-bottom: 0; /* Remove margin - replaced with invisible gap sections */
+        }
+        
+        /* Three invisible sections to replace 25px gap after CAPTURE */
+        .gap-section-1 {
+            height: 5px; /* 20% of 25px = 5px */
+            background: transparent;
+            pointer-events: none;
+        }
+        
+        .gap-section-2 {
+            height: 15px; /* 60% of 25px = 15px */
+            background: transparent;
+            pointer-events: none;
+        }
+        
+        .gap-section-3 {
+            height: 5px; /* 20% of 25px = 5px */
+            background: transparent;
+            pointer-events: none;
+        }
 
         /* Legacy h3 styling for non-collapsible sections */
         .control-section h3:not(.section-header h3) {
@@ -252,6 +276,11 @@
                         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
                         padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
                         padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* CAPTURE section - Allow Y-axis hover movement without clipping */
+        [data-section="capture"] .section-content {
+            overflow: visible;
         }
 
         .control-section.collapsed .section-content {
@@ -472,29 +501,45 @@
         }
 
         .upload-status {
-            font-size: 12px;
-            margin-bottom: 20px;
-            padding: 8px;
-            border-radius: 4px;
+            font-size: 12px; /* Match LOAD AND SAVE panel font size */
+            margin-bottom: 10px; /* Reduced from 20px to 10px */
+            padding: 10px; /* Match LOAD AND SAVE panel - 10px all around */
+            border-radius: 8px; /* Match LOAD AND SAVE panel border radius */
             text-align: center;
+            border: none !important; /* Borderless design - force for all browsers */
+            width: calc(var(--right-ui-width) + 20px); /* Match LOAD AND SAVE panel width exactly */
+            box-sizing: border-box;
+            margin-left: -10px; /* Match LOAD AND SAVE panel left margin exactly */
+            margin-right: 0;
+            position: relative;
+            background: transparent; /* No background when empty */
+            box-shadow: none; /* No shadow when empty */
+        }
+
+        /* Hide status box when empty */
+        .upload-status:empty {
+            display: none;
         }
 
         .upload-status.success {
             background: rgba(76, 175, 80, 0.1);
             color: #4CAF50;
-            border: 1px solid rgba(76, 175, 80, 0.3);
+            border: none; /* Borderless design */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Match borderless panel shadow */
         }
 
         .upload-status.error {
             background: rgba(244, 67, 54, 0.1);
             color: #f44336;
-            border: 1px solid rgba(244, 67, 54, 0.3);
+            border: none; /* Borderless design */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Match borderless panel shadow */
         }
 
         .upload-status.loading {
             background: rgba(255, 193, 7, 0.1);
             color: #ff9800;
-            border: 1px solid rgba(255, 193, 7, 0.3);
+            border: none; /* Borderless design */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Match borderless panel shadow */
         }
 
         .example-models {
@@ -568,6 +613,25 @@
         /* Canvas styling within the box */
         .orientation-widget-canvas {
             border-radius: 4px; /* Slightly smaller radius for canvas inside box */
+        }
+        
+        /* Orientation widget hint text - positioned at bottom inside widget box */
+        .orientation-widget-box {
+            position: relative; /* Enable positioning for hint text inside the box */
+        }
+        
+        .orientation-widget-hint {
+            font-size: 10px; /* Made smaller as requested */
+            color: #999; /* Match other grey hint text */
+            font-weight: normal;
+            text-transform: none;
+            font-family: 'Arial', sans-serif;
+            position: absolute;
+            bottom: 7.5px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            white-space: nowrap;
         }
 
         /* Data columns styling with proper grouping */
@@ -726,7 +790,7 @@
             color: #999;
             text-transform: none;
             position: absolute;
-            left: 132px; /* Moved forward 1px (131px + 1px) */
+            left: 135px; /* Moved right 2-3px more (132px + 3px) */
             top: 50%;
             transform: translateY(-50%);
             width: 150px; /* Wider to prevent wrapping */
@@ -1233,6 +1297,18 @@
             left: 199px; /* Positioned to align with action text: 180px + 9px + 10px offset for better visual alignment */
             top: 50%;
             transform: translateY(-50%); /* Center vertically */
+        }
+
+        /* INSTRUCTIONS hint text positioning - different for collapsed vs open */
+        .instructions-display.collapsed .title-hint {
+            left: auto !important;
+            right: 10px !important; /* Right-aligned in collapsed state */
+        }
+        
+        /* Open state: align with non-bold text beneath (original left position) */
+        .instructions-display:not(.collapsed) .title-hint {
+            left: 199px !important; /* Back to original position in open state */
+            right: auto !important;
         }
         
         .instructions-display p {

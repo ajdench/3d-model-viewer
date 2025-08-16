@@ -190,7 +190,7 @@ This project maintains a detailed history of changes and development decisions i
 - **Sunset of Hover Glow**: The glow effect on button hovers in the main controls panel has been removed for a cleaner look.
 
 ### Sunset Features
-- **Zoom Control**: The dedicated "Zoom" slider and its corresponding display in the "VIEWER STATS" panel have been removed. The camera's Z-position, controlled by the mouse wheel, now serves as the primary zooming mechanism.
+- **Zoom Control**: The dedicated "Zoom" slider and its corresponding display in the "VIEWER STATS" panel has been removed. The camera's Z-position, controlled by the mouse wheel, now serves as the primary zooming mechanism.
 - **Control Scheme**: The legacy "Model-centric" control scheme has been removed to simplify the user experience. The application now exclusively uses the "Standard (Camera-centric)" control scheme.
 
 ### Known Issues
@@ -312,3 +312,41 @@ Based on comprehensive analysis of 24 distinct issues from memory files, codebas
     - Fixed a critical issue where the model viewer would not load.
     - Corrected a problem with saving and loading guide lines.
     - Resolved an import failure related to the `ViewHelper`.
+
+## Comprehensive Codebase and Memory System Review (August 15, 2025)
+
+### Codebase Overview:
+
+The project is a 3D Model Viewer built with Vanilla JavaScript, Three.js (r179), and Vite (7.1.2). It's designed for offline use and deploys to GitHub Pages. Key features include model loading (OBJ, STL, GLTF, GLB, DAE), extensive camera and model controls, material properties, lighting, multiple guide lines, presets, image capture, and a comprehensive save/load system. The UI has undergone significant enhancements for a cleaner, more consistent look. A known issue is recurring build failures related to duplicate function definitions in `main.js`. The project emphasizes security with regular CVE scanning.
+
+### Memory System Overview:
+
+The project utilizes a structured memory system, "Claude-dementia v3.0," with a 10,000 token budget, optimized for knowledge capture and retrieval.
+
+*   **Architecture:** Divided into `CLAUDE.md` (core guide), `Active Memory` (current work: `status.md`, `context.md`), `Reference Memory` (stable patterns: `architecture.md`, `patterns.md`, `decisions.md`), and a `Buffer`.
+*   **Content:**
+    *   `memory/fixes/`: Detailed logs of problems, causes, fixes, and prevention strategies (e.g., `2025-08-14-model-viewer-not-loading.md` for deployment issues, `2025-08-13-ambient-lighting-slider-fix.md` for UI-to-3D synchronization).
+    *   `memory/reference/`: High-level architectural overviews, technical decisions, and anti-patterns (e.g., `architecture.md` detailing the core stack, state management, and key architectural patterns).
+    *   `memory/patterns/`: Documents reusable code patterns.
+    *   `memory/questions/`: Tracks open and answered questions.
+*   **Automation:** A Python-based automation suite (`scripts/`) supports the memory system:
+    *   `session-logger.py`: Auto-generates session summaries from Git commits.
+    *   `pattern-detector.py`: Discovers and documents code patterns.
+    *   `question-tracker.py`: Manages and reminds about open questions.
+    *   `memory-search.py`: Provides fast, weighted search across all memory files.
+    *   `memory-assistant.py`: Orchestrates daily workflow routines (start/end sessions, search).
+
+### Development Methodology:
+
+The project adheres to an "Evidence-Based Debugging Protocol," a critical shift in methodology prioritizing real-time browser console errors and runtime verification over theoretical code analysis. This protocol was established after past critical failures and aims to prevent recurring issues.
+
+### Strategic Roadmap:
+
+The project is currently in Phase 2 of a four-phase remediation strategy:
+
+*   **Phase 1 (Completed):** Critical Stabilization (system verification, controller restoration, evidence-based debugging).
+*   **Phase 2 (Current Focus):** Quality Foundation (implementing testing infrastructure like Jest/Vitest, mandating evidence-based debugging, auditing function boundaries).
+*   **Phase 3:** Core Architecture (modularizing `main.js` into `StateManager`, `EventManager`, `ResourceManager`).
+*   **Phase 4:** Performance & Optimization (code splitting, Web Workers, quality gates).
+
+The project is well-structured, with a clear focus on robust development practices, knowledge management, and continuous improvement.

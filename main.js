@@ -2965,6 +2965,157 @@ function setupControls() {
         });
     });
 
+    // CLIPBOARD Button Event Listener - Modern Clipboard API with fallback
+    safeAddEventListener('saveToClipboard', 'click', async () => {
+        console.log('Starting clipboard copy...');
+        
+        // Check if clipboard API is supported and permissions
+        if (!navigator.clipboard) {
+            showUploadStatus('Clipboard API not supported in this browser', 'error');
+            return;
+        }
+        
+        try {
+            showUploadStatus('Copying to clipboard...', 'loading');
+            
+            // Use high-quality capture like FILE button for consistency
+            captureHighQualityFrame(async (blob) => {
+                if (!blob) {
+                    showUploadStatus('Failed to create image blob', 'error');
+                    return;
+                }
+                
+                try {
+                    const clipboardItem = new ClipboardItem({
+                        'image/png': blob
+                    });
+                    
+                    await navigator.clipboard.write([clipboardItem]);
+                    showUploadStatus('Image copied to clipboard successfully! ✓', 'success');
+                    
+                    setTimeout(() => {
+                        showUploadStatus('', 'success');
+                    }, 3000);
+                } catch (clipboardError) {
+                    console.error('Clipboard write failed:', clipboardError);
+                    
+                    // Fallback overlay system
+                    try {
+                        const overlayContainer = document.createElement('div');
+                        overlayContainer.style.position = 'fixed';
+                        overlayContainer.style.zIndex = '10000';
+                        overlayContainer.style.backgroundColor = 'rgba(250, 250, 250, 0.5)';
+                        overlayContainer.style.border = 'none';
+                        overlayContainer.style.borderRadius = '8px';
+                        overlayContainer.style.padding = '10px';
+                        overlayContainer.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.08)';
+                        overlayContainer.style.display = 'flex';
+                        overlayContainer.style.flexDirection = 'column';
+                        overlayContainer.style.pointerEvents = 'auto';
+                        
+                        // Center on model viewing panel
+                        const viewerContainer = document.querySelector('.viewer-container');
+                        const viewerRect = viewerContainer.getBoundingClientRect();
+                        const centerX = viewerRect.left + (viewerRect.width / 2);
+                        const centerY = viewerRect.top + (viewerRect.height / 2);
+                        
+                        overlayContainer.style.left = centerX + 'px';
+                        overlayContainer.style.top = centerY + 'px';
+                        overlayContainer.style.transform = 'translate(-50%, -50%)';
+                        overlayContainer.style.width = '440px';
+                        overlayContainer.style.maxHeight = '550px';
+                        
+                        // Create the image element
+                        const tempImg = document.createElement('img');
+                        tempImg.src = URL.createObjectURL(blob);
+                        tempImg.style.width = '100%';
+                        tempImg.style.height = 'auto';
+                        tempImg.style.maxWidth = '100%';
+                        tempImg.style.maxHeight = 'calc(100% - 30px)';
+                        tempImg.style.objectFit = 'contain';
+                        tempImg.style.borderRadius = '8px';
+                        tempImg.style.marginBottom = '10px';
+                        tempImg.style.pointerEvents = 'auto';
+                        
+                        // Create instructions container
+                        const instructionsContainer = document.createElement('div');
+                        instructionsContainer.style.display = 'flex';
+                        instructionsContainer.style.justifyContent = 'space-between';
+                        instructionsContainer.style.alignItems = 'flex-end';
+                        instructionsContainer.style.fontSize = '12px';
+                        instructionsContainer.style.color = '#999';
+                        instructionsContainer.style.marginTop = 'auto';
+                        instructionsContainer.style.fontFamily = "'Arial', sans-serif";
+                        
+                        // Left instruction
+                        const leftInstruction = document.createElement('div');
+                        leftInstruction.textContent = '(Left-click to exit)';
+                        leftInstruction.style.fontSize = '12px';
+                        leftInstruction.style.color = '#999';
+                        leftInstruction.style.fontWeight = '550';
+                        leftInstruction.style.textTransform = 'none';
+                        leftInstruction.style.fontFamily = "'Arial', sans-serif";
+                        leftInstruction.style.lineHeight = '1';
+                        leftInstruction.style.letterSpacing = 'normal';
+                        leftInstruction.style.webkitFontSmoothing = 'antialiased';
+                        leftInstruction.style.mozOsxFontSmoothing = 'grayscale';
+                        leftInstruction.style.textRendering = 'optimizeLegibility';
+                        
+                        // Right instruction
+                        const rightInstruction = document.createElement('div');
+                        rightInstruction.textContent = '(Right-click to select Copy options)';
+                        rightInstruction.style.fontSize = '12px';
+                        rightInstruction.style.color = '#999';
+                        rightInstruction.style.fontWeight = '550';
+                        rightInstruction.style.textTransform = 'none';
+                        rightInstruction.style.fontFamily = "'Arial', sans-serif";
+                        rightInstruction.style.lineHeight = '1';
+                        rightInstruction.style.letterSpacing = 'normal';
+                        rightInstruction.style.webkitFontSmoothing = 'antialiased';
+                        rightInstruction.style.mozOsxFontSmoothing = 'grayscale';
+                        rightInstruction.style.textRendering = 'optimizeLegibility';
+                        
+                        instructionsContainer.appendChild(leftInstruction);
+                        instructionsContainer.appendChild(rightInstruction);
+                        
+                        // Assemble the overlay
+                        overlayContainer.appendChild(tempImg);
+                        overlayContainer.appendChild(instructionsContainer);
+                        
+                        // Add click to close overlay (but not when clicking on image)
+                        overlayContainer.addEventListener('click', (e) => {
+                            // Don't close if clicking on the image (allow right-click context menu)
+                            if (e.target !== tempImg) {
+                                document.body.removeChild(overlayContainer);
+                                URL.revokeObjectURL(tempImg.src);
+                            }
+                        });
+                        
+                        // Image already has pointerEvents = 'auto' for right-click context menu
+                        
+                        // Auto-remove after 15 seconds
+                        setTimeout(() => {
+                            if (document.body.contains(overlayContainer)) {
+                                document.body.removeChild(overlayContainer);
+                                URL.revokeObjectURL(tempImg.src);
+                            }
+                        }, 15000);
+                        
+                        document.body.appendChild(overlayContainer);
+                        showUploadStatus('Clipboard blocked by browser. Use overlay to copy image.', 'error');
+                        
+                    } catch (fallbackError) {
+                        console.error('Fallback failed:', fallbackError);
+                        showUploadStatus('Failed to copy to clipboard. Try right-click → Copy Image instead.', 'error');
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Capture setup failed:', error);
+            showUploadStatus('Failed to setup clipboard capture', 'error');
+        }
+    });
+
     // SAVE SCENE Button Event Listener
     safeAddEventListener('saveSceneButton', 'click', async () => {
         // Generate default filename with timestamp
