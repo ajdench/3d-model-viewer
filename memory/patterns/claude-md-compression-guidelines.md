@@ -1,7 +1,7 @@
 # CLAUDE.md Compression Guidelines
 
 ## Purpose
-Maintain CLAUDE.md under 37,950 character GitHub limit while preserving essential development guidance.
+Maintain CLAUDE.md under 35,995 character GitHub limit while preserving essential development guidance.
 
 ## Compression Protocol
 

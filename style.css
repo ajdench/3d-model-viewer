@@ -349,8 +349,53 @@
             width: 100%;
             height: 37px; /* FIXED: Match button height for consistent alignment */
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
+        }
+        
+        /* Webkit color picker internal padding adjustment */
+        .color-input::-webkit-color-swatch-wrapper {
+            padding: 4px !important;
+        }
+        
+        /* Webkit color picker swatch corner rounding to match container */
+        .color-input::-webkit-color-swatch {
+            border-radius: 5px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important; /* Remove black border in Edge */
+        }
+        
+        /* Edge-specific fixes for color picker */
+        .color-input {
+            background: rgba(250, 250, 250, 0.9) !important; /* Add white container background for Edge */
+            border: none !important; /* Force remove border in Edge */
+            outline: none !important; /* Remove any outline */
+        }
+        
+        /* Additional Edge fixes - more specific targeting */
+        .color-input::-webkit-color-swatch {
+            border: none !important; /* Force remove black border in Edge */
+            outline: none !important; /* Remove outline */
+            box-shadow: none !important; /* Remove any box shadow */
+        }
+        
+        /* Edge/Chromium fallback - ensure no borders anywhere */
+        input[type="color"] {
+            border: none !important;
+            outline: none !important;
+            background: rgba(250, 250, 250, 0.9) !important;
+        }
+        
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            border: none !important;
+            padding: 4px !important;
+        }
+        
+        input[type="color"]::-webkit-color-swatch {
+            border: none !important;
+            border-radius: 5px !important;
+            outline: none !important;
         }
 
         .button {
@@ -501,15 +546,15 @@
         }
 
         .upload-status {
-            font-size: 12px; /* Match LOAD AND SAVE panel font size */
+            font-size: 10px; /* Reduced from 12px to prevent wrapping on longest message */
             margin-bottom: 10px; /* Reduced from 20px to 10px */
             padding: 10px; /* Match LOAD AND SAVE panel - 10px all around */
             border-radius: 8px; /* Match LOAD AND SAVE panel border radius */
             text-align: center;
             border: none !important; /* Borderless design - force for all browsers */
-            width: calc(var(--right-ui-width) + 20px); /* Match LOAD AND SAVE panel width exactly */
+            width: calc(var(--right-ui-width) + 40px); /* Wider to accommodate longest message without wrapping */
             box-sizing: border-box;
-            margin-left: -10px; /* Match LOAD AND SAVE panel left margin exactly */
+            margin-left: -20px; /* Centered for wider upload status box */
             margin-right: 0;
             position: relative;
             background: transparent; /* No background when empty */
@@ -1528,7 +1573,7 @@
             width: 100%;
             height: 37px; /* Match MATERIALS height */
             border: none; /* Borderless design - remove border */
-            border-radius: 6px; /* Keep current corner radius */
+            border-radius: 5px; /* Updated to match global 5px radius */
             cursor: pointer;
             padding: 0;
             box-sizing: border-box;

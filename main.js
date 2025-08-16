@@ -3075,7 +3075,7 @@ function setupControls() {
                         leftInstruction.textContent = '(Left-click to exit)';
                         leftInstruction.style.fontSize = '12px';
                         leftInstruction.style.color = '#999';
-                        leftInstruction.style.fontWeight = '550';
+                        leftInstruction.style.fontWeight = 'normal';
                         leftInstruction.style.textTransform = 'none';
                         leftInstruction.style.fontFamily = "'Arial', sans-serif";
                         leftInstruction.style.lineHeight = '1';
@@ -3089,7 +3089,7 @@ function setupControls() {
                         rightInstruction.textContent = '(Right-click to select Copy options)';
                         rightInstruction.style.fontSize = '12px';
                         rightInstruction.style.color = '#999';
-                        rightInstruction.style.fontWeight = '550';
+                        rightInstruction.style.fontWeight = 'normal';
                         rightInstruction.style.textTransform = 'none';
                         rightInstruction.style.fontFamily = "'Arial', sans-serif";
                         rightInstruction.style.lineHeight = '1';
