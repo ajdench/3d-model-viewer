@@ -6,7 +6,7 @@
 
 ## What is this?
 
-**3D Model Viewer** is a professional, interactive 3D model viewer built with Three.js, a cross-browser JavaScript library and application programming interface (API) used to create and display animated 3D computer graphics in a web browser. It's designed to be completely self-contained for offline use and provides intuitive model manipulation, camera positioning, and material properties controls directly in your browser, offering enterprise-level features for viewing, orienting and reclouring 3D files, creating 2D images of 3D models for use with a variety of applications.
+**3D Model Viewer** is a professional, interactive 3D model viewer built with **Three.js** (a cross-browser JavaScript library used to create and display static and animated 3D computer graphics in a web browser). It's designed to be completely self-contained for offline use and provides intuitive model manipulation, camera positioning, and material property controls directly in your browser, offering enterprise-level features for viewing, orienting and recolouring 3D files, creating 2D images of 3D models for use in a variety of applications.
 
 ## What can you do with it?
 
@@ -136,7 +136,13 @@ Requires modern browser with WebGL support and ES6 module capabilities.
 
 ### Recent Updates (v3.0+)
 
-#### Professional Capture & Guide Line System (v3.0 - Latest)
+#### Professional Clipboard & Interface Improvements (v3.1 - Latest)
+- **Complete Clipboard Functionality**: Modern Clipboard API with three-tier fallback (direct copy → browser overlay → manual save)
+- **Cross-Browser Status Messages**: Borderless design with perfect width alignment and anti-aliasing optimizations
+- **Popup Overlay System**: Professional fallback interface with macOS context menu integration for copy/save operations
+- **Y-Axis Hover Restoration**: Fixed CAPTURE button clipping with proper overflow handling and smooth animations
+
+#### Professional Capture & Guide Line System (v3.0)
 - **High-Quality Capture**: 2K-4K adaptive rendering with model-focused framing and 10px transparent borders
 - **OS-Level File Dialogs**: Native file system integration with three-tier fallback (OS dialog → prompt → download)
 - **Dynamic Guide Lines**: Edge-to-edge extension at all angles (-90° to +90°) with perpendicular positioning mathematics

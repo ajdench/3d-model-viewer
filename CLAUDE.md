@@ -27,7 +27,7 @@ Token Budget: 10,000 (Hard Limit)
 ### Memory Management Commands
 ```bash
 # Core operations
-./memory/update.sh "changes"     # Update with auto-compression
+./memory/update.sh "changes"     # Update with auto-compression + CLAUDE.md limit check
 ./memory/compress.sh             # Check usage and compress
 ./memory/weekly-maintenance.sh   # Auto-archive old content
 
@@ -35,6 +35,13 @@ Token Budget: 10,000 (Hard Limit)
 grep -r "pattern" memory/        # Search all memory
 cat memory/active/status.md      # Current status dashboard
 ```
+
+### CLAUDE.md GitHub Limit Management
+**Limit**: 37,950 characters | **Monitoring**: Automatic with every memory update
+**Compression Protocol**: All CLAUDE.md updates must prioritize conciseness without losing essential details
+- Use bullet points over paragraphs | Tables over prose | References over full explanations
+- Compress verbose examples while maintaining technical accuracy
+- Archive detailed information to memory/reference/ files when space needed
 
 ### Python Automation Suite (`/scripts/`)
 - **session-logger.py**: Auto-generates session summaries (5-10min saved/session)
@@ -61,13 +68,31 @@ python scripts/memory-assistant.py end     # Session end
 
 **For Gemini CLI**: This section provides essential context for understanding the implemented solutions and codebase architecture.
 
-### Current System Status (v3.0 - August 2025)
-- **✅ FULLY OPERATIONAL**: All systems stable, controller synchronization complete
+### Current System Status (v3.1 - August 2025)
+- **✅ FULLY OPERATIONAL**: All systems stable, complete function restoration achieved
+- **✅ PROFESSIONAL CLIPBOARD SYSTEM**: Modern API with cross-browser fallback + macOS context menu
 - **✅ PROFESSIONAL CAPTURE SYSTEM**: High-quality model rendering with OS-level file dialogs
-- **✅ ADVANCED GUIDE LINE SYSTEM**: Edge-to-edge dynamic lines with perpendicular positioning
-- **✅ COMPREHENSIVE UI**: Collapsible panels, responsive design, professional styling
+- **✅ ORIENTATION WIDGET**: Thick gradient axis lines with 7 overlapping AxesHelper implementation
+- **✅ CROSS-BROWSER UI**: Borderless status messages, Y-axis hover fixes, anti-aliasing optimization
 
 ### Key Architectural Solutions Implemented
+
+#### **Professional Clipboard System (v3.1)**
+**Location**: `main.js:safeAddEventListener('saveToClipboard')` (~line 2970)
+- **Modern Clipboard API**: `navigator.clipboard.write()` with `ClipboardItem` for direct copy
+- **Three-Tier Fallback**: Direct copy → Professional overlay → Manual download
+- **Cross-Browser Compatibility**: Safari/Chrome/Edge with `!important` CSS enforcement
+- **macOS Context Menu**: Right-click copy/save integration with proper pointer events
+
+**Pattern**: `navigator.clipboard.write(ClipboardItem)` → overlay fallback → manual download
+
+#### **Orientation Widget Axis Thickness (v3.1)**
+**Location**: `main.js:initOrientationWidget()` (~line 1824)
+- **7 Overlapping AxesHelper**: 1 original + 6 offset copies for uniform thickness
+- **Circular Offset Pattern**: 0.035 offset with 0.35 opacity for gradient effect
+- **Group Container**: Coordinated rotation of all axes via `THREE.Group()`
+
+**Pattern**: 6 copies in circular pattern, 0.035 offset, 0.35 opacity
 
 #### **Professional Guide Line System (v3.0)**
 **Location**: `main.js:updateGuideLine()` function (~line 570)
@@ -125,6 +150,14 @@ if ('showSaveFilePicker' in window) {
 - Use perpendicular vectors: `cos(θ+90°) = -sin(θ)`, `sin(θ+90°) = cos(θ)`
 - Scale by viewport diagonal × 0.8 for true edge-to-edge coverage
 - Container clipping provides clean 10px margins
+
+#### **Cross-Browser UI Compatibility (v3.1)**
+**Challenge**: Status messages and hover effects inconsistent across Safari/Chrome/Edge
+**Solutions Implemented**:
+- **CSS Enforcement**: `border: none !important` for Edge compatibility
+- **Empty State Handling**: `.upload-status:empty { display: none }` prevents lingering boxes
+- **Y-Axis Hover Fix**: `[data-section="capture"] .section-content { overflow: visible }`
+- **Font Anti-Aliasing**: `webkitFontSmoothing`, `mozOsxFontSmoothing`, `textRendering` optimization
 
 #### **Cross-Browser File System Integration**
 **Challenge**: OS-level file dialogs not universally supported

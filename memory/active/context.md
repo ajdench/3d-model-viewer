@@ -97,5 +97,6 @@
 - **Full Installation**: ✅ Complete claude-dementia v3.0
 - **Python Tools**: ✅ All 5 tools available and documented
 - **Workflow Integration**: ✅ Start/end routines established
-- **Token Management**: ✅ 4,112/10,000 tokens used
+- **Token Management**: ✅ 4,348/10,000 tokens used (43.4%)
+- **CLAUDE.md Limit**: ✅ 35,244/37,950 characters (92.9%) - Monitor for compression
 - **Automation Ready**: ✅ Ready for pattern detection and session logging

@@ -1824,13 +1824,36 @@ function initOrientationWidget() {
         // Create axes helper with shorter lines (2/3 of original length)
         const axesHelper = new THREE.AxesHelper(1.33); // Shortened from 2 to 1.33 (2/3)
         
-        // Make axes lines much thicker
-        if (axesHelper.material) {
-            axesHelper.material.linewidth = 8; // Even thicker for better visibility
+        // Create a group to hold all axes so they rotate together
+        const axesGroup = new THREE.Group();
+        axesGroup.add(axesHelper);
+        
+        // Create additional axes with circular offsets for consistent thickness at all angles
+        const numCopies = 6; // More copies for smoother thickness
+        const offset = 0.035; // Adjusted offset for better thickness
+        
+        for (let i = 0; i < numCopies; i++) {
+            const additionalAxes = new THREE.AxesHelper(1.33);
+            
+            // Create circular offset pattern around each axis for uniform thickness
+            const angle = (i / numCopies) * Math.PI * 2;
+            const offsetX = Math.cos(angle) * offset;
+            const offsetY = Math.sin(angle) * offset;
+            
+            // Apply offset in screen-space directions for consistent visual thickness
+            additionalAxes.position.set(offsetX, offsetY, 0);
+            
+            // Make additional axes slightly more transparent and blend well
+            if (additionalAxes.material) {
+                additionalAxes.material.transparent = true;
+                additionalAxes.material.opacity = 0.35; // Balanced opacity for subtle gradient effect
+            }
+            
+            axesGroup.add(additionalAxes);
         }
         
-        widget.scene.add(axesHelper);
-        widget.axesHelper = axesHelper;
+        widget.scene.add(axesGroup);
+        widget.axesHelper = axesGroup; // Store the group instead of single axes
         
         // Create group for labels that will rotate with axes
         widget.labelGroup = new THREE.Group();
