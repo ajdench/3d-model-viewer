@@ -380,6 +380,7 @@
                             <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
                         </div>
                     </div>
+                    <button id="resetCameraRanges" class="button blue" title="Reset camera position control ranges to default values">Reset Ranges</button>
                     <div class="control-group">
                         <label>Rotation X</label>
                         <div class="slider-container">
@@ -602,23 +603,35 @@
                         <input type="number" id="roughnessNum" class="number-input" min="0" max="1" step="0.01" value="0.8">
                     </div>
                 </div>
-                <div class="control-group">
-                    <label>Transparency</label>
+                
+                <!-- Object Transparency (NEW - Primary Control) -->
+                <div class="control-group transparency-group-primary">
+                    <label title="Global transparency for entire object">Object Transparency</label>
                     <div class="slider-container">
-                        <input type="range" id="transparency" class="slider-input" min="0" max="1" step="0.01" value="1">
-                        <input type="number" id="transparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
+                        <input type="range" id="objectTransparency" class="slider-input" min="0" max="1" step="0.01" value="1">
+                        <input type="number" id="objectTransparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
                     </div>
                 </div>
+                
+                <!-- Surface Transparency (RENAMED - Secondary Control) -->
+                <div class="control-group transparency-group-secondary">
+                    <label title="Material-level transparency effects">Surface Transparency</label>
+                    <div class="slider-container">
+                        <input type="range" id="surfaceTransparency" class="slider-input" min="0" max="1" step="0.01" value="1">
+                        <input type="number" id="surfaceTransparencyNum" class="number-input" min="0" max="1" step="0.01" value="1">
+                    </div>
+                </div>
+                
+                <!-- Surface Mode (RENAMED - Tertiary Control) -->
                 <div class="control-group">
-                    <label>Transparency Mode</label>
-                    <select id="transparencyMode" class="control-input">
-                        <option value="external-surface">External Surface Only</option>
-                        <option value="threshold">Unified Surface</option>
-                        <option value="advanced">Advanced (High-Poly)</option>
-                        <option value="wboit">WBOIT (Alpha Test)</option>
+                    <label>Surface Mode</label>
+                    <select id="surfaceMode" class="control-input">
                         <option value="standard" selected>Standard</option>
+                        <option value="threshold">Unified Surface</option>
+                        <option value="wboit">WBOIT (Alpha Test)</option>
+                        <option value="advanced">Advanced (High-Poly)</option>
                         <option value="dithered">Dithered</option>
-                        <option value="convex">Convex Hull (Fast)</option>
+                        <option value="external-surface">External Surface Only</option>
                     </select>
                 </div>
                 </div>

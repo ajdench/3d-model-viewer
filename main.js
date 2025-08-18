@@ -20,6 +20,9 @@ let state = {
     lightingMode: 'basic', // 'basic' or 'complex'
     materialMode: 'default', // 'default' or 'complex'
     transparencyMode: 'standard', // 'standard', 'threshold', 'wboit', 'advanced', 'dithered', 'convex'
+    // Dual Transparency System
+    objectTransparency: 1.0, // Global transparency for entire object (0.0 = invisible, 1.0 = opaque)
+    surfaceTransparency: 1.0, // Material-level transparency (renamed from previous transparency)
     surfaceExtractionMode: 'none', // 'none', 'convex', 'raycast', 'alpha' (future WASM), 'meshlab' (future)
     surfaceExtractionEnabled: false, // Enable/disable surface extraction
     alphaValue: 0.1, // Alpha parameter for future alpha shape extraction
@@ -63,6 +66,9 @@ let mouseControls = {
     isCtrlDrag: false,
     previousMousePosition: { x: 0, y: 0 }
 };
+
+// Dual Transparency System - Material Override
+const originalMaterials = new Map(); // Store original materials for transparency restoration
 
 // ----------------------------------------------------------------
 // 10. Initialization
@@ -914,21 +920,11 @@ function updateMaterialPropertyForMesh(mesh, property, value) {
 async function updateMaterialTransparency(opacity) {
     console.log('Updating material transparency to:', opacity);
     
-    if (state.model) {
-        if (state.model.material) {
-            // Single mesh
-            await applyAdvancedTransparency(state.model, opacity);
-        } else if (state.model.children) {
-            // Group of meshes
-            const promises = [];
-            state.model.traverse((child) => {
-                if (child.isMesh && child.material) {
-                    promises.push(applyAdvancedTransparency(child, opacity));
-                }
-            });
-            await Promise.all(promises);
-        }
-    }
+    // Update surface transparency state
+    state.surfaceTransparency = opacity;
+    
+    // Apply surface transparency directly (used by legacy code)
+    applySurfaceTransparency(opacity);
 }
 
 async function applyAdvancedTransparency(mesh, opacity) {
@@ -1152,6 +1148,246 @@ function applyDitheredTransparency(mesh, opacity) {
 }
 
 // ----------------------------------------------------------------
+// Dual Transparency System - Material Override Functions
+
+async function applyGlobalTransparency(objectOpacity) {
+    console.log('Applying global transparency:', objectOpacity);
+    
+    if (!state.model) return;
+    
+    // For Object Transparency: Use External Surface extraction + global opacity
+    // This treats the 3D object like an image - only external surfaces visible
+    if (objectOpacity < 1.0) {
+        // Apply external surface extraction with object transparency
+        state.model.traverse(async (object) => {
+            if (object.isMesh && object.material) {
+                // Store original material and geometry if not already stored
+                if (!originalMaterials.has(object.uuid)) {
+                    originalMaterials.set(object.uuid, {
+                        material: object.material.clone(),
+                        geometry: object.geometry.clone()
+                    });
+                }
+                
+                try {
+                    // Extract external surface (convex hull for performance)
+                    const externalSurface = await extractExternalSurface(object.geometry);
+                    
+                    // Create material with external surface
+                    const externalMaterial = originalMaterials.get(object.uuid).material.clone();
+                    externalMaterial.transparent = true;
+                    
+                    // Apply only object transparency (no surface multiplication)
+                    externalMaterial.opacity = objectOpacity;
+                    
+                    // Use standard transparency mode for external surface
+                    applyTransparencyModeToMaterial(externalMaterial, objectOpacity);
+                    
+                    // Replace geometry with external surface
+                    object.geometry = externalSurface;
+                    object.material = externalMaterial;
+                    object.material.needsUpdate = true;
+                    
+                } catch (error) {
+                    console.warn('External surface extraction failed, using standard transparency:', error);
+                    // Fallback to standard material transparency with object opacity only
+                    const transparentMaterial = originalMaterials.get(object.uuid).material.clone();
+                    transparentMaterial.transparent = true;
+                    transparentMaterial.opacity = objectOpacity;
+                    applyTransparencyModeToMaterial(transparentMaterial, objectOpacity);
+                    object.material = transparentMaterial;
+                    object.material.needsUpdate = true;
+                }
+            }
+        });
+    } else {
+        // Object fully opaque: restore original materials and geometry
+        restoreOriginalMaterials();
+    }
+}
+
+function applyTransparencyModeToMaterial(material, opacity) {
+    // Apply the current transparency mode to the material
+    switch (state.transparencyMode) {
+        case 'threshold':
+            applyThresholdTransparencyToMaterial(material, opacity);
+            break;
+        case 'wboit':
+            applyWBOITTransparencyToMaterial(material, opacity);
+            break;
+        case 'advanced':
+            applyAdvancedTransparencyToMaterial(material, opacity);
+            break;
+        case 'standard':
+            applyStandardTransparencyToMaterial(material, opacity);
+            break;
+        case 'dithered':
+            applyDitheredTransparencyToMaterial(material, opacity);
+            break;
+        default:
+            applyStandardTransparencyToMaterial(material, opacity);
+    }
+}
+
+function applyThresholdTransparencyToMaterial(material, opacity) {
+    material.transparent = true;
+    material.opacity = opacity;
+    material.side = THREE.FrontSide;
+    material.depthWrite = false;
+    
+    if (opacity < 0.1) {
+        material.blending = THREE.AdditiveBlending;
+        material.opacity = opacity * 0.5;
+    } else {
+        material.blending = THREE.NormalBlending;
+        material.premultipliedAlpha = true;
+    }
+    material.alphaTest = 0;
+    material._isThreshold = true;
+}
+
+function applyWBOITTransparencyToMaterial(material, opacity) {
+    material.transparent = false;
+    material.alphaTest = Math.max(0.01, 1.0 - opacity);
+    material.side = THREE.FrontSide;
+    material.depthWrite = true;
+    material.depthTest = true;
+    material.blending = THREE.NormalBlending;
+    material.premultipliedAlpha = false;
+    material._isWBOIT = true;
+}
+
+function applyAdvancedTransparencyToMaterial(material, opacity) {
+    material.transparent = true;
+    material.opacity = opacity;
+    material.side = THREE.DoubleSide;
+    material.depthWrite = false;
+    
+    if (opacity < 0.3) {
+        material.blending = THREE.AdditiveBlending;
+        material.opacity = opacity * 0.7;
+    } else if (opacity < 0.7) {
+        material.blending = THREE.NormalBlending;
+        material.premultipliedAlpha = true;
+    } else {
+        material.blending = THREE.NormalBlending;
+        material.alphaTest = 0.05;
+    }
+}
+
+function applyStandardTransparencyToMaterial(material, opacity) {
+    material.transparent = true;
+    material.opacity = opacity;
+    material.side = THREE.FrontSide;
+    material.depthWrite = true;
+    material.blending = THREE.NormalBlending;
+    material.alphaTest = 0;
+    material.premultipliedAlpha = false;
+}
+
+function applyDitheredTransparencyToMaterial(material, opacity) {
+    material.transparent = true;
+    material.opacity = opacity;
+    material.side = THREE.FrontSide;
+    material.depthWrite = true;
+    material.blending = THREE.NormalBlending;
+    material.alphaTest = 0;
+}
+
+function restoreOriginalMaterials() {
+    console.log('Restoring original materials and geometry');
+    
+    if (!state.model) return;
+    
+    state.model.traverse((object) => {
+        if (object.isMesh && originalMaterials.has(object.uuid)) {
+            const original = originalMaterials.get(object.uuid);
+            // Restore both material and geometry for external surface mode
+            if (original.material) {
+                object.material = original.material;
+                object.material.needsUpdate = true;
+            }
+            if (original.geometry) {
+                object.geometry = original.geometry;
+            }
+        }
+    });
+}
+
+async function updateDualTransparency() {
+    console.log('Updating dual transparency - Object:', state.objectTransparency, 'Surface:', state.surfaceTransparency);
+    
+    if (state.objectTransparency < 1.0) {
+        // Object Transparency: Use external surface extraction (PowerPoint-like)
+        // This creates a simplified external shell with object transparency
+        await applyGlobalTransparency(state.objectTransparency);
+    } else if (state.surfaceTransparency < 1.0) {
+        // Surface Transparency only: Standard material transparency
+        restoreOriginalMaterials();
+        applySurfaceTransparency(state.surfaceTransparency);
+    } else {
+        // Both fully opaque: Restore original materials
+        restoreOriginalMaterials();
+    }
+}
+
+function syncDirectToAttitudeControls() {
+    // Sync direct rotation controls (XYZ) to attitude controls (Yaw/Pitch/Roll)
+    // This prevents the dual control system from having inconsistent values
+    if (!state.model) return;
+    
+    // Convert model's current rotation (set by direct controls) to attitude values
+    const euler = new THREE.Euler().copy(state.model.rotation).reorder('YXZ');
+    state.modelPitch = radToDeg(euler.x);
+    state.modelYaw = radToDeg(euler.y);
+    state.modelRoll = radToDeg(euler.z);
+    
+    // Update attitude UI controls to reflect direct rotation values
+    safeSetValue('modelPitch', Math.round(state.modelPitch));
+    safeSetValue('modelPitchNum', Math.round(state.modelPitch));
+    safeSetValue('modelYaw', Math.round(state.modelYaw));
+    safeSetValue('modelYawNum', Math.round(state.modelYaw));
+    safeSetValue('modelRoll', Math.round(state.modelRoll));
+    safeSetValue('modelRollNum', Math.round(state.modelRoll));
+}
+
+function syncAttitudeToDirectControls() {
+    // Sync attitude controls (Yaw/Pitch/Roll) to direct rotation controls (XYZ)
+    // This ensures both control systems remain consistent
+    if (!state.model) return;
+    
+    // Convert model's current rotation (set by attitude controls) to direct XYZ values
+    const euler = new THREE.Euler().copy(state.model.rotation).reorder('XYZ');
+    
+    // Update direct rotation UI controls to reflect attitude-derived values
+    safeSetValue('modelRotX', Math.round(radToDeg(euler.x)));
+    safeSetValue('modelRotXNum', Math.round(radToDeg(euler.x)));
+    safeSetValue('modelRotY', Math.round(radToDeg(euler.y)));
+    safeSetValue('modelRotYNum', Math.round(radToDeg(euler.y)));
+    safeSetValue('modelRotZ', Math.round(radToDeg(euler.z)));
+    safeSetValue('modelRotZNum', Math.round(radToDeg(euler.z)));
+}
+
+function applySurfaceTransparency(surfaceOpacity) {
+    console.log('Applying surface transparency:', surfaceOpacity);
+    
+    if (!state.model) return;
+    
+    state.model.traverse((object) => {
+        if (object.isMesh && object.material) {
+            // Apply surface transparency to the current material
+            const material = object.material;
+            material.transparent = surfaceOpacity < 1.0;
+            material.opacity = surfaceOpacity;
+            
+            // Apply current transparency mode
+            applyTransparencyModeToMaterial(material, surfaceOpacity);
+            material.needsUpdate = true;
+        }
+    });
+}
+
+// ----------------------------------------------------------------
 // 3. File Handling & Model Loading Helpers
 function validateFile(file) {
     if (!file) {
@@ -1302,6 +1538,30 @@ function handleMouseMove(e) {
         // Apply the rotations to the model's quaternion
         state.model.quaternion.premultiply(horizontalRot);
         state.model.quaternion.premultiply(verticalRot);
+
+        // CRITICAL: Synchronize quaternion changes back to Euler state values
+        // This prevents the Roll/Yaw confusion by keeping UI controls in sync
+        const euler = new THREE.Euler().setFromQuaternion(state.model.quaternion, 'YXZ');
+        state.modelPitch = radToDeg(euler.x);
+        state.modelYaw = radToDeg(euler.y);
+        state.modelRoll = radToDeg(euler.z);
+
+        // Update UI controls to reflect quaternion-derived values
+        safeSetValue('modelPitch', Math.round(state.modelPitch));
+        safeSetValue('modelPitchNum', Math.round(state.modelPitch));
+        safeSetValue('modelYaw', Math.round(state.modelYaw));
+        safeSetValue('modelYawNum', Math.round(state.modelYaw));
+        safeSetValue('modelRoll', Math.round(state.modelRoll));
+        safeSetValue('modelRollNum', Math.round(state.modelRoll));
+
+        // Also update the direct rotation controls for consistency
+        const directEuler = new THREE.Euler().setFromQuaternion(state.model.quaternion, 'XYZ');
+        safeSetValue('modelRotX', Math.round(radToDeg(directEuler.x)));
+        safeSetValue('modelRotXNum', Math.round(radToDeg(directEuler.x)));
+        safeSetValue('modelRotY', Math.round(radToDeg(directEuler.y)));
+        safeSetValue('modelRotYNum', Math.round(radToDeg(directEuler.y)));
+        safeSetValue('modelRotZ', Math.round(radToDeg(directEuler.z)));
+        safeSetValue('modelRotZNum', Math.round(radToDeg(directEuler.z)));
 
     } else if (mouseControls.isRightButton) {
         // Right click: Pan camera (same for both control schemes)
@@ -1553,7 +1813,127 @@ function focusModelOnScreen() {
     state.camera.position.z += cameraZ; // Move camera back along its local Z axis
     state.camera.lookAt(center);
 
+    // DYNAMIC RANGE EXPANSION: Check if calculated values exceed UI control ranges
+    const calculatedX = state.camera.position.x;
+    const calculatedY = state.camera.position.y;
+    const calculatedZ = state.camera.position.z;
+    
+    // Check if we need to expand camera control ranges
+    const needsExpansion = Math.abs(calculatedX) > 10 || 
+                          Math.abs(calculatedY) > 10 || 
+                          calculatedZ > 20 || calculatedZ < 1;
+    
+    if (needsExpansion) {
+        expandCameraControlRanges(calculatedX, calculatedY, calculatedZ);
+        console.log(`Camera control ranges expanded for F key focus: X=${calculatedX.toFixed(1)}, Y=${calculatedY.toFixed(1)}, Z=${calculatedZ.toFixed(1)}`);
+    }
+
     updateCameraInfo();
+}
+
+function expandCameraControlRanges(posX, posY, posZ) {
+    // Calculate expanded ranges with 20% buffer
+    const bufferFactor = 1.2;
+    
+    // Calculate new ranges ensuring they encompass both current and default ranges
+    const newMinX = Math.min(-10, Math.floor(posX * bufferFactor));
+    const newMaxX = Math.max(10, Math.ceil(posX * bufferFactor));
+    
+    const newMinY = Math.min(-10, Math.floor(posY * bufferFactor));
+    const newMaxY = Math.max(10, Math.ceil(posY * bufferFactor));
+    
+    const newMinZ = Math.min(1, Math.floor(posZ / bufferFactor));
+    const newMaxZ = Math.max(20, Math.ceil(posZ * bufferFactor));
+    
+    // Update slider and number input controls
+    const controls = [
+        {id: 'posX', min: newMinX, max: newMaxX},
+        {id: 'posY', min: newMinY, max: newMaxY}, 
+        {id: 'posZ', min: newMinZ, max: newMaxZ}
+    ];
+    
+    controls.forEach(control => {
+        const slider = document.getElementById(control.id);
+        const numberInput = document.getElementById(control.id + 'Num');
+        
+        if (slider) {
+            slider.min = control.min;
+            slider.max = control.max;
+        }
+        
+        if (numberInput) {
+            numberInput.min = control.min;
+            numberInput.max = control.max;
+        }
+    });
+    
+    // Show user feedback about range expansion
+    showCameraRangeExpansionFeedback(newMinX, newMaxX, newMinY, newMaxY, newMinZ, newMaxZ);
+}
+
+function showCameraRangeExpansionFeedback(minX, maxX, minY, maxY, minZ, maxZ) {
+    // Create or update feedback element
+    let feedback = document.getElementById('camera-range-feedback');
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.id = 'camera-range-feedback';
+        feedback.style.cssText = `
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: #333;
+            z-index: 1000;
+            max-width: 200px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        `;
+        document.body.appendChild(feedback);
+    }
+    
+    feedback.innerHTML = `
+        <strong>Camera Ranges Expanded</strong><br>
+        X: ${minX} to ${maxX}<br>
+        Y: ${minY} to ${maxY}<br>
+        Z: ${minZ} to ${maxZ}<br>
+        <small style="color: #666;">F key focus required larger ranges</small>
+    `;
+    
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+        if (feedback && feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+        }
+    }, 4000);
+}
+
+function resetCameraControlRanges() {
+    // Reset to default ranges
+    const defaultRanges = [
+        {id: 'posX', min: -10, max: 10},
+        {id: 'posY', min: -10, max: 10},
+        {id: 'posZ', min: 1, max: 20}
+    ];
+    
+    defaultRanges.forEach(control => {
+        const slider = document.getElementById(control.id);
+        const numberInput = document.getElementById(control.id + 'Num');
+        
+        if (slider) {
+            slider.min = control.min;
+            slider.max = control.max;
+        }
+        
+        if (numberInput) {
+            numberInput.min = control.min;
+            numberInput.max = control.max;
+        }
+    });
+    
+    console.log('Camera control ranges reset to default values');
 }
 
 function promptForFilename(defaultName, extension = '') {
@@ -2477,7 +2857,8 @@ function updateMaterialModeButtons() {
 }
 
 function hideAdvancedMaterialControls() {
-    const transparencyModeGroup = document.querySelector('#transparencyMode')?.closest('.control-group');
+    // Hide Surface Mode dropdown (renamed from transparencyMode)
+    const surfaceModeGroup = document.querySelector('#surfaceMode')?.closest('.control-group');
     
     // Find and hide the entire Surface Extraction section by looking for the label
     const surfaceExtractionLabels = document.querySelectorAll('label');
@@ -2489,7 +2870,7 @@ function hideAdvancedMaterialControls() {
         }
     }
     
-    if (transparencyModeGroup) transparencyModeGroup.style.display = 'none';
+    if (surfaceModeGroup) surfaceModeGroup.style.display = 'none';
     if (surfaceExtractionGroup) surfaceExtractionGroup.style.display = 'none';
     
     // Also hide the parameter groups that might be visible
@@ -2500,10 +2881,18 @@ function hideAdvancedMaterialControls() {
     if (alphaGroup) alphaGroup.style.display = 'none';
     if (raycastGroup) raycastGroup.style.display = 'none';
     if (visibilityGroup) visibilityGroup.style.display = 'none';
+    
+    // BASIC mode: Set Surface Mode to Standard and disable other options
+    const surfaceModeSelect = document.getElementById('surfaceMode');
+    if (surfaceModeSelect) {
+        state.transparencyMode = 'standard';
+        surfaceModeSelect.value = 'standard';
+    }
 }
 
 function showAdvancedMaterialControls() {
-    const transparencyModeGroup = document.querySelector('#transparencyMode')?.closest('.control-group');
+    // Show Surface Mode dropdown (renamed from transparencyMode)
+    const surfaceModeGroup = document.querySelector('#surfaceMode')?.closest('.control-group');
     
     // Find and show the entire Surface Extraction section by looking for the label
     const surfaceExtractionLabels = document.querySelectorAll('label');
@@ -2515,7 +2904,7 @@ function showAdvancedMaterialControls() {
         }
     }
     
-    if (transparencyModeGroup) transparencyModeGroup.style.display = 'block';
+    if (surfaceModeGroup) surfaceModeGroup.style.display = 'block';
     if (surfaceExtractionGroup) surfaceExtractionGroup.style.display = 'block';
     
     // Re-trigger visibility updates for parameter groups based on current settings
@@ -3245,18 +3634,24 @@ function setupControls() {
     safeAddEventListener('modelRotX', 'input', (e) => {
         if (state.model) {
             state.model.rotation.x = degToRad(parseFloat(e.target.value));
+            // Sync direct rotation changes to attitude controls
+            syncDirectToAttitudeControls();
             updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotY', 'input', (e) => {
         if (state.model) {
             state.model.rotation.y = degToRad(parseFloat(e.target.value));
+            // Sync direct rotation changes to attitude controls
+            syncDirectToAttitudeControls();
             updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotZ', 'input', (e) => {
         if (state.model) {
             state.model.rotation.z = degToRad(parseFloat(e.target.value));
+            // Sync direct rotation changes to attitude controls
+            syncDirectToAttitudeControls();
             updateCameraInfo();
         }
     });
@@ -3270,6 +3665,8 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelYaw = parseFloat(e.target.value);
+            // Sync attitude changes to direct rotation controls
+            syncAttitudeToDirectControls();
             updateCameraInfo();
         }
     });
@@ -3281,6 +3678,8 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelPitch = parseFloat(e.target.value);
+            // Sync attitude changes to direct rotation controls
+            syncAttitudeToDirectControls();
             updateCameraInfo();
         }
     });
@@ -3292,6 +3691,8 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelRoll = parseFloat(e.target.value);
+            // Sync attitude changes to direct rotation controls
+            syncAttitudeToDirectControls();
             updateCameraInfo();
         }
     });
@@ -3314,8 +3715,17 @@ function setupControls() {
     safeAddEventListener('roughness', 'input', (e) => {
         updateMaterialProperty('roughness', parseFloat(e.target.value));
     });
-    safeAddEventListener('transparency', 'input', (e) => {
-        updateMaterialTransparency(parseFloat(e.target.value));
+    // Dual Transparency System Event Handlers
+    safeAddEventListener('objectTransparency', 'input', async (e) => {
+        state.objectTransparency = parseFloat(e.target.value);
+        syncSliderNumber('objectTransparency', 'objectTransparencyNum', state.objectTransparency);
+        await updateDualTransparency();
+    });
+    
+    safeAddEventListener('surfaceTransparency', 'input', async (e) => {
+        state.surfaceTransparency = parseFloat(e.target.value);
+        syncSliderNumber('surfaceTransparency', 'surfaceTransparencyNum', state.surfaceTransparency);
+        await updateDualTransparency();
     });
 
     // Advanced Material Controls Event Listeners
@@ -3369,6 +3779,11 @@ function setupControls() {
         }
     });
 
+    // Reset Camera Ranges Button
+    safeAddEventListener('resetCameraRanges', 'click', () => {
+        resetCameraControlRanges();
+    });
+
     // Reset Camera Button
     safeAddEventListener('resetCamera', 'click', () => {
         if (state.camera) {
@@ -3396,23 +3811,29 @@ function setupControls() {
     safeAddEventListener('modelRotXNum', 'input', (e) => {
         if (state.model) {
             state.model.rotation.x = degToRad(parseFloat(e.target.value));
+            // Sync direct rotation changes to attitude controls
+            syncDirectToAttitudeControls();
             updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotYNum', 'input', (e) => {
         if (state.model) {
             state.model.rotation.y = degToRad(parseFloat(e.target.value));
+            // Sync direct rotation changes to attitude controls
+            syncDirectToAttitudeControls();
             updateCameraInfo();
         }
     });
     safeAddEventListener('modelRotZNum', 'input', (e) => {
         if (state.model) {
             state.model.rotation.z = degToRad(parseFloat(e.target.value));
+            // Sync direct rotation changes to attitude controls
+            syncDirectToAttitudeControls();
             updateCameraInfo();
         }
     });
 
-    // Model Yaw/Pitch/Roll NUMBER INPUT Event Listeners (MISSING!)
+    // Model Yaw/Pitch/Roll NUMBER INPUT Event Listeners
     safeAddEventListener('modelYawNum', 'input', (e) => {
         if (state.model) {
             const yaw = degToRad(parseFloat(e.target.value));
@@ -3421,6 +3842,8 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelYaw = parseFloat(e.target.value);
+            // Sync attitude changes to direct rotation controls
+            syncAttitudeToDirectControls();
             updateCameraInfo();
         }
     });
@@ -3432,6 +3855,8 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelPitch = parseFloat(e.target.value);
+            // Sync attitude changes to direct rotation controls
+            syncAttitudeToDirectControls();
             updateCameraInfo();
         }
     });
@@ -3443,6 +3868,8 @@ function setupControls() {
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
             state.modelRoll = parseFloat(e.target.value);
+            // Sync attitude changes to direct rotation controls
+            syncAttitudeToDirectControls();
             updateCameraInfo();
         }
     });
@@ -3488,8 +3915,23 @@ function setupControls() {
     safeAddEventListener('roughnessNum', 'input', (e) => {
         updateMaterialProperty('roughness', parseFloat(e.target.value));
     });
-    safeAddEventListener('transparencyNum', 'input', (e) => {
-        updateMaterialTransparency(parseFloat(e.target.value));
+    // Dual Transparency Number Input Event Handlers
+    safeAddEventListener('objectTransparencyNum', 'input', async (e) => {
+        state.objectTransparency = parseFloat(e.target.value);
+        syncSliderNumber('objectTransparencyNum', 'objectTransparency', state.objectTransparency);
+        await updateDualTransparency();
+    });
+    
+    safeAddEventListener('surfaceTransparencyNum', 'input', async (e) => {
+        state.surfaceTransparency = parseFloat(e.target.value);
+        syncSliderNumber('surfaceTransparencyNum', 'surfaceTransparency', state.surfaceTransparency);
+        await updateDualTransparency();
+    });
+
+    // Surface Mode Dropdown Event Handler (RENAMED from transparencyMode)
+    safeAddEventListener('surfaceMode', 'change', async (e) => {
+        state.transparencyMode = e.target.value;
+        await updateDualTransparency();
     });
 
     // Material COMPLEX/BASIC Button Event Listener (MISSING!)
