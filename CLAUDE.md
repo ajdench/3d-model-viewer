@@ -66,12 +66,13 @@ python scripts/memory-assistant.py end     # Session end
 
 **For Gemini CLI**: This section provides essential context for understanding the implemented solutions and codebase architecture.
 
-### Current System Status (v3.1 - August 2025)
+### Current System Status (v3.2 - August 2025)
 - **✅ FULLY OPERATIONAL**: All systems stable, complete function restoration achieved
 - **✅ PROFESSIONAL CLIPBOARD SYSTEM**: Modern API with cross-browser fallback + macOS context menu
 - **✅ PROFESSIONAL CAPTURE SYSTEM**: High-quality model rendering with OS-level file dialogs
 - **✅ ORIENTATION WIDGET**: Thick gradient axis lines with 7 overlapping AxesHelper implementation
 - **✅ CROSS-BROWSER UI**: Borderless status messages, Y-axis hover fixes, anti-aliasing optimization
+- **✅ CONTROLS SCROLLING SYSTEM**: Complete gradient fades, scrollbar positioning, auto-scroll functionality
 
 ### Key Architectural Solutions Implemented
 
@@ -91,6 +92,23 @@ python scripts/memory-assistant.py end     # Session end
 - **Group Container**: Coordinated rotation of all axes via `THREE.Group()`
 
 **Pattern**: 6 copies in circular pattern, 0.035 offset, 0.35 opacity
+
+#### **CONTROLS Scrolling System (v3.2)**
+**Location**: `main.js:setupScrollDetection()` (~line 3788), `style.css:128-150`
+- **Dynamic Height Calculation**: JavaScript measures containers, calculates exact scrollable space
+- **Gradient Fade Indicators**: CSS masks show when content extends beyond visible bounds
+- **Scrollbar Positioning**: Extended 15px right into controls-panel padding for clean appearance
+- **Auto-scroll Integration**: PRESETS section auto-scrolls to bottom on expand with 100ms delay
+- **Content-Based Detection**: Gradients appear based on content extension, not scroll position
+
+**Pattern**: Content extension detection → CSS mask application → scrollbar positioning
+```javascript
+// Height: Available space - sticky header - margins
+const scrollableHeight = (controlsPanelHeight - 40) - stickyHeaderHeight - 20;
+// Gradients: Based on content visibility, not scroll state
+const hasContentAbove = scrollTop > 0;
+const hasContentBelow = scrollTop + clientHeight < scrollHeight - 1;
+```
 
 #### **Professional Guide Line System (v3.0)**
 **Location**: `main.js:updateGuideLine()` function (~line 570)

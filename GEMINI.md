@@ -188,6 +188,7 @@ This project maintains a detailed history of changes and development decisions i
 - **Button Standardization**: All buttons now use standardized height, padding, and font size variables for a uniform appearance.
 - **Lighting Grid Layout**: The lighting control panel has been refactored to use a precise CSS Grid layout for better alignment and maintainability.
 - **Sunset of Hover Glow**: The glow effect on button hovers in the main controls panel has been removed for a cleaner look.
+- **Controls Scrolling with Fade Effect**: Implemented a vertical scrollbar for the main controls container. A fade-out effect at the top and bottom indicates when there is more content to scroll, improving user experience for smaller screens or when many panels are open.
 
 ### Sunset Features
 - **Zoom Control**: The dedicated "Zoom" slider and its corresponding display in the "VIEWER STATS" panel has been removed. The camera's Z-position, controlled by the mouse wheel, now serves as the primary zooming mechanism.

@@ -134,9 +134,23 @@ Requires modern browser with WebGL support and ES6 module capabilities.
 - **Files**: 50MB upload limit, supports .obj/.stl/.gltf/.glb/.dae
 - **Performance**: requestAnimationFrame, preserveDrawingBuffer for capture
 
-### Recent Updates (v3.0+)
+### Recent Updates (v3.2+)
 
-#### Professional Clipboard & Interface Improvements (v3.1 - Latest)
+#### System Stability & Deployment Excellence (v3.2 - Latest)
+- **GitHub Actions Deployment**: Automated CI/CD pipeline with branch-specific deployment to GitHub Pages
+- **Critical System Restoration**: Comprehensive ControlSync system recovery with 20+ missing event listeners restored
+- **Evidence-Based Debugging**: Revolutionary debugging methodology proven superior to theoretical code analysis
+- **Camera Control Integration**: Full camera rotation control system with expanded ranges and F-key focus integration
+- **DAE File Support**: Enhanced model loading with improved scene traversal for Collada (.dae) files
+
+#### CONTROLS Scrolling System (v3.2)
+- **Smart Gradient Fades**: Visual indicators show when content extends beyond visible areas
+- **Dynamic Height Calculation**: JavaScript measures container dimensions for perfect fit
+- **Scrollbar Positioning**: Clean scrollbar placement outside gradient-masked content
+- **Auto-scroll Integration**: PRESETS section automatically scrolls to show full content on expand
+- **Constant 20px Bottom Gap**: Mathematical spacing ensures consistent UI layout
+
+#### Professional Clipboard & Interface Improvements (v3.1)
 - **Complete Clipboard Functionality**: Modern Clipboard API with three-tier fallback (direct copy → browser overlay → manual save)
 - **Cross-Browser Status Messages**: Borderless design with perfect width alignment and anti-aliasing optimizations
 - **Popup Overlay System**: Professional fallback interface with macOS context menu integration for copy/save operations
@@ -157,7 +171,7 @@ Requires modern browser with WebGL support and ES6 module capabilities.
 #### Major Features (v2.8-2.9)
 - **Collapsible Controls** (v2.8): All 7 sections with smooth CSS animations, persistent state, accessibility
 - **Upload Area Relocation** (v2.9): Moved to bottom-right with streamlined interface
-- **Dependency Updates** (v2.9.2): Three.js r178→r179, Vite 7.0.6→7.1.2
+- **Dependency Updates** (v2.9.2): Three.js r178→r179, Vite 7.0.6→7.1.2, automated security audit pipeline
 - **External Surface Extraction** (v2.10.0): Hybrid architecture for high-poly model optimization
 
 ### License

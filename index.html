@@ -236,8 +236,9 @@
         </div>
         
         <div class="controls-panel">
-            <h3 class="panel-title">CONTROLS</h3>
-            <div class="control-section" data-section="capture">
+            <div class="sticky-header">
+                <h3 class="panel-title">CONTROLS</h3>
+                <div class="control-section" data-section="capture">
                 <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="capture-content">
                     <h3>Capture</h3>
                     <span class="collapse-icon" aria-hidden="true">−</span>
@@ -247,12 +248,13 @@
                         <button id="saveToClipboard" class="button secondary">CLIPBOARD</button>
                         <button id="saveToFile" class="button secondary">FILE</button>
                     </div>
-                </div>
             </div>
-            <div class="gap-section-1"></div>
-            <div class="gap-section-2"></div>
-            <div class="gap-section-3"></div>
-            <div class="control-section" data-section="guideline">
+            </div>
+            </div>
+            
+            <!-- Independent scrollable sections container -->
+            <div class="scrollable-sections">
+                <div class="control-section" data-section="guideline">
                 <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="guideline-content">
                     <h3>Guide Line</h3>
                     <span class="collapse-icon" aria-hidden="true">−</span>
@@ -660,6 +662,7 @@
                 </div>
                 </div>
             </div>
+            </div> <!-- Close scrollable-sections -->
 
         </div>
     </div>

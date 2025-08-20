@@ -3783,7 +3783,67 @@ function setupControls() {
     safeAddEventListener('resetCameraRanges', 'click', () => {
         resetCameraControlRanges();
     });
+}
 
+function setupScrollDetection() {
+    const scrollableContainer = document.querySelector('.scrollable-sections');
+    const controlsPanel = document.querySelector('.controls-panel');
+    
+    if (scrollableContainer && controlsPanel) {
+        console.log('Scroll detection setup successful');
+        scrollableContainer.addEventListener('scroll', () => {
+            console.log('Scroll event triggered');
+            const scrollTop = scrollableContainer.scrollTop;
+            const clientHeight = scrollableContainer.clientHeight;
+            const scrollHeight = scrollableContainer.scrollHeight;
+            
+            // Top gradient: Show when content extends above (scrolled down from top)
+            const hasContentAbove = scrollTop > 0;
+            
+            // Bottom gradient: Show when content extends below (not at bottom)
+            const hasContentBelow = scrollTop + clientHeight < scrollHeight - 1;
+            
+            // Apply classes based on content extension
+            if (hasContentAbove) {
+                controlsPanel.classList.add('content-above');
+            } else {
+                controlsPanel.classList.remove('content-above');
+            }
+            
+            if (hasContentBelow) {
+                controlsPanel.classList.add('content-below');
+            } else {
+                controlsPanel.classList.remove('content-below');
+            }
+            
+            // Debug logging
+            console.log(`Scroll: ${scrollTop}, Height: ${clientHeight}/${scrollHeight}, Above: ${hasContentAbove}, Below: ${hasContentBelow}`);
+        });
+    }
+}
+
+function setupDynamicScrollableHeight() {
+    const controlsPanel = document.querySelector('.controls-panel');
+    const stickyHeader = document.querySelector('.sticky-header');
+    const scrollableSections = document.querySelector('.scrollable-sections');
+    
+    if (controlsPanel && stickyHeader && scrollableSections) {
+        // Get actual heights
+        const controlsPanelHeight = controlsPanel.clientHeight;
+        const stickyHeaderHeight = stickyHeader.clientHeight;
+        
+        // Available height = controls panel interior height - sticky header height - bottom padding
+        // Controls panel interior = full height - top padding - bottom padding  
+        const availableHeight = controlsPanelHeight - 40; // 20px top + 20px bottom padding
+        const scrollableHeight = availableHeight - stickyHeaderHeight - 20; // 20px sticky header margin-bottom
+        
+        scrollableSections.style.height = `${scrollableHeight}px`;
+        
+        console.log(`Controls: ${controlsPanelHeight}px, Sticky: ${stickyHeaderHeight}px, Available: ${availableHeight}px, Scrollable: ${scrollableHeight}px`);
+    }
+}
+
+function setupCameraControls() {
     // Reset Camera Button
     safeAddEventListener('resetCamera', 'click', () => {
         if (state.camera) {
@@ -4004,6 +4064,21 @@ function expandSection(sectionElement, header) {
     const icon = header.querySelector('.collapse-icon');
     if (icon) {
         icon.textContent = '−';
+    }
+    
+    // Auto-scroll to bottom when PRESETS section is expanded to show it fully
+    const sectionType = sectionElement.getAttribute('data-section');
+    console.log(`Expanding section: ${sectionType}`);
+    
+    if (sectionType === 'presets') {
+        console.log('PRESETS section detected - auto-scrolling to bottom');
+        const scrollableContainer = document.querySelector('.scrollable-sections');
+        if (scrollableContainer) {
+            // Use setTimeout to ensure content is fully rendered before scrolling
+            setTimeout(() => {
+                scrollableContainer.scrollTop = scrollableContainer.scrollHeight;
+            }, 100);
+        }
     }
 }
 
@@ -4833,6 +4908,9 @@ function handleResize() {
         
         // Update guide lines to match new window dimensions
         updateGuideLine();
+        
+        // Recalculate scrollable height on window resize
+        setupDynamicScrollableHeight();
     }
 }
 
@@ -5028,6 +5106,9 @@ async function initializeViewer() {
         loadPresetsList();
         updateLightingModeButtons(); // Initialize button states
         setupMouseControls(); // Call here after DOM is ready
+        setupScrollDetection(); // Setup scroll detection for dynamic spacer
+        setupDynamicScrollableHeight(); // Setup dynamic height calculation
+        setupCameraControls(); // Setup camera control event listeners
         
         // Initialize guide line controls to match state
         safeSetValue('lineThickness', state.guideLines[0].thickness);
