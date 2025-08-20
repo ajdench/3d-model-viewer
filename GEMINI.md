@@ -314,6 +314,10 @@ Based on comprehensive analysis of 24 distinct issues from memory files, codebas
     - Corrected a problem with saving and loading guide lines.
     - Resolved an import failure related to the `ViewHelper`.
 
+### Scroll-Fade Bug Fixes (2025-08-20)
+- **Initial State:** Fixed a bug where the bottom scroll-fade effect was not present on page load even if the content was overflowing. The fade state is now correctly calculated and applied when the application initializes.
+- **Dynamic Content:** Fixed a bug where the fade effect would not update after expanding or collapsing a control panel section. The fade state is now re-evaluated every time a section is toggled, ensuring it accurately reflects content overflow.
+
 ## Comprehensive Codebase and Memory System Review (August 15, 2025)
 
 ### Codebase Overview:

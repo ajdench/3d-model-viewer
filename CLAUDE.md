@@ -94,20 +94,22 @@ python scripts/memory-assistant.py end     # Session end
 **Pattern**: 6 copies in circular pattern, 0.035 offset, 0.35 opacity
 
 #### **CONTROLS Scrolling System (v3.2)**
-**Location**: `main.js:setupScrollDetection()` (~line 3788), `style.css:128-150`
+**Location**: `main.js:updateScrollFade()` (~line 3788), `style.css:128-150`
 - **Dynamic Height Calculation**: JavaScript measures containers, calculates exact scrollable space
 - **Gradient Fade Indicators**: CSS masks show when content extends beyond visible bounds
+- **Event-Driven Updates**: Fade effect is updated on initial load, on scroll, and after any collapsible section is toggled, ensuring state is always accurate.
 - **Scrollbar Positioning**: Extended 15px right into controls-panel padding for clean appearance
 - **Auto-scroll Integration**: PRESETS section auto-scrolls to bottom on expand with 100ms delay
-- **Content-Based Detection**: Gradients appear based on content extension, not scroll position
+- **Content-Based Detection**: Gradients appear based on content extension, not just scroll position.
 
-**Pattern**: Content extension detection → CSS mask application → scrollbar positioning
+**Pattern**: Event (load, scroll, toggle) → `updateScrollFade()` → CSS mask application
 ```javascript
-// Height: Available space - sticky header - margins
-const scrollableHeight = (controlsPanelHeight - 40) - stickyHeaderHeight - 20;
-// Gradients: Based on content visibility, not scroll state
-const hasContentAbove = scrollTop > 0;
-const hasContentBelow = scrollTop + clientHeight < scrollHeight - 1;
+// The core logic, now in its own function, is triggered by multiple events
+function updateScrollFade() {
+    // ... logic to check scrollHeight vs clientHeight ...
+    const hasContentBelow = scrollTop + clientHeight < scrollHeight - 1;
+    controlsPanel.classList.toggle('content-below', hasContentBelow);
+}
 ```
 
 #### **Professional Guide Line System (v3.0)**

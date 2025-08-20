@@ -3785,40 +3785,35 @@ function setupControls() {
     });
 }
 
-function setupScrollDetection() {
+function updateScrollFade() {
     const scrollableContainer = document.querySelector('.scrollable-sections');
     const controlsPanel = document.querySelector('.controls-panel');
-    
+
     if (scrollableContainer && controlsPanel) {
+        const scrollTop = scrollableContainer.scrollTop;
+        const clientHeight = scrollableContainer.clientHeight;
+        const scrollHeight = scrollableContainer.scrollHeight;
+
+        // Top gradient: Show when content extends above (scrolled down from top)
+        const hasContentAbove = scrollTop > 0;
+
+        // Bottom gradient: Show when content extends below (not at bottom)
+        const hasContentBelow = scrollTop + clientHeight < scrollHeight - 1; // -1 for pixel precision
+
+        // Apply classes based on content extension
+        controlsPanel.classList.toggle('content-above', hasContentAbove);
+        controlsPanel.classList.toggle('content-below', hasContentBelow);
+        
+        console.log(`ScrollFade Update: Above: ${hasContentAbove}, Below: ${hasContentBelow}`);
+    }
+}
+
+function setupScrollDetection() {
+    const scrollableContainer = document.querySelector('.scrollable-sections');
+    
+    if (scrollableContainer) {
         console.log('Scroll detection setup successful');
-        scrollableContainer.addEventListener('scroll', () => {
-            console.log('Scroll event triggered');
-            const scrollTop = scrollableContainer.scrollTop;
-            const clientHeight = scrollableContainer.clientHeight;
-            const scrollHeight = scrollableContainer.scrollHeight;
-            
-            // Top gradient: Show when content extends above (scrolled down from top)
-            const hasContentAbove = scrollTop > 0;
-            
-            // Bottom gradient: Show when content extends below (not at bottom)
-            const hasContentBelow = scrollTop + clientHeight < scrollHeight - 1;
-            
-            // Apply classes based on content extension
-            if (hasContentAbove) {
-                controlsPanel.classList.add('content-above');
-            } else {
-                controlsPanel.classList.remove('content-above');
-            }
-            
-            if (hasContentBelow) {
-                controlsPanel.classList.add('content-below');
-            } else {
-                controlsPanel.classList.remove('content-below');
-            }
-            
-            // Debug logging
-            console.log(`Scroll: ${scrollTop}, Height: ${clientHeight}/${scrollHeight}, Above: ${hasContentAbove}, Below: ${hasContentBelow}`);
-        });
+        scrollableContainer.addEventListener('scroll', updateScrollFade);
     }
 }
 
@@ -4043,6 +4038,9 @@ function toggleSection(sectionElement, sectionId) {
     }
     
     saveCollapsedState(sectionId, !isCollapsed);
+
+    // After expanding or collapsing, check the scroll fade state
+    setTimeout(updateScrollFade, 100);
 }
 
 function collapseSection(sectionElement, header) {
@@ -5108,6 +5106,9 @@ async function initializeViewer() {
         setupMouseControls(); // Call here after DOM is ready
         setupScrollDetection(); // Setup scroll detection for dynamic spacer
         setupDynamicScrollableHeight(); // Setup dynamic height calculation
+        
+        // Initial check for scroll fade state on load, with a short delay
+        setTimeout(updateScrollFade, 100);
         setupCameraControls(); // Setup camera control event listeners
         
         // Initialize guide line controls to match state
