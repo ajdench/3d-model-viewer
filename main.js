@@ -4,6 +4,10 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
+// Export functionality imports
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter.js';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 // Temporarily disable ViewHelper import to fix initialization
 // import { ViewHelper } from 'three/examples/jsm/helpers/ViewHelper.js';
 
@@ -56,7 +60,27 @@ let state = {
     lightDisplayMode: 'arrows',
     // Light direction state for each light (true = inward, false = outward)
     leftLightDirectionIn: true,
-    rightLightDirectionIn: true
+    rightLightDirectionIn: true,
+    // Multi-Model Assembly System
+    assembly: {
+        mode: 'basic', // 'basic' or 'developer'
+        models: new Map(), // ModelComponent instances
+        activeModel: null, // Currently selected model ID
+        hierarchy: [], // Parent-child relationships
+        tools: { 
+            snapGrid: false, 
+            gridSize: 1.0,
+            measurements: [],
+            showWireframes: false,
+            showGrid: false,
+            isolateMode: false
+        },
+        ui: {
+            modelListVisible: true,
+            transformPanelVisible: true,
+            hierarchyPanelVisible: true
+        }
+    }
 };
 
 let mouseControls = {
@@ -69,6 +93,2177 @@ let mouseControls = {
 
 // Dual Transparency System - Material Override
 const originalMaterials = new Map(); // Store original materials for transparency restoration
+
+// ----------------------------------------------------------------
+// Multi-Model Assembly System - Core Classes
+// ----------------------------------------------------------------
+
+/**
+ * Generate UUID for model components
+ */
+function generateUUID() {
+    return 'model-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * Get the target object for mouse rotation controls
+ * In basic mode: returns state.model
+ * In assembly mode: returns a virtual group or active model
+ */
+function getRotationTarget() {
+    if (state.assembly.mode === 'basic') {
+        return state.model;
+    } else {
+        // In developer mode
+        if (state.assembly.models.size === 0) return null;
+        
+        // If there's an active model, rotate just that one (only if it's selected)
+        if (state.assembly.activeModel) {
+            const activeModel = state.assembly.models.get(state.assembly.activeModel);
+            // Only allow manipulation of selected models
+            if (activeModel && activeModel.selected) {
+                return activeModel.mesh;
+            }
+        }
+        
+        // For assembly-wide rotation, create a virtual group that doesn't interfere with scene
+        if (!state.scene.userData.assemblyRotationGroup) {
+            const group = new THREE.Group();
+            group.name = 'AssemblyRotationGroup';
+            // Don't add models to this group - it's just for rotation calculations
+            state.scene.userData.assemblyRotationGroup = group;
+        }
+        
+        return state.scene.userData.assemblyRotationGroup;
+    }
+}
+
+/**
+ * Apply rotation to all assembly models when no specific model is selected
+ */
+function applyAssemblyRotation(rotationQuaternion) {
+    if (state.assembly.mode === 'basic' || state.assembly.activeModel) return;
+    
+    state.assembly.models.forEach(model => {
+        if (model.mesh && model.visible && !model.locked) {
+            model.mesh.quaternion.premultiply(rotationQuaternion.clone());
+        }
+    });
+}
+
+/**
+ * ModelComponent - Core class for individual models in assembly system
+ */
+class ModelComponent {
+    constructor(geometry, material, name, fileType) {
+        this.id = generateUUID();
+        this.name = name || 'Unnamed Model';
+        this.fileType = fileType || 'unknown';
+        this.geometry = geometry;
+        this.material = material;
+        this.mesh = null; // Three.js mesh object
+        this.originalObject = null; // Store original loaded object for GLTF/OBJ hierarchies
+        this.transform = { 
+            position: { x: 0, y: 0, z: 0 }, 
+            rotation: { x: 0, y: 0, z: 0 }, 
+            scale: { x: 1, y: 1, z: 1 } 
+        };
+        this.parent = null;
+        this.children = [];
+        this.visible = true;
+        this.locked = false;
+        this.selected = false;
+        this.boundingBox = null;
+        this.originalMaterial = null; // For highlight/selection states
+        this.createdAt = Date.now();
+    }
+
+    /**
+     * Create Three.js mesh from geometry and material
+     */
+    createMesh() {
+        if (!this.geometry || !this.material) {
+            console.warn(`Cannot create mesh for ${this.name}: missing geometry or material`);
+            return null;
+        }
+
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        this.mesh.userData.modelId = this.id;
+        this.mesh.userData.modelComponent = this;
+        
+        // Apply transform
+        this.applyTransform();
+        
+        // Calculate bounding box
+        this.calculateBoundingBox();
+        
+        return this.mesh;
+    }
+
+    /**
+     * Apply transform values to mesh
+     */
+    applyTransform() {
+        if (!this.mesh) return;
+        
+        this.mesh.position.set(this.transform.position.x, this.transform.position.y, this.transform.position.z);
+        this.mesh.rotation.set(this.transform.rotation.x, this.transform.rotation.y, this.transform.rotation.z);
+        this.mesh.scale.set(this.transform.scale.x, this.transform.scale.y, this.transform.scale.z);
+    }
+
+    /**
+     * Update transform from mesh (for interactive updates)
+     */
+    updateTransformFromMesh() {
+        if (!this.mesh) return;
+        
+        this.transform.position.x = this.mesh.position.x;
+        this.transform.position.y = this.mesh.position.y;
+        this.transform.position.z = this.mesh.position.z;
+        
+        this.transform.rotation.x = this.mesh.rotation.x;
+        this.transform.rotation.y = this.mesh.rotation.y;
+        this.transform.rotation.z = this.mesh.rotation.z;
+        
+        this.transform.scale.x = this.mesh.scale.x;
+        this.transform.scale.y = this.mesh.scale.y;
+        this.transform.scale.z = this.mesh.scale.z;
+    }
+
+    /**
+     * Calculate bounding box for the model
+     */
+    calculateBoundingBox() {
+        if (!this.mesh) return;
+        
+        this.boundingBox = new THREE.Box3().setFromObject(this.mesh);
+    }
+
+    /**
+     * Set selection state with visual feedback
+     */
+    setSelected(selected) {
+        if (this.selected === selected) {
+            // Selection state unchanged, skip to prevent flickering
+            return;
+        }
+        
+        this.selected = selected;
+        
+        if (!this.mesh) return;
+        
+        if (selected) {
+            // Store original emissive properties if not already stored
+            if (!this.originalEmissive) {
+                this.originalEmissive = {
+                    color: this.mesh.material.emissive.clone(),
+                    intensity: this.mesh.material.emissiveIntensity
+                };
+            }
+            
+            // Apply selection highlighting by modifying existing material
+            if (!this.mesh.material.emissive.equals(new THREE.Color(0x444444))) {
+                this.mesh.material.emissive.setHex(0x444444);
+                this.mesh.material.emissiveIntensity = 0.3;
+                this.mesh.material.needsUpdate = true;
+            }
+        } else {
+            // Restore original emissive properties
+            if (this.originalEmissive) {
+                if (!this.mesh.material.emissive.equals(this.originalEmissive.color)) {
+                    this.mesh.material.emissive.copy(this.originalEmissive.color);
+                    this.mesh.material.emissiveIntensity = this.originalEmissive.intensity;
+                    this.mesh.material.needsUpdate = true;
+                }
+            }
+        }
+    }
+
+    /**
+     * Set visibility
+     */
+    setVisible(visible) {
+        this.visible = visible;
+        if (this.mesh) {
+            this.mesh.visible = visible;
+        }
+    }
+
+    /**
+     * Export model data for serialization
+     */
+    exportData() {
+        return {
+            id: this.id,
+            name: this.name,
+            fileType: this.fileType,
+            transform: { ...this.transform },
+            visible: this.visible,
+            locked: this.locked,
+            parentId: this.parent ? this.parent.id : null,
+            childIds: this.children.map(child => child.id),
+            createdAt: this.createdAt
+        };
+    }
+
+    /**
+     * Dispose of Three.js resources
+     */
+    dispose() {
+        if (this.mesh) {
+            if (this.mesh.geometry) {
+                this.mesh.geometry.dispose();
+            }
+            if (this.mesh.material) {
+                if (Array.isArray(this.mesh.material)) {
+                    this.mesh.material.forEach(material => material.dispose());
+                } else {
+                    this.mesh.material.dispose();
+                }
+            }
+        }
+        if (this.originalMaterial) {
+            this.originalMaterial.dispose();
+        }
+    }
+}
+
+// ----------------------------------------------------------------
+// Multi-Model Assembly System - Core Functions
+// ----------------------------------------------------------------
+
+/**
+ * Initialize Developer Console / Assembly System
+ */
+function initDeveloperConsole() {
+    console.log('🔧 Initializing Developer Console Assembly System...');
+    
+    // Set up event listeners for assembly mode
+    safeAddEventListener('enterDeveloperConsol', 'click', () => {
+        if (state.assembly.mode === 'basic') {
+            enterDeveloperMode();
+        } else {
+            exitDeveloperMode();
+        }
+    });
+    
+    // Initialize UI event handlers for assembly system
+    setupAssemblyEventHandlers();
+    
+    console.log('✅ Developer Console initialized successfully');
+}
+
+/**
+ * Enter Developer/Assembly Mode
+ */
+function enterDeveloperMode() {
+    console.log('🚀 Entering Developer Assembly Mode...');
+    
+    state.assembly.mode = 'developer';
+    
+    // Update button text
+    const button = document.getElementById('enterDeveloperConsol');
+    if (button) {
+        button.textContent = 'EXIT DEVELOPER MODE';
+        button.classList.add('active');
+    }
+    
+    // Transform UI for multi-model assembly
+    transformUIForAssembly();
+    
+    // Show Model Distance control for DEVELOPER mode
+    const relativePositionGroup = document.getElementById('relativePositionGroup');
+    if (relativePositionGroup) {
+        relativePositionGroup.style.display = 'block';
+    }
+    
+    // Set slight grey background for DEVELOPER mode
+    if (state.scene) {
+        state.scene.background = new THREE.Color(0xf8f8f8); // Very light grey
+    }
+    
+    // Enable multi-file drop handling
+    enableMultiFileSupport();
+    
+    // If we have a current model, convert it to the assembly system
+    if (state.model) {
+        convertCurrentModelToAssembly();
+    }
+    
+    // Update view display to show assembly info
+    updateViewDisplayForAssembly();
+    
+    showUploadStatus('🔧 Developer Assembly Mode Active - Drop multiple files to create assemblies', 'info');
+    console.log('✅ Developer Assembly Mode activated');
+}
+
+/**
+ * Exit Developer Mode and return to basic mode
+ */
+function exitDeveloperMode() {
+    console.log('🔄 Exiting Developer Assembly Mode...');
+    
+    state.assembly.mode = 'basic';
+    
+    // Update button text
+    const button = document.getElementById('enterDeveloperConsol');
+    if (button) {
+        button.textContent = 'DEVELOPER CONSOL';
+        button.classList.remove('active');
+    }
+    
+    // Hide assembly UI elements
+    hideAssemblyUI();
+    
+    // Hide Model Distance control in basic mode
+    const relativePositionGroup = document.getElementById('relativePositionGroup');
+    if (relativePositionGroup) {
+        relativePositionGroup.style.display = 'none';
+    }
+    
+    // Restore transparent background for basic mode
+    if (state.scene) {
+        state.scene.background = null; // Transparent
+    }
+    
+    // Hide floor grid when exiting DEVELOPER mode
+    hideFloorGrid();
+    
+    // Disable multi-file support
+    disableMultiFileSupport();
+    
+    // Convert assembly back to single model if possible
+    convertAssemblyToSingleModel();
+    
+    // Restore normal view display
+    updateViewDisplayForBasic();
+    
+    showUploadStatus('Basic mode restored - Single model operations', 'info');
+    console.log('✅ Basic mode restored');
+}
+
+/**
+ * Transform UI for assembly mode
+ */
+function transformUIForAssembly() {
+    // Create assembly panel if it doesn't exist
+    createAssemblyPanel();
+    
+    // Show assembly controls
+    const assemblyElements = document.querySelectorAll('.assembly-control');
+    assemblyElements.forEach(el => el.style.display = 'block');
+    
+    // Update drop zone text
+    const dropZone = document.getElementById('dropZone');
+    if (dropZone) {
+        const hint = dropZone.querySelector('.upload-hint');
+        if (hint) {
+            hint.innerHTML = 'Drop multiple files here<br><small>Supports: OBJ, STL, GLTF, GLB, DAE</small>';
+        }
+    }
+}
+
+/**
+ * Create assembly control panel dynamically
+ */
+function createAssemblyPanel() {
+    // Check if assembly panel already exists
+    let assemblyPanel = document.getElementById('assemblyPanel');
+    if (assemblyPanel) {
+        // Panel exists but might be hidden, show it
+        assemblyPanel.style.display = 'block';
+        return;
+    }
+    
+    // Create assembly panel HTML with proper control-section styling
+    const panelHTML = `
+        <div id="assemblyPanel" class="control-section" data-section="assembly">
+            <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="assembly-content">
+                <h3>Assembly (${state.assembly.models.size})</h3>
+                <span class="collapse-icon" aria-hidden="true">−</span>
+            </div>
+            <div class="section-content" id="assembly-content">
+                <div id="modelsList" class="models-list" style="margin-bottom: 15px;"></div>
+                
+                <div class="button-group-vertical" style="margin-bottom: 15px;">
+                    <button id="selectAllModels" class="button secondary">Select All</button>
+                    <button id="deselectAllModels" class="button orange">Deselect All</button>
+                    <button id="deleteSelectedModels" class="button danger">Delete Selected</button>
+                </div>
+                
+                
+                <div style="margin-bottom: 15px;">
+                    <h4 style="margin: 10px 0 5px 0; font-size: 12px; color: #555;">Assembly Tools</h4>
+                    <div class="tool-controls">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="snapGrid" class="tool-checkbox">
+                            Snap to Grid
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showWireframes" class="tool-checkbox">
+                            Show Wireframes
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showGrid" class="tool-checkbox">
+                            Show Grid
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isolateMode" class="tool-checkbox">
+                            Isolate Selected
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="button-group-vertical">
+                    <button id="exportAssembly" class="button orange">Export Assembly</button>
+                    <button id="saveAssembly" class="button blue">Save .3dassembly</button>
+                    <button id="loadAssembly" class="button secondary">Load Assembly</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Insert before the developer section (as independent pane above it)
+    const developerSection = document.querySelector('[data-section="developer"]');
+    if (developerSection) {
+        developerSection.insertAdjacentHTML('beforebegin', panelHTML);
+    }
+    
+    // Set up assembly panel event handlers
+    setupAssemblyPanelHandlers();
+    setupAssemblyEventHandlers();
+    
+    // Set up collapsible functionality for assembly panel
+    setupAssemblyCollapse();
+    
+    // Create transform panel if models exist
+    if (state.assembly.models.size > 0) {
+        createTransformPanel();
+    }
+}
+
+/**
+ * Create transform control panel dynamically
+ */
+function createTransformPanels() {
+    // Remove any existing transform panels first
+    document.querySelectorAll('[data-section^="transform-"]').forEach(panel => panel.remove());
+    
+    // Create transform panels for all loaded models
+    state.assembly.models.forEach((model, modelId) => {
+        createTransformPanelForModel(modelId, model.name);
+    });
+}
+
+function createTransformPanelForModel(modelId, modelName) {
+    // Create unique IDs for this model's controls
+    const panelId = `transformPanel-${modelId}`;
+    const contentId = `transform-content-${modelId}`;
+    const controlsId = `modelTransformControls-${modelId}`;
+    
+    // Get the model to use its current transform values
+    const model = state.assembly.models.get(modelId);
+    if (!model) return;
+    
+    // Create transform panel HTML with proper control-section styling
+    const panelHTML = `
+        <div id="${panelId}" class="control-section" data-section="transform-${modelId}">
+            <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="${contentId}">
+                <h3>${modelName.replace(/\.[^/.]+$/, '')}</h3>
+                <span class="collapse-icon" aria-hidden="true">−</span>
+            </div>
+            <div class="section-content" id="${contentId}">
+                <div id="${controlsId}" class="transform-controls">
+                    <div class="transform-group position">
+                        <div class="control-group">
+                            <label>Position X</label>
+                            <div class="ambient-controls">
+                                <input type="range" id="transformPosX-${modelId}" min="-10" max="10" step="0.1" value="${model.transform.position.x.toFixed(1)}" class="horizontal-slider">
+                                <input type="number" id="transformPosXNum-${modelId}" min="-10" max="10" step="0.1" value="${model.transform.position.x.toFixed(1)}" class="slider-value transform-value">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Position Y</label>
+                            <div class="ambient-controls">
+                                <input type="range" id="transformPosY-${modelId}" min="-10" max="10" step="0.1" value="${model.transform.position.y.toFixed(1)}" class="horizontal-slider">
+                                <input type="number" id="transformPosYNum-${modelId}" min="-10" max="10" step="0.1" value="${model.transform.position.y.toFixed(1)}" class="slider-value transform-value">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Position Z</label>
+                            <div class="ambient-controls">
+                                <input type="range" id="transformPosZ-${modelId}" min="-10" max="10" step="0.1" value="${model.transform.position.z.toFixed(1)}" class="horizontal-slider">
+                                <input type="number" id="transformPosZNum-${modelId}" min="-10" max="10" step="0.1" value="${model.transform.position.z.toFixed(1)}" class="slider-value transform-value">
+                            </div>
+                        </div>
+                        <button id="resetPosition-${modelId}" class="button secondary transform-reset-button">RESET POSITION</button>
+                    </div>
+                    
+                    <div class="transform-group rotation">
+                        <div class="control-group">
+                            <label>Rotation X</label>
+                            <div class="ambient-controls">
+                                <input type="range" id="transformRotX-${modelId}" min="-180" max="180" step="1" value="${Math.round(model.transform.rotation.x)}" class="horizontal-slider">
+                                <input type="number" id="transformRotXNum-${modelId}" min="-180" max="180" step="1" value="${Math.round(model.transform.rotation.x)}" class="slider-value transform-value">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Rotation Y</label>
+                            <div class="ambient-controls">
+                                <input type="range" id="transformRotY-${modelId}" min="-180" max="180" step="1" value="${Math.round(model.transform.rotation.y)}" class="horizontal-slider">
+                                <input type="number" id="transformRotYNum-${modelId}" min="-180" max="180" step="1" value="${Math.round(model.transform.rotation.y)}" class="slider-value transform-value">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>Rotation Z</label>
+                            <div class="ambient-controls">
+                                <input type="range" id="transformRotZ-${modelId}" min="-180" max="180" step="1" value="${Math.round(model.transform.rotation.z)}" class="horizontal-slider">
+                                <input type="number" id="transformRotZNum-${modelId}" min="-180" max="180" step="1" value="${Math.round(model.transform.rotation.z)}" class="slider-value transform-value">
+                            </div>
+                        </div>
+                        <button id="resetRotation-${modelId}" class="button orange transform-reset-button">RESET ROTATION</button>
+                    </div>
+                    
+                    <div class="transform-group scale">
+                        <div class="control-group">
+                            <label>Scale</label>
+                            <div class="ambient-controls">
+                                <input type="range" id="transformScale-${modelId}" min="0.1" max="3" step="0.1" value="${model.transform.scale.x.toFixed(1)}" class="horizontal-slider">
+                                <input type="number" id="transformScaleNum-${modelId}" min="0.1" max="3" step="0.1" value="${model.transform.scale.x.toFixed(1)}" class="slider-value transform-value">
+                            </div>
+                        </div>
+                        <button id="resetScale-${modelId}" class="button blue transform-reset-button">RESET SCALE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Insert after the assembly panel (between assembly and developer)
+    const assemblySection = document.querySelector('[data-section="assembly"]');
+    const developerSection = document.querySelector('[data-section="developer"]');
+    
+    if (assemblySection) {
+        // Insert after assembly panel
+        assemblySection.insertAdjacentHTML('afterend', panelHTML);
+    } else if (developerSection) {
+        // Fallback: insert before developer if assembly doesn't exist
+        developerSection.insertAdjacentHTML('beforebegin', panelHTML);
+    }
+    
+    // Set up transform control event handlers for this model
+    setupTransformEventHandlersForModel(modelId);
+    
+    // Re-initialize collapsible functionality for all sections (including new transform panel)
+    setupCollapsibleSections();
+}
+
+
+/**
+ * Set up event handlers for transform controls for a specific model
+ */
+function setupTransformEventHandlersForModel(modelId) {
+    // Position controls
+    syncSliderNumber(`transformPosX-${modelId}`, `transformPosXNum-${modelId}`, () => updateAssemblyModelTransform(modelId));
+    syncSliderNumber(`transformPosY-${modelId}`, `transformPosYNum-${modelId}`, () => updateAssemblyModelTransform(modelId));
+    syncSliderNumber(`transformPosZ-${modelId}`, `transformPosZNum-${modelId}`, () => updateAssemblyModelTransform(modelId));
+    
+    // Rotation controls
+    syncSliderNumber(`transformRotX-${modelId}`, `transformRotXNum-${modelId}`, () => updateAssemblyModelTransform(modelId));
+    syncSliderNumber(`transformRotY-${modelId}`, `transformRotYNum-${modelId}`, () => updateAssemblyModelTransform(modelId));
+    syncSliderNumber(`transformRotZ-${modelId}`, `transformRotZNum-${modelId}`, () => updateAssemblyModelTransform(modelId));
+    
+    // Scale controls
+    syncSliderNumber(`transformScale-${modelId}`, `transformScaleNum-${modelId}`, () => updateAssemblyModelTransform(modelId));
+    
+    // Reset button event handlers
+    safeAddEventListener(`resetPosition-${modelId}`, 'click', () => resetTransformGroup(modelId, 'position'));
+    safeAddEventListener(`resetRotation-${modelId}`, 'click', () => resetTransformGroup(modelId, 'rotation'));
+    safeAddEventListener(`resetScale-${modelId}`, 'click', () => resetTransformGroup(modelId, 'scale'));
+}
+
+/**
+ * Update a specific model's transform based on its control values
+ */
+function updateAssemblyModelTransform(modelId) {
+    const model = state.assembly.models.get(modelId);
+    if (!model || !model.mesh) return;
+    
+    // Get control values for this specific model
+    const posX = parseFloat(document.getElementById(`transformPosX-${modelId}`)?.value || 0);
+    const posY = parseFloat(document.getElementById(`transformPosY-${modelId}`)?.value || 0);
+    const posZ = parseFloat(document.getElementById(`transformPosZ-${modelId}`)?.value || 0);
+    
+    const rotX = parseFloat(document.getElementById(`transformRotX-${modelId}`)?.value || 0);
+    const rotY = parseFloat(document.getElementById(`transformRotY-${modelId}`)?.value || 0);
+    const rotZ = parseFloat(document.getElementById(`transformRotZ-${modelId}`)?.value || 0);
+    
+    const scale = parseFloat(document.getElementById(`transformScale-${modelId}`)?.value || 1);
+    
+    // Apply transforms
+    model.mesh.position.set(posX, posY, posZ);
+    model.mesh.rotation.set(degToRad(rotX), degToRad(rotY), degToRad(rotZ));
+    model.mesh.scale.setScalar(scale);
+    
+    // Update model component transform data
+    model.transform.position = { x: posX, y: posY, z: posZ };
+    model.transform.rotation = { x: rotX, y: rotY, z: rotZ };
+    model.transform.scale = { x: scale, y: scale, z: scale };
+}
+
+/**
+ * Reset a specific transform group for a model
+ */
+function resetTransformGroup(modelId, type) {
+    const model = state.assembly.models.get(modelId);
+    if (!model || !model.mesh) return;
+    
+    switch(type) {
+        case 'position':
+            safeSetValue(`transformPosX-${modelId}`, '0');
+            safeSetValue(`transformPosXNum-${modelId}`, '0');
+            safeSetValue(`transformPosY-${modelId}`, '0');
+            safeSetValue(`transformPosYNum-${modelId}`, '0');
+            safeSetValue(`transformPosZ-${modelId}`, '0');
+            safeSetValue(`transformPosZNum-${modelId}`, '0');
+            break;
+        case 'rotation':
+            safeSetValue(`transformRotX-${modelId}`, '0');
+            safeSetValue(`transformRotXNum-${modelId}`, '0');
+            safeSetValue(`transformRotY-${modelId}`, '0');
+            safeSetValue(`transformRotYNum-${modelId}`, '0');
+            safeSetValue(`transformRotZ-${modelId}`, '0');
+            safeSetValue(`transformRotZNum-${modelId}`, '0');
+            break;
+        case 'scale':
+            safeSetValue(`transformScale-${modelId}`, '1');
+            safeSetValue(`transformScaleNum-${modelId}`, '1');
+            break;
+    }
+    
+    // Apply the reset transform
+    updateAssemblyModelTransform(modelId);
+}
+
+/**
+ * Set up collapsible functionality for assembly panel
+ */
+function setupAssemblyCollapse() {
+    const header = document.querySelector('#assemblyPanel .section-header');
+    if (!header) return;
+    
+    header.addEventListener('click', function() {
+        const content = document.getElementById('assembly-content');
+        const icon = this.querySelector('.collapse-icon');
+        const isExpanded = this.getAttribute('aria-expanded') === 'true';
+        
+        if (isExpanded) {
+            content.style.maxHeight = '0px';
+            content.style.opacity = '0';
+            icon.textContent = '▼';
+            this.setAttribute('aria-expanded', 'false');
+        } else {
+            content.style.maxHeight = '1000px';
+            content.style.opacity = '1';
+            icon.textContent = '−';
+            this.setAttribute('aria-expanded', 'true');
+        }
+    });
+}
+
+/**
+ * Set up event handlers for assembly system
+ */
+function setupAssemblyEventHandlers() {
+    // Model selection handlers will be set up dynamically
+    // Tool handlers
+    safeAddEventListener('selectAllModels', 'click', selectAllModels);
+    safeAddEventListener('deselectAllModels', 'click', deselectAllModels);
+    safeAddEventListener('deleteSelectedModels', 'click', deleteSelectedModels);
+    
+    safeAddEventListener('snapGrid', 'change', (e) => {
+        state.assembly.tools.snapGrid = e.target.checked;
+        updateSnapGrid();
+    });
+    
+    safeAddEventListener('showWireframes', 'change', (e) => {
+        state.assembly.tools.showWireframes = e.target.checked;
+        updateWireframeDisplay();
+    });
+    
+    safeAddEventListener('showGrid', 'change', (e) => {
+        state.assembly.tools.showGrid = e.target.checked;
+        updateGridDisplay();
+    });
+    
+    safeAddEventListener('isolateMode', 'change', (e) => {
+        state.assembly.tools.isolateMode = e.target.checked;
+        updateIsolateMode();
+    });
+    
+    safeAddEventListener('exportAssembly', 'click', exportAssembly);
+    safeAddEventListener('saveAssembly', 'click', saveAssembly);
+    safeAddEventListener('loadAssembly', 'click', loadAssembly);
+}
+
+/**
+ * Set up panel-specific event handlers
+ */
+function setupAssemblyPanelHandlers() {
+    // These will be called after panel creation
+    const panel = document.getElementById('assemblyPanel');
+    if (!panel) return;
+    
+    // Dynamic event delegation for all assembly panel interactions
+    panel.addEventListener('click', (e) => {
+        const target = e.target;
+        const action = target.dataset.action;
+        const modelId = target.dataset.modelId;
+        
+        // Find model-item element (could be target or parent)
+        let modelItem = target;
+        if (!modelItem.classList.contains('model-item')) {
+            modelItem = target.closest('.model-item');
+        }
+        
+        if (modelItem && modelItem.classList.contains('model-item') && !action) {
+            // Model selection with modifier key support (only if not clicking a button)
+            console.log('Model item clicked:', modelItem.dataset.modelId);
+            
+            const modelId = modelItem.dataset.modelId;
+            const model = state.assembly.models.get(modelId);
+            
+            // Handle deselection for single selected model
+            if (model && model.selected && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                const selectedCount = Array.from(state.assembly.models.values()).filter(m => m.selected).length;
+                if (selectedCount === 1) {
+                    // Deselect the single selected model
+                    model.setSelected(false);
+                    state.assembly.activeModel = null;
+                    updateModelsListUI();
+                    return;
+                }
+            }
+            
+            // Normal selection
+            selectModel(modelId, e);
+        } else if (action && modelId) {
+            // Handle model control buttons
+            e.stopPropagation(); // Prevent model selection when clicking buttons
+            
+            switch (action) {
+                case 'toggle-visibility':
+                    toggleModelVisibility(modelId);
+                    break;
+                case 'toggle-lock':
+                    toggleModelLock(modelId);
+                    break;
+                case 'delete-model':
+                    deleteModel(modelId);
+                    break;
+            }
+        } else if (action) {
+            // Handle transform action buttons
+            switch (action) {
+                case 'reset-transform':
+                    resetModelTransform();
+                    break;
+                case 'center-model':
+                    centerModel();
+                    break;
+            }
+        }
+    });
+    
+    // Handle transform input changes
+    panel.addEventListener('change', (e) => {
+        const target = e.target;
+        if (target.classList.contains('transform-input')) {
+            const transformType = target.dataset.transform;
+            const axis = target.dataset.axis;
+            let value = parseFloat(target.value);
+            
+            // Convert degrees to radians for rotation
+            if (transformType === 'rotation') {
+                value = degToRad(value);
+            }
+            
+            updateModelTransform(transformType, axis, value);
+        }
+    });
+}
+
+/**
+ * Enable multi-file drag and drop support
+ */
+function enableMultiFileSupport() {
+    const dropZone = document.getElementById('dropZone');
+    if (!dropZone) return;
+    
+    // Store original handlers
+    if (!dropZone._originalHandlers) {
+        dropZone._originalHandlers = {
+            drop: dropZone.ondrop,
+            dragover: dropZone.ondragover
+        };
+    }
+    
+    // Replace with multi-file handlers
+    dropZone.addEventListener('drop', handleMultiFileDrop);
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+}
+
+/**
+ * Handle multiple file drop
+ */
+function handleMultiFileDrop(e) {
+    e.preventDefault();
+    const dropZone = document.getElementById('dropZone');
+    if (dropZone) {
+        dropZone.classList.remove('dragover');
+    }
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+    
+    if (state.assembly.mode === 'developer') {
+        loadMultipleModels(files);
+    } else {
+        // Basic mode - handle single file
+        if (files.length > 1) {
+            showUploadStatus('Multiple files detected. Enter Developer Mode for assembly features.', 'warning');
+        }
+        handleFileUpload(files[0]);
+    }
+}
+
+/**
+ * Load multiple model files into assembly
+ */
+async function loadMultipleModels(files) {
+    console.log(`📦 Loading ${files.length} models into assembly...`);
+    showUploadStatus(`Loading ${files.length} models...`, 'loading');
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Process files sequentially to avoid overwhelming the system
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        try {
+            const extension = validateFile(file);
+            const modelComponent = await loadModelForAssembly(file, extension);
+            
+            if (modelComponent) {
+                addModelToAssembly(modelComponent);
+                successCount++;
+                showUploadStatus(`Loaded ${successCount}/${files.length} models...`, 'loading');
+            } else {
+                errorCount++;
+            }
+        } catch (error) {
+            console.error(`Error loading ${file.name}:`, error);
+            errorCount++;
+        }
+    }
+    
+    // Final status update
+    if (successCount > 0) {
+        showUploadStatus(`✅ Loaded ${successCount} models successfully` + 
+                        (errorCount > 0 ? ` (${errorCount} failed)` : ''), 
+                        errorCount > 0 ? 'warning' : 'success');
+        updateModelsListUI();
+        centerAndScaleAssembly();
+    } else {
+        showUploadStatus(`❌ Failed to load any models`, 'error');
+    }
+}
+
+/**
+ * Load a single model file for assembly system
+ */
+function loadModelForAssembly(file, extension) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const filename = file.name;
+        
+        const onSuccess = (loadedObject, geometry, material) => {
+            try {
+                const modelComponent = new ModelComponent(geometry, material, filename, extension);
+                modelComponent.originalObject = loadedObject;
+                
+                // Position model to avoid overlap
+                positionNewModel(modelComponent);
+                
+                URL.revokeObjectURL(url);
+                resolve(modelComponent);
+            } catch (error) {
+                URL.revokeObjectURL(url);
+                reject(error);
+            }
+        };
+        
+        const onError = (error) => {
+            URL.revokeObjectURL(url);
+            reject(error);
+        };
+        
+        // Use existing loaders but with modified callbacks
+        switch (extension) {
+            case 'obj':
+                loadOBJForAssembly(url, filename, onSuccess, onError);
+                break;
+            case 'stl':
+                loadSTLForAssembly(url, filename, onSuccess, onError);
+                break;
+            case 'gltf':
+            case 'glb':
+                loadGLTFForAssembly(url, filename, onSuccess, onError);
+                break;
+            case 'dae':
+                loadDAEForAssembly(url, filename, onSuccess, onError);
+                break;
+            default:
+                reject(new Error(`Unsupported file format: ${extension}`));
+        }
+    });
+}
+
+/**
+ * Position new model to avoid overlap with existing models
+ */
+function positionNewModel(modelComponent) {
+    const models = Array.from(state.assembly.models.values());
+    if (models.length === 0) return; // First model stays at origin
+    
+    // Simple spiral positioning pattern
+    const index = models.length;
+    const angle = (index * 60) % 360; // 60 degree increments
+    const distance = Math.ceil(index / 6) * 3; // Increase distance every 6 models
+    
+    modelComponent.transform.position.x = Math.cos(angle * Math.PI / 180) * distance;
+    modelComponent.transform.position.z = Math.sin(angle * Math.PI / 180) * distance;
+}
+
+/**
+ * Add model component to assembly
+ */
+function addModelToAssembly(modelComponent) {
+    // Add to models map
+    state.assembly.models.set(modelComponent.id, modelComponent);
+    
+    // Create mesh and add to scene
+    const mesh = modelComponent.createMesh();
+    if (mesh) {
+        state.scene.add(mesh);
+    }
+    
+    // Update UI
+    updateModelsListUI();
+    
+    // Create transform panels for all models if we're in developer mode
+    if (state.assembly.mode === 'developer') {
+        createTransformPanels();
+    }
+    
+    console.log(`✅ Added model ${modelComponent.name} to assembly (${state.assembly.models.size} total)`);
+}
+
+/**
+ * Update the models list UI
+ */
+function updateModelsListUI() {
+    const modelsList = document.getElementById('modelsList');
+    if (!modelsList) return;
+    
+    // Update count in header
+    const header = document.querySelector('#assemblyPanel h3');
+    if (header) {
+        header.textContent = `Assembly (${state.assembly.models.size})`;
+    }
+    
+    // Clear and rebuild list
+    modelsList.innerHTML = '';
+    
+    if (state.assembly.models.size === 0) {
+        // Show empty placeholder when no models are loaded
+        const placeholderItem = document.createElement('div');
+        placeholderItem.className = 'model-item placeholder';
+        placeholderItem.innerHTML = `
+            <div class="model-info">
+                <span class="model-name">&lt;Model Title&gt;</span>
+                <span class="model-type">&lt;.Extension/Format&gt;</span>
+            </div>
+            <div class="model-controls">
+                <button class="btn-visibility hidden" disabled>👁</button>
+                <button class="btn-lock unlocked" disabled>🔓</button>
+                <button class="btn-delete" disabled>🗑</button>
+            </div>
+        `;
+        modelsList.appendChild(placeholderItem);
+    } else {
+        // Show actual models
+        state.assembly.models.forEach((model, id) => {
+            const modelItem = document.createElement('div');
+            modelItem.className = `model-item ${model.selected ? 'selected' : ''}`;
+            modelItem.dataset.modelId = id;
+            
+            modelItem.innerHTML = `
+                <div class="model-info">
+                    <span class="model-name">${model.name}</span>
+                    <span class="model-type">.${model.fileType}</span>
+                </div>
+                <div class="model-controls">
+                    <button class="btn-visibility ${model.visible ? 'visible' : 'hidden'}" 
+                            data-action="toggle-visibility" data-model-id="${id}">👁</button>
+                    <button class="btn-lock ${model.locked ? 'locked' : 'unlocked'}" 
+                            data-action="toggle-lock" data-model-id="${id}">${model.locked ? '🔒' : '🔓'}</button>
+                    <button class="btn-delete" data-action="delete-model" data-model-id="${id}">🗑</button>
+                </div>
+            `;
+            
+            modelsList.appendChild(modelItem);
+        });
+    }
+}
+
+/**
+ * Update the assembly panel state and UI
+ */
+function updateAssemblyPanel() {
+    // Update models list UI
+    updateModelsListUI();
+    
+    // Update transform panels if in developer mode
+    if (state.assembly.mode === 'developer') {
+        createTransformPanels();
+    }
+    
+    // Update assembly panel - always keep it visible
+    const assemblyPanel = document.getElementById('assemblyPanel');
+    if (!assemblyPanel) return;
+    
+    // Always show the assembly panel
+    assemblyPanel.style.display = 'block';
+    
+    // Update active model display
+    if (state.assembly.activeModel) {
+        const activeModel = state.assembly.models.get(state.assembly.activeModel);
+        if (activeModel) {
+            console.log(`Active model: ${activeModel.name}`);
+        }
+    }
+    
+    // Remove all transform panels if no models (but keep assembly panel)
+    if (state.assembly.models.size === 0) {
+        document.querySelectorAll('[data-section^="transform-"]').forEach(panel => panel.remove());
+    }
+}
+
+/**
+ * Model Selection and Interaction Functions
+ */
+function selectModel(modelId, event = null) {
+    const model = state.assembly.models.get(modelId);
+    if (!model) return;
+    
+    // Handle multi-selection with Ctrl/Cmd key
+    if (event && (event.ctrlKey || event.metaKey)) {
+        // Toggle selection of this model
+        model.setSelected(!model.selected);
+        
+        // Update active model to the last selected one
+        if (model.selected) {
+            state.assembly.activeModel = modelId;
+        } else {
+            // Find another selected model to make active
+            let newActiveModel = null;
+            state.assembly.models.forEach((m, id) => {
+                if (m.selected && !newActiveModel) {
+                    newActiveModel = id;
+                }
+            });
+            state.assembly.activeModel = newActiveModel;
+        }
+    }
+    // Handle range selection with Shift key
+    else if (event && event.shiftKey && state.assembly.activeModel) {
+        // Get all model IDs as array
+        const modelIds = Array.from(state.assembly.models.keys());
+        const currentIndex = modelIds.indexOf(modelId);
+        const activeIndex = modelIds.indexOf(state.assembly.activeModel);
+        
+        if (currentIndex !== -1 && activeIndex !== -1) {
+            // Select range between active and current
+            const startIndex = Math.min(currentIndex, activeIndex);
+            const endIndex = Math.max(currentIndex, activeIndex);
+            
+            // Deselect all first
+            state.assembly.models.forEach(m => m.setSelected(false));
+            
+            // Select range
+            for (let i = startIndex; i <= endIndex; i++) {
+                const rangeModel = state.assembly.models.get(modelIds[i]);
+                if (rangeModel) rangeModel.setSelected(true);
+            }
+            
+            state.assembly.activeModel = modelId;
+        }
+    }
+    // Normal single selection
+    else {
+        // Deselect all other models
+        state.assembly.models.forEach(m => m.setSelected(false));
+        
+        // Select this model
+        model.setSelected(true);
+        state.assembly.activeModel = modelId;
+    }
+    
+    // Update UI
+    updateModelsListUI();
+    
+    // Show transform controls for single selection
+    const selectedModels = Array.from(state.assembly.models.values()).filter(m => m.selected);
+    if (selectedModels.length === 1) {
+        showTransformControls(selectedModels[0]);
+    } else {
+        hideTransformControls();
+    }
+    
+    // Update VIEW display to reflect selection
+    updateCameraInfo();
+    
+    console.log(`Selected model: ${model.name}`);
+}
+
+function selectAllModels() {
+    state.assembly.models.forEach(model => model.setSelected(true));
+    updateModelsListUI();
+    updateCameraInfo();
+}
+
+function deselectAllModels() {
+    state.assembly.models.forEach(model => model.setSelected(false));
+    state.assembly.activeModel = null;
+    hideTransformControls();
+    updateModelsListUI();
+    updateCameraInfo();
+}
+
+function deleteSelectedModels() {
+    const modelsToDelete = [];
+    state.assembly.models.forEach((model, id) => {
+        if (model.selected) {
+            modelsToDelete.push(id);
+        }
+    });
+    
+    if (modelsToDelete.length === 0) {
+        showUploadStatus('No models selected for deletion', 'warning');
+        return;
+    }
+    
+    // Confirm deletion
+    if (!confirm(`Delete ${modelsToDelete.length} selected models?`)) {
+        return;
+    }
+    
+    modelsToDelete.forEach(id => deleteModel(id));
+}
+
+function deleteModel(modelId) {
+    const model = state.assembly.models.get(modelId);
+    if (!model) return;
+    
+    // Remove from scene
+    if (model.mesh) {
+        state.scene.remove(model.mesh);
+        model.dispose();
+    }
+    
+    // Remove from assembly
+    state.assembly.models.delete(modelId);
+    
+    // Clear active model if it was the deleted one
+    if (state.assembly.activeModel === modelId) {
+        state.assembly.activeModel = null;
+        hideTransformControls();
+    }
+    
+    // Update UI
+    updateAssemblyPanel();
+    
+    console.log(`Deleted model: ${model.name}`);
+}
+
+function toggleModelVisibility(modelId) {
+    const model = state.assembly.models.get(modelId);
+    if (!model) return;
+    
+    model.setVisible(!model.visible);
+    updateModelsListUI();
+}
+
+function toggleModelLock(modelId) {
+    const model = state.assembly.models.get(modelId);
+    if (!model) return;
+    
+    model.locked = !model.locked;
+    updateModelsListUI();
+}
+
+/**
+ * Transform Controls
+ */
+function showTransformControls(model) {
+    const transformSection = document.getElementById('transformSection');
+    const controlsContainer = document.getElementById('modelTransformControls');
+    
+    if (!transformSection || !controlsContainer) return;
+    
+    // Generate transform controls HTML
+    controlsContainer.innerHTML = `
+        <div class="transform-group">
+            <label>Position</label>
+            <div class="coordinate-controls">
+                <input type="number" class="transform-input" value="${model.transform.position.x.toFixed(3)}" 
+                       step="0.1" data-transform="position" data-axis="x">
+                <input type="number" class="transform-input" value="${model.transform.position.y.toFixed(3)}" 
+                       step="0.1" data-transform="position" data-axis="y">
+                <input type="number" class="transform-input" value="${model.transform.position.z.toFixed(3)}" 
+                       step="0.1" data-transform="position" data-axis="z">
+            </div>
+        </div>
+        
+        <div class="transform-group">
+            <label>Rotation (degrees)</label>
+            <div class="coordinate-controls">
+                <input type="number" class="transform-input" value="${radToDeg(model.transform.rotation.x).toFixed(1)}" 
+                       step="5" data-transform="rotation" data-axis="x">
+                <input type="number" class="transform-input" value="${radToDeg(model.transform.rotation.y).toFixed(1)}" 
+                       step="5" data-transform="rotation" data-axis="y">
+                <input type="number" class="transform-input" value="${radToDeg(model.transform.rotation.z).toFixed(1)}" 
+                       step="5" data-transform="rotation" data-axis="z">
+            </div>
+        </div>
+        
+        <div class="transform-group">
+            <label>Scale</label>
+            <div class="coordinate-controls">
+                <input type="number" class="transform-input" value="${model.transform.scale.x.toFixed(3)}" 
+                       step="0.1" min="0.01" data-transform="scale" data-axis="x">
+                <input type="number" class="transform-input" value="${model.transform.scale.y.toFixed(3)}" 
+                       step="0.1" min="0.01" data-transform="scale" data-axis="y">
+                <input type="number" class="transform-input" value="${model.transform.scale.z.toFixed(3)}" 
+                       step="0.1" min="0.01" data-transform="scale" data-axis="z">
+            </div>
+        </div>
+        
+        <div class="transform-actions">
+            <button data-action="reset-transform">Reset Transform</button>
+            <button data-action="center-model">Center Model</button>
+        </div>
+    `;
+    
+    transformSection.style.display = 'block';
+}
+
+function hideTransformControls() {
+    const transformSection = document.getElementById('transformSection');
+    if (transformSection) {
+        transformSection.style.display = 'none';
+    }
+}
+
+function updateModelTransform(type, axis, value) {
+    const model = state.assembly.models.get(state.assembly.activeModel);
+    if (!model || model.locked) return;
+    
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    
+    // Apply snap to grid if enabled
+    let finalValue = numValue;
+    if (state.assembly.tools.snapGrid && type === 'position') {
+        finalValue = Math.round(numValue / state.assembly.tools.gridSize) * state.assembly.tools.gridSize;
+    }
+    
+    // Update model transform
+    model.transform[type][axis] = finalValue;
+    model.applyTransform();
+    
+    // Update input field if snapping occurred
+    if (finalValue !== numValue) {
+        const inputId = `model-${type.charAt(0)}${type === 'rotation' ? 'ot' : type === 'position' ? 'os' : 'cale'}-${axis}`;
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.value = type === 'rotation' ? radToDeg(finalValue).toFixed(1) : finalValue.toFixed(3);
+        }
+    }
+}
+
+function resetModelTransform() {
+    const model = state.assembly.models.get(state.assembly.activeModel);
+    if (!model || model.locked) return;
+    
+    model.transform = {
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        scale: { x: 1, y: 1, z: 1 }
+    };
+    
+    model.applyTransform();
+    showTransformControls(model);
+}
+
+function centerModel() {
+    const model = state.assembly.models.get(state.assembly.activeModel);
+    if (!model || model.locked) return;
+    
+    // Calculate assembly bounding box
+    const assemblyBox = calculateAssemblyBoundingBox();
+    if (assemblyBox) {
+        const center = assemblyBox.getCenter(new THREE.Vector3());
+        model.transform.position.x = -center.x;
+        model.transform.position.y = -center.y;
+        model.transform.position.z = -center.z;
+        
+        model.applyTransform();
+        showTransformControls(model);
+    }
+}
+
+/**
+ * Assembly Tools Functions
+ */
+function updateSnapGrid() {
+    // Visual grid could be added here
+    console.log(`Snap to grid: ${state.assembly.tools.snapGrid ? 'enabled' : 'disabled'}`);
+}
+
+function updateWireframeDisplay() {
+    const showWireframes = state.assembly.tools.showWireframes;
+    
+    state.assembly.models.forEach(model => {
+        if (model.mesh && model.mesh.material) {
+            model.mesh.material.wireframe = showWireframes;
+        }
+    });
+    
+    console.log(`Wireframes: ${showWireframes ? 'enabled' : 'disabled'}`);
+}
+
+function updateGridDisplay() {
+    const showGrid = state.assembly.tools.showGrid;
+    
+    if (showGrid) {
+        // Create or show floor grid
+        createFloorGrid();
+    } else {
+        // Hide floor grid
+        hideFloorGrid();
+    }
+    
+    console.log(`Floor grid: ${showGrid ? 'enabled' : 'disabled'}`);
+}
+
+function createFloorGrid() {
+    // Remove existing grid if it exists
+    hideFloorGrid();
+    
+    const size = 20; // Grid size (20x20 units)
+    const divisions = 20; // Number of divisions
+    
+    // Create floor plane (slightly below Y=0 to avoid Z-fighting)
+    const floorGeometry = new THREE.PlaneGeometry(size, size);
+    const floorMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xf9f9f9, // Tiny step up from light grey background
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide
+    });
+    
+    const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+    floorMesh.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+    floorMesh.position.y = -0.01; // Slightly below origin
+    floorMesh.name = 'floorGrid';
+    
+    // Create grid lines
+    const gridHelper = new THREE.GridHelper(size, divisions, 0xcccccc, 0xdddddd);
+    gridHelper.name = 'gridLines';
+    gridHelper.position.y = -0.005; // Slightly above floor
+    
+    // Add to scene
+    state.scene.add(floorMesh);
+    state.scene.add(gridHelper);
+}
+
+function hideFloorGrid() {
+    // Remove existing floor grid elements
+    const objectsToRemove = [];
+    state.scene.traverse((child) => {
+        if (child.name === 'floorGrid' || child.name === 'gridLines') {
+            objectsToRemove.push(child);
+        }
+    });
+    
+    objectsToRemove.forEach(obj => {
+        state.scene.remove(obj);
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) obj.material.dispose();
+    });
+}
+
+function updateIsolateMode() {
+    const isolateMode = state.assembly.tools.isolateMode;
+    
+    if (isolateMode) {
+        // Hide all models except selected
+        state.assembly.models.forEach(model => {
+            model.setVisible(model.selected);
+        });
+    } else {
+        // Show all models (restore original visibility)
+        state.assembly.models.forEach(model => {
+            model.setVisible(true);
+        });
+    }
+    
+    updateModelsListUI();
+    console.log(`Isolate mode: ${isolateMode ? 'enabled' : 'disabled'}`);
+}
+
+/**
+ * Assembly Management Functions
+ */
+function centerAndScaleAssembly() {
+    if (state.assembly.models.size === 0) return;
+    
+    const assemblyBox = calculateAssemblyBoundingBox();
+    if (!assemblyBox) return;
+    
+    // Center camera on assembly
+    const center = assemblyBox.getCenter(new THREE.Vector3());
+    const size = assemblyBox.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    
+    // Position camera to view entire assembly
+    const distance = maxDim * 2;
+    state.camera.position.set(distance, distance, distance);
+    state.camera.lookAt(center);
+    
+    // Update camera control ranges to accommodate the new position
+    updateCameraControlRangesForAssembly(distance, size);
+    
+    console.log(`Assembly centered and scaled - ${state.assembly.models.size} models`);
+}
+
+/**
+ * Update camera control ranges based on assembly size
+ */
+function updateCameraControlRangesForAssembly(cameraDistance, assemblySize) {
+    // Calculate appropriate ranges based on assembly size and camera distance
+    const maxSize = Math.max(assemblySize.x, assemblySize.y, assemblySize.z);
+    
+    // For very large models, we need much more generous ranges
+    const rangeMultiplier = Math.max(5, maxSize / 2); // At least 5x, scale with model size
+    const maxRange = Math.max(cameraDistance * rangeMultiplier, maxSize * 10);
+    const maxZoom = Math.max(cameraDistance * 5, maxSize * 20); // Even more range for Z axis
+    
+    // Update camera far plane to accommodate large models
+    updateCameraFarPlane(maxZoom);
+    
+    const ranges = [
+        {id: 'posX', min: -maxRange, max: maxRange},
+        {id: 'posY', min: -maxRange, max: maxRange},
+        {id: 'posZ', min: 0.1, max: maxZoom} // Allow very close zoom and very far zoom
+    ];
+    
+    ranges.forEach(control => {
+        const slider = document.getElementById(control.id);
+        const numberInput = document.getElementById(control.id + 'Num');
+        
+        if (slider) {
+            slider.min = control.min;
+            slider.max = control.max;
+        }
+        if (numberInput) {
+            numberInput.min = control.min;
+            numberInput.max = control.max;
+        }
+    });
+    
+    console.log(`Updated camera ranges for large models: X/Y: ±${Math.round(maxRange)}, Z: 0.1-${Math.round(maxZoom)}, Model size: ${Math.round(maxSize)}`);
+}
+
+/**
+ * Update camera far plane for large models to prevent clipping
+ */
+function updateCameraFarPlane(requiredDistance) {
+    if (!state.camera) return;
+    
+    // Calculate required far plane with safety margin
+    const safetyMultiplier = 2.5; // 150% extra distance for safety
+    const requiredFarPlane = requiredDistance * safetyMultiplier;
+    
+    // Only update if we need a larger far plane (never make it smaller)
+    const currentFarPlane = state.camera.far;
+    if (requiredFarPlane > currentFarPlane) {
+        state.camera.far = Math.max(requiredFarPlane, 10000); // Minimum 10,000 units for large models
+        state.camera.updateProjectionMatrix();
+        console.log(`Updated camera far plane from ${currentFarPlane} to ${state.camera.far} for large model support`);
+    }
+}
+
+/**
+ * Calculate distance where model fills screen (Position 0 in relative system)
+ */
+function calculateScreenFillDistance(boundingBox) {
+    if (!boundingBox || boundingBox.isEmpty()) return 5;
+    
+    const fov = state.camera.fov * (Math.PI / 180); // Convert to radians
+    const size = boundingBox.getSize(new THREE.Vector3());
+    const maxDimension = Math.max(size.x, size.y, size.z);
+    
+    // Calculate distance for vertical and horizontal fit
+    const distanceForVertical = (maxDimension / 2) / Math.tan(fov / 2);
+    const horizontalFOV = 2 * Math.atan(Math.tan(fov / 2) * state.camera.aspect);
+    const distanceForHorizontal = (maxDimension / 2) / Math.tan(horizontalFOV / 2);
+    
+    // Use the larger distance to ensure full model visibility
+    const fillDistance = Math.max(distanceForVertical, distanceForHorizontal);
+    
+    return fillDistance * 1.1; // 10% padding for perfect "fills screen" positioning
+}
+
+/**
+ * Calculate smallest manageable distance (Position 360 in relative system)
+ */
+function calculateSmallestManageableDistance(boundingBox) {
+    if (!boundingBox || boundingBox.isEmpty()) return 100;
+    
+    const size = boundingBox.getSize(new THREE.Vector3());
+    const maxDimension = Math.max(size.x, size.y, size.z);
+    
+    // Model becomes unrecognizable when it occupies less than 2% of screen
+    const minScreenPercentage = 0.02;
+    const fov = state.camera.fov * (Math.PI / 180);
+    
+    // Calculate distance where model occupies minScreenPercentage of screen
+    const fillDistance = (maxDimension / 2) / Math.tan(fov / 2);
+    const farDistance = fillDistance / minScreenPercentage;
+    
+    return Math.min(farDistance, 1000); // Cap at reasonable maximum
+}
+
+/**
+ * Get reference bounding box for relative positioning (largest model in assembly)
+ */
+function getReferenceBoundingBox() {
+    if (state.assembly.mode === 'developer' && state.assembly.models.size > 0) {
+        // Use largest model in assembly
+        let largestBox = null;
+        let maxVolume = 0;
+        
+        state.assembly.models.forEach(modelComponent => {
+            if (modelComponent.mesh) {
+                const box = new THREE.Box3().setFromObject(modelComponent.mesh);
+                const size = box.getSize(new THREE.Vector3());
+                const volume = size.x * size.y * size.z;
+                
+                if (volume > maxVolume) {
+                    maxVolume = volume;
+                    largestBox = box;
+                }
+            }
+        });
+        
+        return largestBox || calculateAssemblyBoundingBox();
+    } else {
+        // Single model mode
+        const targetModel = getRotationTarget();
+        return targetModel ? new THREE.Box3().setFromObject(targetModel) : null;
+    }
+}
+
+/**
+ * Convert relative position (0-360) to camera distance
+ */
+function relativePositionToDistance(relativePosition, boundingBox) {
+    if (!boundingBox || boundingBox.isEmpty()) {
+        // Fallback for invalid bounding box
+        return 5; // Default middle distance
+    }
+    
+    const minDistance = calculateScreenFillDistance(boundingBox);
+    const maxDistance = calculateSmallestManageableDistance(boundingBox);
+    
+    // Ensure minimum separation
+    if (maxDistance <= minDistance) {
+        return minDistance * 1.5; // Fallback
+    }
+    
+    // Non-linear mapping for better control feel
+    // Uses cubic interpolation: more precision near "fill screen" (0-180)
+    const normalizedPos = relativePosition / 360;
+    const cubicPos = Math.pow(normalizedPos, 1.8); // Slightly curved for better feel
+    
+    return minDistance + (maxDistance - minDistance) * cubicPos;
+}
+
+/**
+ * Convert camera distance to relative position (0-360)
+ */
+function distanceToRelativePosition(distance, boundingBox) {
+    if (!boundingBox || boundingBox.isEmpty()) {
+        return 180; // Default middle position
+    }
+    
+    const minDistance = calculateScreenFillDistance(boundingBox);
+    const maxDistance = calculateSmallestManageableDistance(boundingBox);
+    
+    // Clamp distance to valid range
+    const clampedDistance = Math.max(minDistance, Math.min(maxDistance, distance));
+    
+    // Inverse cubic mapping
+    const normalizedDistance = (clampedDistance - minDistance) / (maxDistance - minDistance);
+    const relativePos = Math.pow(normalizedDistance, 1/1.8) * 360;
+    
+    return Math.round(relativePos);
+}
+
+/**
+ * Update UI display with current relative position
+ */
+function updateRelativePositionUI(relativePosition) {
+    const slider = document.getElementById('relativePosition');
+    const numberInput = document.getElementById('relativePositionNum');
+    
+    if (slider) slider.value = relativePosition;
+    if (numberInput) numberInput.value = relativePosition;
+}
+
+/**
+ * Get current relative position from camera distance
+ */
+function getCurrentRelativePosition() {
+    const boundingBox = getReferenceBoundingBox();
+    if (!boundingBox) return 180; // Default middle
+    
+    const currentDistance = state.camera.position.length();
+    return distanceToRelativePosition(currentDistance, boundingBox);
+}
+
+function calculateAssemblyBoundingBox() {
+    if (state.assembly.models.size === 0) return null;
+    
+    const assemblyBox = new THREE.Box3();
+    
+    state.assembly.models.forEach(model => {
+        if (model.mesh) {
+            // Calculate bounding box directly without modifying model's stored boundingBox
+            const modelBox = new THREE.Box3().setFromObject(model.mesh);
+            if (!modelBox.isEmpty()) {
+                assemblyBox.union(modelBox);
+            }
+        }
+    });
+    
+    return assemblyBox.isEmpty() ? null : assemblyBox;
+}
+
+/**
+ * Assembly Conversion Functions
+ */
+function convertCurrentModelToAssembly() {
+    if (!state.model) return;
+    
+    console.log('Converting current model to assembly...');
+    
+    // Extract geometry and material from current model
+    let geometry = null;
+    let material = null;
+    
+    if (state.model.isMesh) {
+        geometry = state.model.geometry;
+        material = state.model.material;
+    } else {
+        // Handle object with multiple meshes
+        state.model.traverse(child => {
+            if (child.isMesh && !geometry) {
+                geometry = child.geometry;
+                material = child.material;
+            }
+        });
+    }
+    
+    if (geometry && material) {
+        const modelComponent = new ModelComponent(geometry, material, state.currentModelType, 'converted');
+        addModelToAssembly(modelComponent);
+        
+        // Remove original model from scene
+        state.scene.remove(state.model);
+        state.model = null;
+    }
+}
+
+function convertAssemblyToSingleModel() {
+    if (state.assembly.models.size === 0) return;
+    
+    if (state.assembly.models.size === 1) {
+        // Single model - convert back to basic mode
+        const modelComponent = Array.from(state.assembly.models.values())[0];
+        
+        if (modelComponent.mesh) {
+            state.model = modelComponent.mesh;
+            state.currentModelType = modelComponent.name;
+        }
+    } else {
+        // Multiple models - create combined group
+        const group = new THREE.Group();
+        
+        state.assembly.models.forEach(modelComponent => {
+            if (modelComponent.mesh) {
+                group.add(modelComponent.mesh.clone());
+            }
+        });
+        
+        state.model = group;
+        state.currentModelType = `Assembly (${state.assembly.models.size} models)`;
+    }
+    
+    // Clear assembly data
+    clearAssembly();
+}
+
+function clearAssembly() {
+    // Dispose of all models
+    state.assembly.models.forEach(model => model.dispose());
+    state.assembly.models.clear();
+    state.assembly.activeModel = null;
+}
+
+/**
+ * UI Management Functions
+ */
+function hideAssemblyUI() {
+    const assemblyPanel = document.getElementById('assemblyPanel');
+    if (assemblyPanel) {
+        assemblyPanel.style.display = 'none';
+    }
+}
+
+function disableMultiFileSupport() {
+    const dropZone = document.getElementById('dropZone');
+    if (!dropZone || !dropZone._originalHandlers) return;
+    
+    // Restore original handlers
+    dropZone.removeEventListener('drop', handleMultiFileDrop);
+    dropZone.ondrop = dropZone._originalHandlers.drop;
+    dropZone.ondragover = dropZone._originalHandlers.dragover;
+}
+
+function updateViewDisplayForAssembly() {
+    // Update VIEW display to show assembly information
+    const modelRotationDisplay = document.getElementById('model-rotation-display');
+    if (modelRotationDisplay) {
+        modelRotationDisplay.textContent = `Assembly (${state.assembly.models.size} models)`;
+    }
+}
+
+function updateViewDisplayForBasic() {
+    // Restore normal VIEW display
+    const modelRotationDisplay = document.getElementById('model-rotation-display');
+    if (modelRotationDisplay && state.model) {
+        updateCameraInfo(); // Use existing function to restore normal display
+    }
+}
+
+// ----------------------------------------------------------------
+// Assembly-Specific Loaders (Modified versions of existing loaders)
+// ----------------------------------------------------------------
+
+function loadOBJForAssembly(url, filename, onSuccess, onError) {
+    const loader = new OBJLoader();
+    
+    loader.load(url, (object) => {
+        try {
+            let geometry = null;
+            let material = null;
+            
+            // Extract geometry and material from OBJ
+            object.traverse((child) => {
+                if (child.isMesh && !geometry) {
+                    geometry = child.geometry;
+                    material = new THREE.MeshStandardMaterial({
+                        color: 0x4CAF50,
+                        metalness: 0.1,
+                        roughness: 0.8,
+                        transparent: false,
+                        opacity: 1.0,
+                        side: THREE.FrontSide
+                    });
+                }
+            });
+            
+            if (geometry && material) {
+                onSuccess(object, geometry, material);
+            } else {
+                onError('No valid geometry found in OBJ file');
+            }
+        } catch (error) {
+            onError('Error processing OBJ: ' + error.message);
+        }
+    }, undefined, (error) => {
+        onError('Error loading OBJ: ' + error.message);
+    });
+}
+
+function loadSTLForAssembly(url, filename, onSuccess, onError) {
+    const loader = new STLLoader();
+    
+    loader.load(url, (geometry) => {
+        try {
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x4CAF50,
+                metalness: 0.1,
+                roughness: 0.8,
+                transparent: false,
+                opacity: 1.0,
+                side: THREE.FrontSide
+            });
+            
+            const mesh = new THREE.Mesh(geometry, material);
+            onSuccess(mesh, geometry, material);
+        } catch (error) {
+            onError('Error processing STL: ' + error.message);
+        }
+    }, undefined, (error) => {
+        onError('Error loading STL: ' + error.message);
+    });
+}
+
+function loadGLTFForAssembly(url, filename, onSuccess, onError) {
+    const loader = new GLTFLoader();
+    
+    loader.load(url, (gltf) => {
+        try {
+            const scene = gltf.scene;
+            let geometry = null;
+            let material = null;
+            
+            // Extract geometry and material from GLTF
+            scene.traverse((child) => {
+                if (child.isMesh && !geometry) {
+                    geometry = child.geometry;
+                    material = child.material || new THREE.MeshStandardMaterial({
+                        color: 0x4CAF50,
+                        metalness: 0.1,
+                        roughness: 0.8
+                    });
+                }
+            });
+            
+            if (geometry && material) {
+                onSuccess(scene, geometry, material);
+            } else {
+                onError('No valid geometry found in GLTF file');
+            }
+        } catch (error) {
+            onError('Error processing GLTF: ' + error.message);
+        }
+    }, undefined, (error) => {
+        onError('Error loading GLTF: ' + error.message);
+    });
+}
+
+function loadDAEForAssembly(url, filename, onSuccess, onError) {
+    const loader = new ColladaLoader();
+    
+    loader.load(url, (collada) => {
+        try {
+            const scene = collada.scene;
+            let geometry = null;
+            let material = null;
+            
+            // Extract geometry and material from DAE
+            scene.traverse((child) => {
+                if (child.isMesh && !geometry) {
+                    geometry = child.geometry;
+                    material = child.material || new THREE.MeshStandardMaterial({
+                        color: 0x4CAF50,
+                        metalness: 0.1,
+                        roughness: 0.8
+                    });
+                }
+            });
+            
+            if (geometry && material) {
+                onSuccess(scene, geometry, material);
+            } else {
+                onError('No valid geometry found in DAE file');
+            }
+        } catch (error) {
+            onError('Error processing DAE: ' + error.message);
+        }
+    }, undefined, (error) => {
+        onError('Error loading DAE: ' + error.message);
+    });
+}
+
+/**
+ * Export and Save/Load Functions
+ */
+function exportAssembly() {
+    if (state.assembly.models.size === 0) {
+        showUploadStatus('No models in assembly to export', 'warning');
+        return;
+    }
+    
+    // For now, show available export options
+    const options = ['Combined GLTF', 'Individual Models', 'Assembly Data (.3dassembly)'];
+    const choice = prompt(`Export Assembly:\n\n${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}\n\nEnter choice (1-3):`);
+    
+    switch (choice) {
+        case '1':
+            exportCombinedGLTF();
+            break;
+        case '2':
+            exportIndividualModels();
+            break;
+        case '3':
+            saveAssembly();
+            break;
+        default:
+            showUploadStatus('Export cancelled', 'info');
+    }
+}
+
+function exportCombinedGLTF() {
+    if (state.assembly.models.size === 0) {
+        showUploadStatus('No models in assembly to export', 'warning');
+        return;
+    }
+
+    showUploadStatus('Exporting assembly as GLTF...', 'info');
+    
+    // Create a group containing all assembly models
+    const assemblyGroup = new THREE.Group();
+    assemblyGroup.name = 'Assembly';
+    
+    state.assembly.models.forEach(modelComponent => {
+        if (modelComponent.mesh && modelComponent.visible) {
+            // Clone the mesh to avoid affecting the scene
+            const clonedMesh = modelComponent.mesh.clone();
+            clonedMesh.material = modelComponent.mesh.material.clone();
+            assemblyGroup.add(clonedMesh);
+        }
+    });
+
+    // Export using GLTFExporter
+    const exporter = new GLTFExporter();
+    exporter.parse(
+        assemblyGroup,
+        function(result) {
+            const blob = new Blob([result], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `assembly_${Date.now()}.glb`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showUploadStatus(`Assembly exported as GLTF (${state.assembly.models.size} models)`, 'success');
+        },
+        function(error) {
+            console.error('GLTF Export Error:', error);
+            showUploadStatus('Error exporting GLTF: ' + error.message, 'error');
+        },
+        { binary: true }
+    );
+}
+
+function exportIndividualModels() {
+    if (state.assembly.models.size === 0) {
+        showUploadStatus('No models in assembly to export', 'warning');
+        return;
+    }
+
+    showUploadStatus(`Exporting ${state.assembly.models.size} individual models...`, 'info');
+    let exportCount = 0;
+    let errorCount = 0;
+
+    state.assembly.models.forEach((modelComponent, id) => {
+        if (!modelComponent.mesh || !modelComponent.visible) {
+            return;
+        }
+
+        const mesh = modelComponent.mesh;
+        const fileType = modelComponent.fileType.toLowerCase();
+        const fileName = `${modelComponent.name}_${Date.now()}`;
+
+        try {
+            switch (fileType) {
+                case 'gltf':
+                case 'glb':
+                    exportModelAsGLTF(mesh, fileName);
+                    break;
+                case 'obj':
+                    exportModelAsOBJ(mesh, fileName);
+                    break;
+                case 'stl':
+                    exportModelAsSTL(mesh, fileName);
+                    break;
+                default:
+                    // Default to GLB for unsupported original formats
+                    exportModelAsGLTF(mesh, fileName);
+                    break;
+            }
+            exportCount++;
+        } catch (error) {
+            console.error(`Error exporting ${modelComponent.name}:`, error);
+            errorCount++;
+        }
+    });
+
+    setTimeout(() => {
+        if (errorCount === 0) {
+            showUploadStatus(`✅ Successfully exported ${exportCount} models`, 'success');
+        } else {
+            showUploadStatus(`⚠️ Exported ${exportCount} models (${errorCount} errors)`, 'warning');
+        }
+    }, 1000);
+}
+
+function exportModelAsGLTF(mesh, fileName) {
+    const exporter = new GLTFExporter();
+    exporter.parse(
+        mesh,
+        function(result) {
+            const blob = new Blob([result], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${fileName}.glb`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        },
+        function(error) {
+            throw error;
+        },
+        { binary: true }
+    );
+}
+
+function exportModelAsOBJ(mesh, fileName) {
+    const exporter = new OBJExporter();
+    const result = exporter.parse(mesh);
+    const blob = new Blob([result], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${fileName}.obj`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+function exportModelAsSTL(mesh, fileName) {
+    const exporter = new STLExporter();
+    const result = exporter.parse(mesh);
+    const blob = new Blob([result], { type: 'application/octet-stream' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${fileName}.stl`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+function saveAssembly() {
+    if (state.assembly.models.size === 0) {
+        showUploadStatus('No models in assembly to save', 'warning');
+        return;
+    }
+    
+    // Create assembly save data
+    const assemblyData = {
+        version: '1.0',
+        created: new Date().toISOString(),
+        modelCount: state.assembly.models.size,
+        models: [],
+        settings: {
+            tools: { ...state.assembly.tools },
+            ui: { ...state.assembly.ui }
+        }
+    };
+    
+    // Export each model's data
+    state.assembly.models.forEach(model => {
+        assemblyData.models.push(model.exportData());
+    });
+    
+    // Create download
+    const dataStr = JSON.stringify(assemblyData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `assembly_${Date.now()}.3dassembly`;
+    link.click();
+    
+    showUploadStatus('✅ Assembly saved successfully', 'success');
+}
+
+function loadAssembly() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.3dassembly,.json';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const assemblyData = JSON.parse(event.target.result);
+                restoreAssemblyFromData(assemblyData);
+            } catch (error) {
+                showUploadStatus('Error loading assembly file: ' + error.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
+function restoreAssemblyFromData(assemblyData) {
+    console.log('Restoring assembly from saved data...');
+    
+    // Validate data format
+    if (!assemblyData.version || !assemblyData.models) {
+        throw new Error('Invalid assembly file format');
+    }
+    
+    // Enter developer mode if not already active
+    if (state.assembly.mode === 'basic') {
+        enterDeveloperMode();
+    }
+    
+    // Clear existing assembly
+    clearAssembly();
+    
+    // Note: This is a simplified restoration - full restoration would require
+    // re-loading the original model files or storing geometry data
+    showUploadStatus(`Assembly structure loaded (${assemblyData.modelCount} models).\nNote: Model files need to be re-imported.`, 'warning');
+    
+    // Restore settings
+    if (assemblyData.settings) {
+        Object.assign(state.assembly.tools, assemblyData.settings.tools || {});
+        Object.assign(state.assembly.ui, assemblyData.settings.ui || {});
+    }
+}
 
 // ----------------------------------------------------------------
 // 10. Initialization
@@ -193,12 +2388,22 @@ class ControlSync {
             const listeners = [];
             
             // Primary → Secondary sync
-            const primaryListener = (e) => this.sync(primaryEl, secondaryEl, config, 'primary-to-secondary');
+            const primaryListener = (e) => {
+                this.sync(primaryEl, secondaryEl, config, 'primary-to-secondary');
+                if (config.onChange) {
+                    config.onChange();
+                }
+            };
             primaryEl.addEventListener('input', primaryListener);
             listeners.push({ element: primaryEl, event: 'input', listener: primaryListener });
             
             // Secondary → Primary sync  
-            const secondaryListener = (e) => this.sync(secondaryEl, primaryEl, config, 'secondary-to-primary');
+            const secondaryListener = (e) => {
+                this.sync(secondaryEl, primaryEl, config, 'secondary-to-primary');
+                if (config.onChange) {
+                    config.onChange();
+                }
+            };
             secondaryEl.addEventListener('input', secondaryListener);
             listeners.push({ element: secondaryEl, event: 'input', listener: secondaryListener });
             
@@ -363,10 +2568,11 @@ window.testControlSync = function() {
  * @param {string} sliderId - ID of the slider element
  * @param {string} numberId - ID of the number input element
  */
-function syncSliderNumber(sliderId, numberId) {
+function syncSliderNumber(sliderId, numberId, changeCallback = null) {
     return controlSync.register(sliderId, numberId, {
         type: 'slider-number',
-        valueType: 'float'
+        valueType: 'float',
+        onChange: changeCallback
     });
 }
 
@@ -1490,8 +3696,67 @@ function handleFileUpload(file) {
 // ----------------------------------------------------------------
 // 4. Mouse Event Handlers
 // ----------------------------------------------------------------
+
+/**
+ * Perform raycasting to detect which assembly model was clicked in 3D viewport
+ * @param {MouseEvent} event - The mouse event
+ * @returns {string|null} - The model ID if intersected, null otherwise
+ */
+function raycastSelectModel(event) {
+    // Only work in developer mode with assembly models
+    if (state.assembly.mode !== 'developer' || state.assembly.models.size === 0) {
+        return null;
+    }
+    
+    // Get canvas bounds for coordinate conversion
+    const canvas = state.renderer.domElement;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Convert mouse coordinates to normalized device coordinates (-1 to +1)
+    const mouse = new THREE.Vector2();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    
+    // Create raycaster
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, state.camera);
+    
+    // Collect all assembly model meshes for intersection testing
+    const intersectableObjects = [];
+    const modelMap = new Map(); // Map mesh to model ID
+    
+    state.assembly.models.forEach((model, modelId) => {
+        if (model.mesh && model.visible) {
+            intersectableObjects.push(model.mesh);
+            modelMap.set(model.mesh, modelId);
+            
+            // Also include children if it's a group
+            if (model.mesh.children && model.mesh.children.length > 0) {
+                model.mesh.traverse((child) => {
+                    if (child.isMesh) {
+                        intersectableObjects.push(child);
+                        modelMap.set(child, modelId);
+                    }
+                });
+            }
+        }
+    });
+    
+    // Perform raycasting
+    const intersects = raycaster.intersectObjects(intersectableObjects, false);
+    
+    if (intersects.length > 0) {
+        // Get the closest intersected object
+        const intersectedObject = intersects[0].object;
+        const modelId = modelMap.get(intersectedObject);
+        return modelId || null;
+    }
+    
+    return null;
+}
 function handleMouseDown(e) {
     mouseControls.isDragging = true;
+    mouseControls.hasDragged = false; // Track if user actually drags
     // SUNSET: isCtrlDrag removed - no longer needed since Ctrl+Click functionality sunset
     // mouseControls.isCtrlDrag = e.ctrlKey;
     mouseControls.previousMousePosition = { x: e.clientX, y: e.clientY };
@@ -1499,6 +3764,26 @@ function handleMouseDown(e) {
     // SUNSET: Control schemes now identical - both use Left=Model Rotate, Right=Pan Camera
     mouseControls.isLeftButton = e.button === 0; // Left for Model Rotate
     mouseControls.isRightButton = e.button === 2; // Right for Pan Camera
+    
+    // In developer mode, store the clicked model for potential selection/deselection
+    if (state.assembly.mode === 'developer' && e.button === 0) {
+        mouseControls.clickedModel = raycastSelectModel(e);
+        mouseControls.clickEvent = e; // Store the event for later use
+        
+        if (mouseControls.clickedModel) {
+            const model = state.assembly.models.get(mouseControls.clickedModel);
+            
+            // Store the model for selection handling in mouseUp
+            // Don't change selection here, just set up for potential manipulation
+            if (model && model.selected) {
+                state.assembly.activeModel = mouseControls.clickedModel;
+            }
+            // Continue with normal mouse handling
+        } else {
+            // Clicked outside of any model - clear active model for assembly-wide manipulation
+            state.assembly.activeModel = null;
+        }
+    }
     
     /* SUNSET: Previous control scheme differences
     if (state.controlScheme === 'standard') {
@@ -1513,6 +3798,18 @@ function handleMouseDown(e) {
 
 function handleMouseMove(e) {
     if (!mouseControls.isDragging) return;
+    
+    // Safety check: if no buttons are pressed, stop dragging
+    if (e.buttons === 0) {
+        // Reset drag state directly instead of calling handleMouseUp to avoid infinite loop
+        mouseControls.isDragging = false;
+        mouseControls.hasDragged = false;
+        mouseControls.clickedModel = null;
+        return;
+    }
+    
+    // Mark that user has actually dragged
+    mouseControls.hasDragged = true;
 
     const deltaMove = {
         x: e.clientX - mouseControls.previousMousePosition.x,
@@ -1521,7 +3818,8 @@ function handleMouseMove(e) {
 
     // SUNSET: Ctrl+Drag functionality removed - now left-click always rotates model
     // Both control schemes now use the same simplified behavior
-    if (mouseControls.isLeftButton && state.model) {
+    const targetModel = getRotationTarget();
+    if (mouseControls.isLeftButton && targetModel) {
         // Left click: Rotate model (was previously Ctrl+Left or Legacy Left)
         const rotSpeed = 0.005;
 
@@ -1535,13 +3833,19 @@ function handleMouseMove(e) {
         // Quaternion for vertical rotation (around camera's RIGHT vector)
         const verticalRot = new THREE.Quaternion().setFromAxisAngle(cameraRight, deltaMove.y * rotSpeed);
 
-        // Apply the rotations to the model's quaternion
-        state.model.quaternion.premultiply(horizontalRot);
-        state.model.quaternion.premultiply(verticalRot);
+        // Apply the rotations to the target's quaternion
+        targetModel.quaternion.premultiply(horizontalRot);
+        targetModel.quaternion.premultiply(verticalRot);
+        
+        // For assembly mode without active model, also apply to all models
+        if (state.assembly.mode === 'developer' && !state.assembly.activeModel) {
+            const combinedRotation = new THREE.Quaternion().multiplyQuaternions(horizontalRot, verticalRot);
+            applyAssemblyRotation(combinedRotation);
+        }
 
         // CRITICAL: Synchronize quaternion changes back to Euler state values
         // This prevents the Roll/Yaw confusion by keeping UI controls in sync
-        const euler = new THREE.Euler().setFromQuaternion(state.model.quaternion, 'YXZ');
+        const euler = new THREE.Euler().setFromQuaternion(targetModel.quaternion, 'YXZ');
         state.modelPitch = radToDeg(euler.x);
         state.modelYaw = radToDeg(euler.y);
         state.modelRoll = radToDeg(euler.z);
@@ -1555,13 +3859,39 @@ function handleMouseMove(e) {
         safeSetValue('modelRollNum', Math.round(state.modelRoll));
 
         // Also update the direct rotation controls for consistency
-        const directEuler = new THREE.Euler().setFromQuaternion(state.model.quaternion, 'XYZ');
+        const directEuler = new THREE.Euler().setFromQuaternion(targetModel.quaternion, 'XYZ');
         safeSetValue('modelRotX', Math.round(radToDeg(directEuler.x)));
         safeSetValue('modelRotXNum', Math.round(radToDeg(directEuler.x)));
         safeSetValue('modelRotY', Math.round(radToDeg(directEuler.y)));
         safeSetValue('modelRotYNum', Math.round(radToDeg(directEuler.y)));
         safeSetValue('modelRotZ', Math.round(radToDeg(directEuler.z)));
         safeSetValue('modelRotZNum', Math.round(radToDeg(directEuler.z)));
+        
+        // Update transform controls if they exist and this is the active model
+        if (state.assembly.activeModel && state.assembly.mode === 'developer') {
+            const activeModel = state.assembly.models.get(state.assembly.activeModel);
+            if (activeModel && activeModel.mesh === targetModel) {
+                // Update transform panel rotation controls
+                safeSetValue('transformRotX', Math.round(radToDeg(directEuler.x)));
+                safeSetValue('transformRotXNum', Math.round(radToDeg(directEuler.x)));
+                safeSetValue('transformRotY', Math.round(radToDeg(directEuler.y)));
+                safeSetValue('transformRotYNum', Math.round(radToDeg(directEuler.y)));
+                safeSetValue('transformRotZ', Math.round(radToDeg(directEuler.z)));
+                safeSetValue('transformRotZNum', Math.round(radToDeg(directEuler.z)));
+                
+                // Also update position if model was moved
+                safeSetValue('transformPosX', targetModel.position.x.toFixed(1));
+                safeSetValue('transformPosXNum', targetModel.position.x.toFixed(1));
+                safeSetValue('transformPosY', targetModel.position.y.toFixed(1));
+                safeSetValue('transformPosYNum', targetModel.position.y.toFixed(1));
+                safeSetValue('transformPosZ', targetModel.position.z.toFixed(1));
+                safeSetValue('transformPosZNum', targetModel.position.z.toFixed(1));
+                
+                // Update scale
+                safeSetValue('transformScale', targetModel.scale.x.toFixed(1));
+                safeSetValue('transformScaleNum', targetModel.scale.x.toFixed(1));
+            }
+        }
 
     } else if (mouseControls.isRightButton) {
         // Right click: Pan camera (same for both control schemes)
@@ -1587,14 +3917,91 @@ function handleMouseMove(e) {
 }
 
 function handleMouseUp() {
+    // Handle selection/deselection for clicks (not drags) in developer mode
+    if (state.assembly.mode === 'developer' && !mouseControls.hasDragged) {
+        const event = mouseControls.clickEvent;
+        
+        if (mouseControls.clickedModel) {
+            // Clicked on a model
+            const model = state.assembly.models.get(mouseControls.clickedModel);
+            
+            if (model) {
+                if (model.selected) {
+                    // Model is already selected - check if we should deselect
+                    if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                        const selectedCount = Array.from(state.assembly.models.values()).filter(m => m.selected).length;
+                        if (selectedCount === 1) {
+                            // Deselect the single selected model
+                            model.setSelected(false);
+                            state.assembly.activeModel = null;
+                            updateAssemblyPanel();
+                            updateModelsListUI();
+                        }
+                    }
+                    // If multi-select or multiple selected, do nothing (keep selection)
+                } else {
+                    // Model is not selected - select it
+                    selectModel(mouseControls.clickedModel, event);
+                    updateAssemblyPanel();
+                }
+            }
+        } else if (event && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+            // Clicked on empty space - deselect all models (if no modifier keys)
+            let hadSelection = false;
+            state.assembly.models.forEach(model => {
+                if (model.selected) {
+                    model.setSelected(false);
+                    hadSelection = true;
+                }
+            });
+            
+            if (hadSelection) {
+                state.assembly.activeModel = null;
+                updateAssemblyPanel();
+                updateModelsListUI();
+            }
+        }
+    }
+    
+    // Reset mouse state
+    console.log('Resetting mouse controls - isDragging was:', mouseControls.isDragging);
     mouseControls.isDragging = false;
     mouseControls.isLeftButton = false;
     mouseControls.isRightButton = false;
     mouseControls.isCtrlDrag = false;
+    mouseControls.hasDragged = false;
+    mouseControls.clickedModel = null;
+    mouseControls.clickEvent = null;
 }
 
 function handleMouseWheel(e) {
     e.preventDefault();
+    
+    // Use relative positioning only in DEVELOPER mode
+    if (state.assembly.mode === 'developer') {
+        const boundingBox = getReferenceBoundingBox();
+        if (boundingBox) {
+            // Get current relative position
+            const currentDistance = state.camera.position.length();
+            const currentRelativePos = distanceToRelativePosition(currentDistance, boundingBox);
+            
+            // Apply zoom increment (±10 relative units for smooth control)
+            const zoomIncrement = e.deltaY > 0 ? 10 : -10;
+            const newRelativePos = Math.max(0, Math.min(360, currentRelativePos + zoomIncrement));
+            
+            // Convert back to distance and apply
+            const newDistance = relativePositionToDistance(newRelativePos, boundingBox);
+            const currentDirection = state.camera.position.clone().normalize();
+            state.camera.position.copy(currentDirection.multiplyScalar(newDistance));
+            
+            // Update UI with current relative position
+            updateRelativePositionUI(newRelativePos);
+            updateCameraInfo();
+            return;
+        }
+    }
+    
+    // Original system for basic mode or when no model available
     const delta = e.deltaY > 0 ? 1.1 : 0.9;
     state.camera.position.multiplyScalar(delta);
     
@@ -1613,10 +4020,11 @@ function handleContextMenu(e) {
 // 5. Core Model/Camera Interaction Functions
 // ----------------------------------------------------------------
 function updateCameraInfo() {
-    if (state.camera && state.model) {
+    const targetModel = getRotationTarget();
+    if (state.camera && (state.model || targetModel)) {
         const pos = state.camera.position;
         const rot = state.camera.rotation;
-        const modelRot = state.model.rotation;
+        const modelRot = targetModel ? targetModel.rotation : { x: 0, y: 0, z: 0 };
         const distance = state.camera.position.length();
         state.zoom = 5 / distance;
         
@@ -1627,6 +4035,13 @@ function updateCameraInfo() {
         safeSetValue('posXNum', formatNumber(pos.x));
         safeSetValue('posYNum', formatNumber(pos.y));
         safeSetValue('posZNum', formatNumber(pos.z));
+        
+        // Update relative positioning controls (DEVELOPER mode only)
+        if (state.assembly.mode === 'developer') {
+            const currentRelativePos = getCurrentRelativePosition();
+            safeSetValue('relativePosition', currentRelativePos);
+            safeSetValue('relativePositionNum', currentRelativePos);
+        }
         
         // SUNSET: Camera rotation controls - commented out but calculations preserved
         const rotXDeg = radToDeg(rot.x);
@@ -1678,11 +4093,26 @@ function updateCameraInfo() {
         // Update original VIEW panel (hidden but preserved for compatibility)
         const infoEl = document.getElementById('info');
         if (infoEl) {
+            // Determine what model info to show based on selection
+            let modelDisplayName = '';
+            if (state.assembly.mode === 'developer') {
+                const selectedModels = Array.from(state.assembly.models.values()).filter(m => m.selected);
+                if (selectedModels.length === 0) {
+                    modelDisplayName = 'No Selection';
+                } else if (selectedModels.length === 1) {
+                    modelDisplayName = selectedModels[0].name;
+                } else {
+                    modelDisplayName = `${selectedModels.length} Selected`;
+                }
+            } else {
+                modelDisplayName = state.currentModelType || 'No Model';
+            }
+            
             infoEl.innerHTML = `
                 <h4>VIEW</h4>
                 <p><span class="info-label">Camera Position:</span><span class="info-values-container"><span class="info-value-box">${Math.round(pos.x)}</span><span class="info-value-box">${Math.round(pos.y)}</span><span class="info-value-box">${Math.round(pos.z)}</span></span></p>
                 <p><span class="info-label">Model Rotation:</span><span class="info-values-container"><span class="info-value-box">${Math.round(modelRotXDeg)}°</span><span class="info-value-box">${Math.round(modelRotYDeg)}°</span><span class="info-value-box">${Math.round(modelRotZDeg)}°</span></span></p>
-                <p><span class="info-label">Model:</span><span class="info-values-container"><span class="model-name-box">${state.currentModelType}</span></span></p>
+                <p><span class="info-label">Model:</span><span class="info-values-container"><span class="model-name-box">${modelDisplayName}</span></span></p>
             `;
         }
         
@@ -1692,10 +4122,29 @@ function updateCameraInfo() {
 }
 
 function updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, modelRotZDeg, camRot, camRotXDeg, camRotYDeg, camRotZDeg) {
+    // Determine selection state for developer mode
+    let selectedModels = [];
+    if (state.assembly.mode === 'developer') {
+        selectedModels = Array.from(state.assembly.models.values()).filter(m => m.selected);
+    }
+    
     // Update Model Rotation display with three-column layout
     const modelRotationDisplay = document.getElementById('model-rotation-display');
     if (modelRotationDisplay) {
-        modelRotationDisplay.innerHTML = `<span>${Math.round(modelRotXDeg)}°</span><span>${Math.round(modelRotYDeg)}°</span><span>${Math.round(modelRotZDeg)}°</span>`;
+        if (state.assembly.mode === 'developer') {
+            if (selectedModels.length === 0) {
+                modelRotationDisplay.innerHTML = `<span>—</span><span>—</span><span>—</span>`;
+            } else if (selectedModels.length === 1) {
+                // Show selected model's rotation
+                modelRotationDisplay.innerHTML = `<span>${Math.round(modelRotXDeg)}°</span><span>${Math.round(modelRotYDeg)}°</span><span>${Math.round(modelRotZDeg)}°</span>`;
+            } else {
+                // Multiple selection - show "Multi" indicator
+                modelRotationDisplay.innerHTML = `<span>Multi</span><span>Multi</span><span>Multi</span>`;
+            }
+        } else {
+            // Basic mode - show model rotation
+            modelRotationDisplay.innerHTML = `<span>${Math.round(modelRotXDeg)}°</span><span>${Math.round(modelRotYDeg)}°</span><span>${Math.round(modelRotZDeg)}°</span>`;
+        }
     }
     
     // Update Camera Position display with three-column layout
@@ -1713,10 +4162,26 @@ function updateHorizontalDataDisplay(pos, modelRot, modelRotXDeg, modelRotYDeg, 
     // Update Model Attitude display with three-column layout (Yaw/Pitch/Roll)
     const modelAttitudeDisplay = document.getElementById('model-attitude-display');
     if (modelAttitudeDisplay) {
-        const yaw = state.modelYaw || 0;
-        const pitch = state.modelPitch || 0;
-        const roll = state.modelRoll || 0;
-        modelAttitudeDisplay.innerHTML = `<span>${Math.round(yaw)}°</span><span>${Math.round(pitch)}°</span><span>${Math.round(roll)}°</span>`;
+        if (state.assembly.mode === 'developer') {
+            if (selectedModels.length === 0) {
+                modelAttitudeDisplay.innerHTML = `<span>—</span><span>—</span><span>—</span>`;
+            } else if (selectedModels.length === 1) {
+                // Show selected model's attitude
+                const yaw = state.modelYaw || 0;
+                const pitch = state.modelPitch || 0;
+                const roll = state.modelRoll || 0;
+                modelAttitudeDisplay.innerHTML = `<span>${Math.round(yaw)}°</span><span>${Math.round(pitch)}°</span><span>${Math.round(roll)}°</span>`;
+            } else {
+                // Multiple selection - show "Multi" indicator
+                modelAttitudeDisplay.innerHTML = `<span>Multi</span><span>Multi</span><span>Multi</span>`;
+            }
+        } else {
+            // Basic mode - show model attitude
+            const yaw = state.modelYaw || 0;
+            const pitch = state.modelPitch || 0;
+            const roll = state.modelRoll || 0;
+            modelAttitudeDisplay.innerHTML = `<span>${Math.round(yaw)}°</span><span>${Math.round(pitch)}°</span><span>${Math.round(roll)}°</span>`;
+        }
     }
     
     // SUNSET: Model Name display removed
@@ -1784,33 +4249,32 @@ function applyPitchYawRoll() {
 }
 
 function focusModelOnScreen() {
-    if (!state.model || !state.camera) return;
-
-    const box = new THREE.Box3().setFromObject(state.model);
+    if (!state.camera) return;
+    
+    let box;
+    
+    // Get bounding box based on current mode
+    if (state.assembly.mode === 'developer' && state.assembly.models.size > 0) {
+        // Use assembly bounding box calculation
+        box = calculateAssemblyBoundingBox();
+        console.log('F key: Centering assembly while maintaining zoom');
+    } else {
+        // Use single model
+        const targetModel = getRotationTarget();
+        if (!targetModel) return;
+        box = new THREE.Box3().setFromObject(targetModel);
+        console.log('F key: Centering single model while maintaining zoom');
+    }
     if (box.isEmpty()) {
-        console.warn('Model has empty bounding box, cannot focus.');
+        console.warn('Model has empty bounding box, cannot center.');
         return;
     }
 
     const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const fov = state.camera.fov * (Math.PI / 180); // convert fov to radians
-    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-
-    // Adjust cameraZ based on aspect ratio to ensure model fits horizontally too
-    const aspect = state.camera.aspect;
-    const horizontalFov = 2 * Math.atan(Math.tan(fov / 2) * aspect);
-    const horizontalCameraZ = Math.abs(size.x / 2 / Math.tan(horizontalFov / 2));
-    cameraZ = Math.max(cameraZ, horizontalCameraZ);
-
-    // Add some padding
-    cameraZ *= 1.2; 
-
-    // Set camera position to look at the center of the model
-    state.camera.position.copy(center);
-    state.camera.position.z += cameraZ; // Move camera back along its local Z axis
+    
+    // MAINTAIN CURRENT Z POSITION - only center X and Y
+    const currentZ = state.camera.position.z;
+    state.camera.position.set(center.x, center.y, currentZ);
     state.camera.lookAt(center);
 
     // DYNAMIC RANGE EXPANSION: Check if calculated values exceed UI control ranges
@@ -1826,6 +4290,16 @@ function focusModelOnScreen() {
     if (needsExpansion) {
         expandCameraControlRanges(calculatedX, calculatedY, calculatedZ);
         console.log(`Camera control ranges expanded for F key focus: X=${calculatedX.toFixed(1)}, Y=${calculatedY.toFixed(1)}, Z=${calculatedZ.toFixed(1)}`);
+    } else if (state.assembly.mode === 'developer' && state.assembly.models.size > 0) {
+        // For assembly mode, ensure ranges are appropriate even without expansion
+        const assemblyBox = calculateAssemblyBoundingBox();
+        if (assemblyBox) {
+            const size = assemblyBox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const distance = maxDim * 2;
+            updateCameraControlRangesForAssembly(distance, size);
+            console.log('F key: Updated assembly camera ranges');
+        }
     }
 
     updateCameraInfo();
@@ -1911,7 +4385,20 @@ function showCameraRangeExpansionFeedback(minX, maxX, minY, maxY, minZ, maxZ) {
 }
 
 function resetCameraControlRanges() {
-    // Reset to default ranges
+    if (state.assembly.mode === 'developer' && state.assembly.models.size > 0) {
+        // In developer mode, recalculate ranges based on current assembly
+        const assemblyBox = calculateAssemblyBoundingBox();
+        if (assemblyBox) {
+            const size = assemblyBox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const distance = maxDim * 2;
+            updateCameraControlRangesForAssembly(distance, size);
+            console.log('Camera control ranges reset for assembly mode');
+            return;
+        }
+    }
+    
+    // Reset to default ranges (basic mode or no assembly)
     const defaultRanges = [
         {id: 'posX', min: -10, max: 10},
         {id: 'posY', min: -10, max: 10},
@@ -1934,6 +4421,55 @@ function resetCameraControlRanges() {
     });
     
     console.log('Camera control ranges reset to default values');
+}
+
+function resetCamera() {
+    if (!state.camera) return;
+    
+    // Reset camera to default position
+    state.camera.position.set(5, 5, 5);
+    state.camera.lookAt(0, 0, 0);
+    
+    // Update camera info display
+    updateCameraInfo();
+    
+    console.log('Camera reset to default position');
+}
+
+function resetModel() {
+    if (state.assembly.mode === 'developer' && state.assembly.models.size > 0) {
+        // Reset all models in assembly
+        state.assembly.models.forEach(model => {
+            if (model.mesh) {
+                model.mesh.position.set(0, 0, 0);
+                model.mesh.rotation.set(0, 0, 0);
+                model.mesh.scale.set(1, 1, 1);
+                // Update model component transform
+                model.updateTransformFromMesh();
+            }
+        });
+        console.log(`Reset ${state.assembly.models.size} models in assembly`);
+    } else if (state.model) {
+        // Reset single model
+        state.model.position.set(0, 0, 0);
+        state.model.rotation.set(0, 0, 0);
+        state.model.scale.set(1, 1, 1);
+        
+        // Reset state values
+        state.modelYaw = 0;
+        state.modelPitch = 0;  
+        state.modelRoll = 0;
+        
+        // Update UI controls
+        ['modelRotX', 'modelRotXNum', 'modelRotY', 'modelRotYNum', 'modelRotZ', 'modelRotZNum'].forEach(id => {
+            safeSetValue(id, 0);
+        });
+        ['modelPitch', 'modelPitchNum', 'modelYaw', 'modelYawNum', 'modelRoll', 'modelRollNum'].forEach(id => {
+            safeSetValue(id, 0);
+        });
+        
+        console.log('Reset single model transform');
+    }
 }
 
 function promptForFilename(defaultName, extension = '') {
@@ -2326,10 +4862,34 @@ function createAxisLabels(widget) {
 }
 
 function updateOrientationWidget() {
-    if (!state.model || !state.orientationWidget.enabled) return;
+    if (!state.orientationWidget.enabled) return;
     
     const widget = state.orientationWidget;
-    const modelRotation = state.model.rotation;
+    
+    // Get rotation target based on current mode
+    let modelRotation = null;
+    
+    if (state.assembly.mode === 'basic' && state.model) {
+        // Basic mode - use single model
+        modelRotation = state.model.rotation;
+    } else if (state.assembly.mode === 'developer') {
+        // Developer mode - use active selected model or first model for reference
+        const targetModel = getRotationTarget();
+        if (targetModel && targetModel.rotation) {
+            modelRotation = targetModel.rotation;
+        } else {
+            // Fallback to first visible model if no rotation target
+            for (const modelComponent of state.assembly.models.values()) {
+                if (modelComponent.mesh && modelComponent.visible) {
+                    modelRotation = modelComponent.mesh.rotation;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // If no valid rotation found, don't update
+    if (!modelRotation) return;
     
     // Check if model rotation has changed (with small threshold for performance)
     const rotChanged = 
@@ -3197,6 +5757,7 @@ function setupMouseControls() {
     canvas.removeEventListener('mousedown', handleMouseDown);
     canvas.removeEventListener('mousemove', handleMouseMove);
     canvas.removeEventListener('mouseup', handleMouseUp);
+    canvas.removeEventListener('mouseleave', handleMouseUp);
     canvas.removeEventListener('wheel', handleMouseWheel);
     canvas.removeEventListener('contextmenu', handleContextMenu);
 
@@ -3204,6 +5765,7 @@ function setupMouseControls() {
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mouseleave', handleMouseUp); // Stop dragging when mouse leaves canvas
     canvas.addEventListener('wheel', handleMouseWheel);
     canvas.addEventListener('contextmenu', handleContextMenu);
     
@@ -3226,8 +5788,26 @@ function setupControls() {
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'f' || e.key === 'F') {
-            focusModelOnScreen();
+        // Prevent shortcuts when user is typing in inputs
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        switch (e.key.toLowerCase()) {
+            case 'f':
+                focusModelOnScreen();
+                e.preventDefault();
+                break;
+            case 'r':
+                resetCameraControlRanges();
+                e.preventDefault();
+                break;
+            case 'c':
+                resetCamera();
+                e.preventDefault();
+                break;
+            case 'm':
+                resetModel();
+                e.preventDefault();
+                break;
         }
     });
 
@@ -3335,14 +5915,33 @@ function setupControls() {
             e.preventDefault();
             e.stopPropagation();
             dropZone.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) {
-                handleFileUpload(e.dataTransfer.files[0]);
+            
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length === 0) return;
+            
+            if (state.assembly.mode === 'developer') {
+                loadMultipleModels(files);
+            } else {
+                // Basic mode - handle single file
+                if (files.length > 1) {
+                    showUploadStatus('Multiple files detected. Enter Developer Mode for assembly features.', 'warning');
+                }
+                handleFileUpload(files[0]);
             }
         });
 
         fileUpload.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFileUpload(e.target.files[0]);
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            
+            if (state.assembly.mode === 'developer') {
+                loadMultipleModels(files);
+            } else {
+                // Basic mode - handle single file
+                if (files.length > 1) {
+                    showUploadStatus('Multiple files detected. Enter Developer Mode for assembly features.', 'warning');
+                }
+                handleFileUpload(files[0]);
             }
         });
     }
@@ -3610,6 +6209,37 @@ function setupControls() {
         }
     });
 
+    // Relative Positioning Controls Event Listeners (DEVELOPER mode only)
+    safeAddEventListener('relativePosition', 'input', (e) => {
+        if (state.assembly.mode !== 'developer') return;
+        
+        const boundingBox = getReferenceBoundingBox();
+        if (!boundingBox || !state.camera) return;
+        
+        const relativePos = parseFloat(e.target.value);
+        const newDistance = relativePositionToDistance(relativePos, boundingBox);
+        const currentDirection = state.camera.position.clone().normalize();
+        state.camera.position.copy(currentDirection.multiplyScalar(newDistance));
+        
+        safeSetValue('relativePositionNum', relativePos);
+        updateCameraInfo();
+    });
+
+    safeAddEventListener('relativePositionNum', 'input', (e) => {
+        if (state.assembly.mode !== 'developer') return;
+        
+        const boundingBox = getReferenceBoundingBox();
+        if (!boundingBox || !state.camera) return;
+        
+        const relativePos = parseFloat(e.target.value);
+        const newDistance = relativePositionToDistance(relativePos, boundingBox);
+        const currentDirection = state.camera.position.clone().normalize();
+        state.camera.position.copy(currentDirection.multiplyScalar(newDistance));
+        
+        safeSetValue('relativePosition', relativePos);
+        updateCameraInfo();
+    });
+
     // Camera Rotation Controls Event Listeners
     safeAddEventListener('rotX', 'input', (e) => {
         if (state.camera) {
@@ -3632,69 +6262,138 @@ function setupControls() {
 
     // Model Rotation Controls Event Listeners
     safeAddEventListener('modelRotX', 'input', (e) => {
-        if (state.model) {
-            state.model.rotation.x = degToRad(parseFloat(e.target.value));
-            // Sync direct rotation changes to attitude controls
+        const rotationValue = degToRad(parseFloat(e.target.value));
+        
+        if (state.assembly.mode === 'basic' && state.model) {
+            // Basic mode - apply to single model
+            state.model.rotation.x = rotationValue;
             syncDirectToAttitudeControls();
-            updateCameraInfo();
+        } else if (state.assembly.mode === 'developer') {
+            // Developer mode - apply to all models
+            state.assembly.models.forEach(modelComponent => {
+                if (modelComponent.mesh && modelComponent.visible && !modelComponent.locked) {
+                    modelComponent.mesh.rotation.x = rotationValue;
+                }
+            });
         }
+        updateCameraInfo();
     });
     safeAddEventListener('modelRotY', 'input', (e) => {
-        if (state.model) {
-            state.model.rotation.y = degToRad(parseFloat(e.target.value));
-            // Sync direct rotation changes to attitude controls
+        const rotationValue = degToRad(parseFloat(e.target.value));
+        
+        if (state.assembly.mode === 'basic' && state.model) {
+            // Basic mode - apply to single model
+            state.model.rotation.y = rotationValue;
             syncDirectToAttitudeControls();
-            updateCameraInfo();
+        } else if (state.assembly.mode === 'developer') {
+            // Developer mode - apply to all models
+            state.assembly.models.forEach(modelComponent => {
+                if (modelComponent.mesh && modelComponent.visible && !modelComponent.locked) {
+                    modelComponent.mesh.rotation.y = rotationValue;
+                }
+            });
         }
+        updateCameraInfo();
     });
     safeAddEventListener('modelRotZ', 'input', (e) => {
-        if (state.model) {
-            state.model.rotation.z = degToRad(parseFloat(e.target.value));
-            // Sync direct rotation changes to attitude controls
+        const rotationValue = degToRad(parseFloat(e.target.value));
+        
+        if (state.assembly.mode === 'basic' && state.model) {
+            // Basic mode - apply to single model
+            state.model.rotation.z = rotationValue;
             syncDirectToAttitudeControls();
-            updateCameraInfo();
+        } else if (state.assembly.mode === 'developer') {
+            // Developer mode - apply to all models
+            state.assembly.models.forEach(modelComponent => {
+                if (modelComponent.mesh && modelComponent.visible && !modelComponent.locked) {
+                    modelComponent.mesh.rotation.z = rotationValue;
+                }
+            });
         }
+        updateCameraInfo();
     });
 
     // Model Yaw/Pitch/Roll Controls Event Listeners (Euler order XYZ)
     safeAddEventListener('modelYaw', 'input', (e) => {
-        if (state.model) {
-            const yaw = degToRad(parseFloat(e.target.value));
+        const yawValue = parseFloat(e.target.value);
+        
+        if (state.assembly.mode === 'basic' && state.model) {
+            // Basic mode - apply to single model
+            const yaw = degToRad(yawValue);
             const pitch = state.model.rotation.x;
             const roll = state.model.rotation.z;
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
-            state.modelYaw = parseFloat(e.target.value);
-            // Sync attitude changes to direct rotation controls
+            state.modelYaw = yawValue;
             syncAttitudeToDirectControls();
-            updateCameraInfo();
+        } else if (state.assembly.mode === 'developer') {
+            // Developer mode - apply to all models
+            const yaw = degToRad(yawValue);
+            state.assembly.models.forEach(modelComponent => {
+                if (modelComponent.mesh && modelComponent.visible && !modelComponent.locked) {
+                    const pitch = modelComponent.mesh.rotation.x;
+                    const roll = modelComponent.mesh.rotation.z;
+                    modelComponent.mesh.rotation.order = 'YXZ';
+                    modelComponent.mesh.rotation.set(pitch, yaw, roll);
+                }
+            });
+            state.modelYaw = yawValue;
         }
+        updateCameraInfo();
     });
     safeAddEventListener('modelPitch', 'input', (e) => {
-        if (state.model) {
+        const pitchValue = parseFloat(e.target.value);
+        
+        if (state.assembly.mode === 'basic' && state.model) {
+            // Basic mode - apply to single model
             const yaw = state.model.rotation.y;
-            const pitch = degToRad(parseFloat(e.target.value));
+            const pitch = degToRad(pitchValue);
             const roll = state.model.rotation.z;
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
-            state.modelPitch = parseFloat(e.target.value);
-            // Sync attitude changes to direct rotation controls
+            state.modelPitch = pitchValue;
             syncAttitudeToDirectControls();
-            updateCameraInfo();
+        } else if (state.assembly.mode === 'developer') {
+            // Developer mode - apply to all models
+            const pitch = degToRad(pitchValue);
+            state.assembly.models.forEach(modelComponent => {
+                if (modelComponent.mesh && modelComponent.visible && !modelComponent.locked) {
+                    const yaw = modelComponent.mesh.rotation.y;
+                    const roll = modelComponent.mesh.rotation.z;
+                    modelComponent.mesh.rotation.order = 'YXZ';
+                    modelComponent.mesh.rotation.set(pitch, yaw, roll);
+                }
+            });
+            state.modelPitch = pitchValue;
         }
+        updateCameraInfo();
     });
     safeAddEventListener('modelRoll', 'input', (e) => {
-        if (state.model) {
+        const rollValue = parseFloat(e.target.value);
+        
+        if (state.assembly.mode === 'basic' && state.model) {
+            // Basic mode - apply to single model
             const yaw = state.model.rotation.y;
             const pitch = state.model.rotation.x;
-            const roll = degToRad(parseFloat(e.target.value));
+            const roll = degToRad(rollValue);
             state.model.rotation.order = 'YXZ';
             state.model.rotation.set(pitch, yaw, roll);
-            state.modelRoll = parseFloat(e.target.value);
-            // Sync attitude changes to direct rotation controls
+            state.modelRoll = rollValue;
             syncAttitudeToDirectControls();
-            updateCameraInfo();
+        } else if (state.assembly.mode === 'developer') {
+            // Developer mode - apply to all models
+            const roll = degToRad(rollValue);
+            state.assembly.models.forEach(modelComponent => {
+                if (modelComponent.mesh && modelComponent.visible && !modelComponent.locked) {
+                    const yaw = modelComponent.mesh.rotation.y;
+                    const pitch = modelComponent.mesh.rotation.x;
+                    modelComponent.mesh.rotation.order = 'YXZ';
+                    modelComponent.mesh.rotation.set(pitch, yaw, roll);
+                }
+            });
+            state.modelRoll = rollValue;
         }
+        updateCameraInfo();
     });
 
     // Model Scale Controls Event Listeners
@@ -4064,12 +6763,12 @@ function expandSection(sectionElement, header) {
         icon.textContent = '−';
     }
     
-    // Auto-scroll to bottom when PRESETS section is expanded to show it fully
+    // Auto-scroll to bottom when DEVELOPER section is expanded to show it fully
     const sectionType = sectionElement.getAttribute('data-section');
     console.log(`Expanding section: ${sectionType}`);
     
-    if (sectionType === 'presets') {
-        console.log('PRESETS section detected - auto-scrolling to bottom');
+    if (sectionType === 'developer') {
+        console.log('DEVELOPER section detected - auto-scrolling to bottom');
         const scrollableContainer = document.querySelector('.scrollable-sections');
         if (scrollableContainer) {
             // Use setTimeout to ensure content is fully rendered before scrolling
@@ -5124,6 +7823,10 @@ async function initializeViewer() {
         
         updateGuideLine(); // Initialize guide line
         updateMaterialModeButtons(); // Initialize material mode
+        
+        // Initialize Developer Console / Assembly System
+        initDeveloperConsole();
+        
         console.log('✅ 3D Model Viewer initialized successfully');
     } catch (error) {
         console.error('❌ Error initializing viewer:', error);

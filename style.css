@@ -109,9 +109,14 @@
             margin-bottom: 0; /* Remove margin - replaced with invisible gap sections */
         }
         
-        /* Remove margin from PRESETS section to prevent over-scroll */
+        /* PRESETS section - restore normal spacing (no longer special) */
         .scrollable-sections .control-section[data-section="presets"] {
-            margin-bottom: 0 !important; /* Remove margin - prevents extra space at bottom */
+            margin-bottom: 20px !important; /* Restore normal margin */
+        }
+
+        /* DEVELOPER section - inherits special scroll treatment from PRESETS */
+        .scrollable-sections .control-section[data-section="developer"] {
+            margin-bottom: 5px !important; /* Small margin to prevent hover clipping */
         }
         
         
@@ -131,6 +136,40 @@
             /* Height set dynamically by JavaScript */
             margin-right: -15px; /* Extend into controls-panel right padding */
             padding-right: 15px; /* Maintain content position */
+            
+            /* Cross-browser thin scrollbar - always visible */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: rgba(0,0,0,0.3) transparent; /* Firefox */
+            -webkit-overflow-scrolling: touch; /* Safari smooth scrolling */
+            overflow-scrolling: touch; /* Legacy Safari */
+        }
+        
+        /* Webkit browsers (Chrome, Safari, Edge) - Force always visible */
+        .scrollable-sections::-webkit-scrollbar {
+            width: 8px; /* Thin width */
+            -webkit-appearance: none; /* Remove default styling */
+        }
+        
+        .scrollable-sections::-webkit-scrollbar-track {
+            background: transparent;
+            -webkit-appearance: none;
+        }
+        
+        .scrollable-sections::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            -webkit-appearance: none;
+            min-height: 20px; /* Ensure visible thumb */
+        }
+        
+        .scrollable-sections::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .scrollable-sections::-webkit-scrollbar-button {
+            display: none; /* Hide scroll arrows */
         }
         
         /* Top gradient: Show when content extends above visible area */
@@ -153,6 +192,90 @@
         
         .scrollable-sections .control-section {
             margin-bottom: 20px; /* 20px gaps between all panes */
+        }
+
+        /* DEVELOPER CONSOL Button Styling */
+        .developer-consol-button {
+            background: #007bff !important;
+            color: white !important;
+            border: none !important;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+
+        .developer-consol-button:hover {
+            background: #0056b3 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        /* RETURN TO 3D MODEL VIEWER Button Styling */
+        .developer-return-button {
+            background: #28a745 !important;
+            color: white !important;
+            border: none !important;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+
+        .developer-return-button:hover {
+            background: #1e7e34 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        /* DEVELOPER CONSOL Mode Styling */
+        .developer-consol-mode {
+            background: rgba(0, 123, 255, 0.05) !important;
+            border-left: 3px solid #007bff !important;
+        }
+
+        /* CONSOL Panes Container */
+        .developer-consol-panes {
+            margin-top: 20px;
+            border-top: 1px solid rgba(0, 123, 255, 0.2);
+            padding-top: 15px;
+        }
+
+        /* Individual Developer Panes */
+        .developer-pane {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(0, 123, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 123, 255, 0.1);
+        }
+
+        .developer-pane-header {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 123, 255, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .developer-pane-header h4 {
+            color: #007bff;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .developer-pane-content {
+            color: #666;
+            font-size: 11px;
+            line-height: 1.4;
         }
         
 
@@ -327,6 +450,17 @@
         [data-section="capture"] .section-content {
             overflow: visible;
         }
+        
+        /* DEVELOPER section - Allow Y-axis hover movement without clipping */
+        [data-section="developer"] .section-content {
+            overflow: visible;
+        }
+        
+        /* DEVELOPER button - Ensure proper z-index during hover animation */
+        [data-section="developer"] .button:hover {
+            z-index: 10;
+            position: relative;
+        }
 
         .control-section.collapsed .section-content {
             max-height: 0;
@@ -344,6 +478,14 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .range-label {
+            font-size: 0.8em;
+            color: #888;
+            font-style: italic;
+            min-width: 60px;
+            text-align: center;
         }
 
         .control-group label {
@@ -588,6 +730,14 @@
 
         .button.blue:hover {
             box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        .button.orange {
+            background: linear-gradient(45deg, rgba(230, 155, 46, 0.8), rgba(230, 133, 22, 0.8));
+        }
+
+        .button.orange:hover {
+            box-shadow: 0 5px 15px rgba(230, 155, 46, 0.4);
         }
 
         .button.button-danger {
@@ -2648,4 +2798,486 @@
             .lighting-sun-control {
                 height: 120px;
             }
+        }
+
+        /* =============================================================================
+         * MULTI-MODEL ASSEMBLY SYSTEM STYLES
+         * =============================================================================
+         */
+
+        /* Assembly Panel */
+        .assembly-panel {
+            background: transparent;
+            border: none;
+            margin: 10px 0;
+            padding: 0;
+            font-size: 12px;
+        }
+
+        .assembly-section {
+            padding: 15px;
+            border-bottom: none;
+        }
+
+        .assembly-section:last-child {
+            border-bottom: none;
+        }
+
+        .assembly-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Models List */
+        .models-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 6px;
+            background: white;
+            margin-bottom: 10px;
+        }
+
+        .model-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 6px !important;
+            border: none !important;
+        }
+
+
+        .model-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .model-item.selected {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+        }
+
+        .model-item.placeholder {
+            background-color: white;
+            cursor: default;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .model-item.placeholder:hover {
+            background-color: white;
+        }
+
+        .model-item.placeholder button {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .model-item.placeholder .model-name,
+        .model-item.placeholder .model-type {
+            opacity: 0.3;
+            color: #999;
+        }
+
+        .model-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .model-name {
+            font-weight: 600;
+            font-size: 11px;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .model-type {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .model-controls {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .model-controls button {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 10px;
+            border-radius: 2px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .model-controls button:hover {
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .btn-visibility.hidden {
+            opacity: 0.3;
+        }
+
+        .btn-lock.locked {
+            color: #f44336;
+        }
+
+        .btn-delete {
+            color: #f44336;
+        }
+
+        /* Assembly Tools */
+        .assembly-tools {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .assembly-tools .button.small {
+            font-size: 10px;
+            padding: 4px 8px;
+            height: 28px;
+        }
+
+        .button.danger {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .button.danger:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Transform Controls */
+        .transform-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .transform-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .transform-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .coordinate-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .coordinate-controls input {
+            flex: 1;
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .transform-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .transform-actions button {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 10px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .transform-actions button:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* Tool Controls */
+        .tool-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .tool-checkbox {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Export Controls */
+        .export-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .export-controls .button {
+            font-size: 11px;
+            padding: 8px 12px;
+            height: 32px;
+        }
+
+        /* Developer Console Button Active State */
+        .developer-consol-button.active {
+            background-color: #4CAF50 !important;
+            color: white !important;
+        }
+
+        .developer-consol-button.active:hover {
+            background-color: #45a049 !important;
+        }
+
+        /* Assembly Status in Upload Area */
+        .upload-area .upload-hint {
+            transition: all 0.3s ease;
+        }
+
+        /* Assembly Mode Indicators */
+        .assembly-mode-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        /* Responsive Assembly Panel */
+        @media (max-width: 1200px) {
+            .assembly-panel {
+                margin: 8px 0;
+                font-size: 11px;
+            }
+            
+            .models-list {
+                max-height: 150px;
+            }
+            
+            .model-name {
+                max-width: 120px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .assembly-panel {
+                margin: 5px 0;
+            }
+            
+            .assembly-tools {
+                flex-direction: column;
+                gap: 3px;
+            }
+            
+            .assembly-tools .button.small {
+                width: 100%;
+            }
+            
+            .coordinate-controls {
+                flex-direction: column;
+                gap: 3px;
+            }
+            
+            .export-controls .button {
+                font-size: 10px;
+                padding: 6px 10px;
+                height: 28px;
+            }
+        }
+
+        /* Assembly Panel Additional Styles */
+        .models-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .model-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+            border-radius: 6px !important;
+            border: none !important;
+        }
+
+        .model-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .model-item.selected {
+            background-color: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+
+
+        .model-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .model-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .model-type {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .model-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .model-controls button {
+            background: none;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+
+        .model-controls button:hover {
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .tool-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .tool-checkbox {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        /* Vertical button group layout */
+        .button-group-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .button-group-vertical .button {
+            width: 100%;
+            margin: 0;
+            height: 25px;
+            line-height: 23px;
+            padding: 1px 8px;
+        }
+
+        /* Transform Controls Styling */
+        .transform-group {
+            margin-bottom: 10px;
+        }
+        
+        .transform-group.position {
+            margin-bottom: 0;
+        }
+        
+        .transform-group.rotation {
+            margin-bottom: 0;
+        }
+        
+        .transform-group.scale {
+            margin-bottom: 0;
+        }
+        
+        .transform-controls .control-group {
+            margin-bottom: 5px;
+        }
+
+        .transform-value {
+            width: 50px !important;
+            box-shadow: none !important;
+            background-color: white !important;
+            margin-top: 0 !important;
+        }
+        
+        .transform-reset-button {
+            height: 25px !important;
+            line-height: 23px !important;
+            padding: 1px 8px !important;
+            margin: 0 !important;
+            width: 100%;
+        }
+        
+        /* Vertical alignment fix for value boxes with sliders */
+        .ambient-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Fix transform panel header alignment to match other panes exactly */
+        [data-section^="transform-"] .section-header {
+            margin: -2px -4px var(--section-header-to-content-gap) -4px;
+            padding: 0 4px 0 4px;
+        }
+        
+        [data-section^="transform-"] .section-header h3 {
+            margin: 0;
+            line-height: 1;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #333;
         }
