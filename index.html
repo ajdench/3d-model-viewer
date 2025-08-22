@@ -21,7 +21,8 @@
             padding: 4px !important;
         }
     </style>
-    <link rel="stylesheet" href="style.css?v=1723395020">
+  <script type="module" crossorigin src="/3d-model-viewer/assets/index-COAVqUg6.js"></script>
+  <link rel="stylesheet" crossorigin href="/3d-model-viewer/assets/index-74M06JlT.css">
 </head>
 <body>
     <div class="container">
@@ -218,7 +219,7 @@
                                                 Supports: .obj, .stl, .gltf, .glb, .dae
                                             </div>
                                         </div>
-                                        <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae,.fbx" style="display: none;" />
+                                        <input type="file" id="fileUpload" accept=".obj,.stl,.gltf,.glb,.dae,.fbx" multiple style="display: none;" />
                                     </div>
                                 </div>
                                 <div class="model-buttons-bottom">
@@ -380,6 +381,13 @@
                         <div class="slider-container">
                             <input type="range" id="posZ" class="slider-input" min="1" max="20" step="0.1" value="5">
                             <input type="number" id="posZNum" class="number-input" min="1" max="20" step="0.1" value="5">
+                        </div>
+                    </div>
+                    <div class="control-group" id="relativePositionGroup" style="display: none;">
+                        <label>Model Distance</label>
+                        <div class="slider-container">
+                            <input type="range" id="relativePosition" class="slider-input" min="0" max="360" step="5" value="180">
+                            <input type="number" id="relativePositionNum" class="number-input" min="0" max="360" step="5" value="180">
                         </div>
                     </div>
                     <button id="resetCameraRanges" class="button blue" title="Reset camera position control ranges to default values">Reset Ranges</button>
@@ -662,10 +670,19 @@
                 </div>
                 </div>
             </div>
+
+            <div class="control-section" data-section="developer">
+                <div class="section-header" tabindex="0" role="button" aria-expanded="true" aria-controls="developer-content">
+                    <h3>Developer</h3>
+                    <span class="collapse-icon" aria-hidden="true">−</span>
+                </div>
+                <div class="section-content" id="developer-content">
+                    <button id="enterDeveloperConsol" class="button blue">DEVELOPER CONSOL</button>
+                </div>
+            </div>
             </div> <!-- Close scrollable-sections -->
 
         </div>
     </div>
-    <script type="module" src="main.js"></script>
 </body>
 </html>
